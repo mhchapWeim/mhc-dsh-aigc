@@ -123,10 +123,10 @@ describe('product icon set', () => {
 })
 
 describe('FishLogo', () => {
-  it('renders the BHSS mascot without stretching its portrait artwork', () => {
+  it('renders the product mascot without stretching its portrait artwork', () => {
     const { container } = render(<primitives.FishLogo />)
     const image = container.querySelector('img')!
-    expect(image.getAttribute('src')).toBe('/bhss-office-assistant.svg')
+    expect(image.getAttribute('src')).toBe('/office-assistant.svg')
     expect(image.getAttribute('width')).toBe('24')
     expect(image.getAttribute('height')).toBe('24')
     expect(image.style.objectFit).toBe('contain')
@@ -136,7 +136,7 @@ describe('FishLogo', () => {
 describe('BrandWordmark', () => {
   it('can render the name artwork with or without its leading mark', () => {
     const view = render(<primitives.BrandWordmark label="弯崽工作伙伴" />)
-    expect(view.container.querySelector('img')?.getAttribute('src')).toBe('/bhss-office-assistant.svg')
+    expect(view.container.querySelector('img')?.getAttribute('src')).toBe('/office-assistant.svg')
     expect(view.container.textContent).toBe('弯崽工作伙伴')
 
     view.rerender(<primitives.BrandWordmark label="弯崽工作伙伴" includeMark={false} />)

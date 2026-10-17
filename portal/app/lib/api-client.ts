@@ -180,7 +180,7 @@ export async function loginBackend(employeeNo: string, password: string): Promis
 export async function getPortalSsoConfig(): Promise<{ enabled: boolean }> {
   if (!API_BASE_URL) return { enabled: false };
   const response = await fetch(`${API_BASE_URL}/api/auth/sso/config`, { cache: 'no-store' });
-  if (!response.ok) throw new Error('无法读取 Bosch SSO 配置');
+  if (!response.ok) throw new Error('无法读取 企业 SSO 配置');
   return response.json();
 }
 
@@ -199,7 +199,7 @@ export async function completePortalSso(): Promise<BackendLogin> {
     method: 'POST', credentials: 'include', cache: 'no-store',
   });
   if (!response.ok) throw new Error(response.status === 401
-    ? 'SSO 登录结果已过期，请重新点击 Bosch SSO 登录。'
+    ? 'SSO 登录结果已过期，请重新点击 企业 SSO 登录。'
     : 'SSO 登录未能完成，请重试或使用工号密码登录。');
   return response.json();
 }

@@ -433,7 +433,7 @@ describe('desktop main startup', () => {
   it('serves the startup mascot from the packaged Web assets', async () => {
     await readyForUpdate()
     const { serveWebDocument, forwardWebRequest } = await import('../src/web-document.ts')
-    const request = new Request('dsh-app://app/bhss-office-assistant.svg')
+    const request = new Request('dsh-app://app/office-assistant.svg')
     const handler = harness.protocolHandle.mock.calls[0]![1]
     await handler(request)
     expect(serveWebDocument).toHaveBeenCalledWith(request,

@@ -11,14 +11,14 @@ type Locale = 'zh' | 'en';
 const copy = {
   zh: {
     product: 'AIGC Agent Hub', subtitle: '企业智能应用中台', language: 'EN', theme: '切换主题', admin: '管理后台', download: '客户端下载',
-    eyebrow: 'BHSS 企业 AI 工作空间', title: '让智能成为工作的起点',
+    eyebrow: '企业 AI 工作空间', title: '让智能成为工作的起点',
     intro: '从一次对话开始，连接公司知识、业务流程与已发布的智能应用。',
     chat: '开始对话', chatBody: '进入企业 AI 对话工作台', apps: '应用集合', appsBody: '浏览已审批发布的内部应用',
     visualTitle: '连接业务与智能', visualBody: '统一入口，清晰抵达每一种能力', visualAlt: '蓝色抽象曲面，象征企业流程与智能能力的连接',
   },
   en: {
     product: 'AIGC Agent Hub', subtitle: 'Enterprise AI Application Hub', language: '中文', theme: 'Switch theme', admin: 'Admin', download: 'Desktop app',
-    eyebrow: 'BHSS ENTERPRISE AI WORKSPACE', title: 'Make intelligence the start of work',
+    eyebrow: 'ENTERPRISE AI WORKSPACE', title: 'Make intelligence the start of work',
     intro: 'Start with a conversation, then connect company knowledge, workflows and approved intelligent applications.',
     chat: 'Start a conversation', chatBody: 'Open the enterprise AI chat workspace', apps: 'Application collection', appsBody: 'Browse approved internal applications',
     visualTitle: 'Connect work with intelligence', visualBody: 'One clear entrance to every capability', visualAlt: 'Blue abstract surface representing connected enterprise workflows and intelligence',
@@ -57,10 +57,9 @@ export function LandingShell() {
 
   return (
     <div className="landing-page">
-      <div className="bhss-brand-stripe" aria-hidden="true" />
       <header className="landing-nav landing-reveal landing-delay-1">
-        <Link className="landing-brand" href="/" aria-label="BHSS AIGC Agent Hub">
-          <span className="landing-logo-frame"><img src="/bhss-logo.png" alt="博世华域转向系统有限公司" /></span>
+        <Link className="landing-brand" href="/" aria-label="AIGC Agent Hub">
+          <span className="landing-logo-frame"><img src="/favicon.svg" alt="AIGC Agent Hub" /></span>
           <span><strong>{t.product}</strong><small>{t.subtitle}</small></span>
         </Link>
         <nav aria-label={locale === 'zh' ? '全局导航' : 'Global navigation'}>

@@ -387,7 +387,7 @@ export function ChatShell() {
     <div className={`chat-page${sidebarOpen ? '' : ' chat-sidebar-collapsed'}${sidebarReady ? ' is-ready' : ''}`}>
       <aside className="chat-sidebar" aria-label="对话历史" aria-hidden={!sidebarOpen}>
         <header>
-          <Link href="/" className="chat-mini-brand" tabIndex={sidebarOpen ? 0 : -1}><img src="/bhss-logo.png" alt="博世华域转向系统有限公司" /></Link>
+          <Link href="/" className="chat-mini-brand" tabIndex={sidebarOpen ? 0 : -1}><img src="/favicon.svg" alt="AIGC Agent Hub" /></Link>
           <button type="button" aria-label="收起侧边栏" tabIndex={sidebarOpen ? 0 : -1} onClick={() => toggleSidebar(false)}><PanelLeftClose size={18} /></button>
         </header>
         <button className="chat-new" type="button" tabIndex={sidebarOpen ? 0 : -1} onClick={() => void startNewConversation()}><MessageSquarePlus size={18} />新对话</button>

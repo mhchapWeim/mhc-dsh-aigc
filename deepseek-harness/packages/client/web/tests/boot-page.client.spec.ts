@@ -21,7 +21,7 @@ describe('BootPage', () => {
     expect(el.textContent).toContain('弯崽工作伙伴')
     expect(el.textContent).toContain('Less busywork. More room to focus.')
     expect(el.textContent).toContain('Starting…')
-    expect(el.querySelector('img')?.getAttribute('src')).toBe('/bhss-office-assistant.svg')
+    expect(el.querySelector('img')?.getAttribute('src')).toBe('/office-assistant.svg')
   })
 
   it('keeps loading while entries are active or loading', () => {

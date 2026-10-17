@@ -154,10 +154,9 @@ export function PortalShell() {
     <div className={`portal-page theme-${theme}`}>
       <a className="skip-link" href="#main-content">{copy.skip}</a>
       <div className="topbar-shell">
-        <div className="bhss-brand-stripe" aria-hidden="true" />
         <header className="topbar">
-          <Link className="brand-lockup" href="/" aria-label="BHSS AIGC Agent Hub">
-            <span className="brand-logo-viewport"><img className="brand-logo-image" src="/bhss-logo.png" width="765" height="295" alt="博世华域转向系统有限公司" /></span>
+          <Link className="brand-lockup" href="/" aria-label="AIGC Agent Hub">
+            <span className="brand-logo-viewport"><img className="brand-logo-image" src="/favicon.svg" width="44" height="44" alt="AIGC Agent Hub" /></span>
             <span className="brand-divider" aria-hidden="true" />
             <div className="brand-copy"><strong>AIGC Agent Hub</strong><small>{copy.subtitle}</small></div>
           </Link>

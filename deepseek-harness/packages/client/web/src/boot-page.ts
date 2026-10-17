@@ -47,7 +47,7 @@ export class BootPage {
     this.brand = div(css.brand)
     const mascot = document.createElement('img')
     mascot.className = css.mascot ?? ''
-    mascot.src = '/bhss-office-assistant.svg'
+    mascot.src = '/office-assistant.svg'
     mascot.alt = ''
     mascot.width = 190
     mascot.height = 190

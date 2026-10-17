@@ -1,18 +1,20 @@
 import { readFileSync } from 'node:fs'
-import { createHash } from 'node:crypto'
 import { expect, it } from 'vitest'
 
-it('keeps browser, welcome, and native icons on the same supplied Wanzai artwork', () => {
-  const source = readFileSync(new URL('../../../packages/client/ui-primitives/src/bhss-mascot.svg', import.meta.url), 'utf8')
+it('keeps browser, welcome, portal, and native icons on the supplied bubble artwork', () => {
+  const source = readFileSync(new URL('../../../packages/client/ui-primitives/src/mascot.svg', import.meta.url), 'utf8')
   for (const path of [
-    '../../web/public/bhss-office-assistant.svg', '../../web/public/favicon.svg', '../../web/public/favicon-dark.svg',
+    '../../web/public/office-assistant.svg', '../../web/public/favicon.svg', '../../web/public/favicon-dark.svg',
     '../renderer/assets/welcome-brand.svg', '../resources/icon.svg', '../resources/icon-windows.svg', '../resources/icon-macos.svg',
+    '../../../../portal/public/wanzai.svg',
   ]) expect(readFileSync(new URL(path, import.meta.url), 'utf8'), path).toBe(source)
-  const embedded = source.match(/data:image\/png;base64,([^"']+)/)?.[1]
-  expect(embedded).toBeTruthy()
-  const raster = Buffer.from(embedded!, 'base64')
-  const digest = createHash('sha256').update(raster).digest('hex')
-  for (const path of ['../resources/icon.png', '../resources/icon-windows.png', '../resources/icon-macos.png']) {
-    expect(createHash('sha256').update(readFileSync(new URL(path, import.meta.url))).digest('hex'), path).toBe(digest)
+  expect(source).toContain('viewBox="0 0 1432 1606"')
+  expect(source).toContain('data:image/png;base64,')
+  const png = readFileSync(new URL('../resources/icon.png', import.meta.url))
+  expect(png.subarray(0, 8)).toEqual(Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]))
+  expect(png.readUInt32BE(16)).toBe(512)
+  expect(png.readUInt32BE(20)).toBe(512)
+  for (const path of ['../resources/icon-windows.png', '../resources/icon-macos.png']) {
+    expect(readFileSync(new URL(path, import.meta.url)), path).toEqual(png)
   }
 })

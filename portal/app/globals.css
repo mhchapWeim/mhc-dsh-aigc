@@ -2682,21 +2682,13 @@ tbody tr:hover {
   animation: none !important;
 }
 
-/* Portal interaction and BHSS brand refinements */
+/* Portal interaction and brand refinements */
 .topbar-shell {
   position: sticky;
   top: 0;
   z-index: 80;
 }
-.bhss-brand-stripe {
-  height: 16px;
-  background-image: url("/bosch-supergraphic-line.svg");
-  background-repeat: no-repeat;
-  background-position: center;
-  background-size: cover;
-  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.22);
-  pointer-events: none;
-}
+
 .topbar {
   position: relative;
   top: auto;
@@ -8219,3 +8211,7 @@ tbody tr:hover {
 .admin-nav-flyout a:hover, .admin-nav-flyout a:focus-visible { background: #213854; color: #fff; }
 .admin-nav-flyout a[aria-current="page"] { background: #28538a; color: #fff; }
 .admin-nav-flyout svg { flex-shrink: 0; }
+
+/* Compact neutral mark shared by the portal entry points. */
+.brand-logo-viewport { width: 44px; height: 44px; flex-basis: 44px; background: transparent; box-shadow: none; }
+.landing-logo-frame { width: 44px; height: 44px; flex: 0 0 44px; }

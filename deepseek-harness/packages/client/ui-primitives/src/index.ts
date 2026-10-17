@@ -36,7 +36,7 @@ export type { RiskConfirmationProps } from './RiskConfirmation.tsx'
 export { ConnectionIndicator } from './ConnectionIndicator.tsx'
 export type { ConnectionIndicatorState } from './ConnectionIndicator.tsx'
 export { FishLogo, FISH_LOGO_PATH, FISH_LOGO_VIEWBOX } from './FishLogo.tsx'
-export { MascotLogo, BHSS_MASCOT_DATA_URL } from './MascotLogo.tsx'
+export { MascotLogo, MASCOT_ASSET_URL } from './MascotLogo.tsx'
 export { BrandWordmark } from './BrandWordmark.tsx'
 export type { BrandWordmarkProps } from './BrandWordmark.tsx'
 export {

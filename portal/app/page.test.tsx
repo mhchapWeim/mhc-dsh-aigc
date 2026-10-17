@@ -13,11 +13,11 @@ afterEach(() => {
 });
 
 describe('AIGC Agent Hub landing page', () => {
-  it('renders the new primary message and supplied corporate logo', () => {
+  it('renders the new primary message and neutral AIGC logo', () => {
     render(<Home />);
 
     expect(screen.getByRole('heading', { name: '让智能成为工作的起点' })).toBeInTheDocument();
-    expect(screen.getByRole('img', { name: '博世华域转向系统有限公司' })).toHaveAttribute('src', '/bhss-logo.png');
+    expect(screen.getByRole('img', { name: 'AIGC Agent Hub' })).toHaveAttribute('src', '/favicon.svg');
     expect(screen.getByRole('img', { name: /蓝色抽象曲面/ })).toHaveAttribute('src', '/hub-hero-blue.webp');
   });
 

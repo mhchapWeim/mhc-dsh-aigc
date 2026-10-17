@@ -34,10 +34,10 @@ export function LoginEntry({ autoSso = false }: { autoSso?: boolean }) {
       setSsoEnabled(config.enabled);
       if (autoSso && !callback) {
         if (config.enabled) { setSubmitting(true); redirectPortalSso(destination()); }
-        else setError('Bosch SSO 尚未启用，请使用工号密码登录或联系管理员。');
+        else setError('企业 SSO 尚未启用，请使用工号密码登录或联系管理员。');
       }
     }).catch(() => {
-      if (active && autoSso && !callback) setError('Bosch SSO 服务暂时不可用，请重试或使用工号密码登录。');
+      if (active && autoSso && !callback) setError('企业 SSO 服务暂时不可用，请重试或使用工号密码登录。');
     });
     const timer = window.setTimeout(() => {
       setReturnTo(destination());
@@ -53,10 +53,10 @@ export function LoginEntry({ autoSso = false }: { autoSso?: boolean }) {
           if (active) setError(reason instanceof Error ? reason.message : 'SSO 登录失败，请重试。');
         }).finally(() => { if (active) setSubmitting(false); });
       } else if (status === 'logged-out') {
-        setError('已退出中台登录。再次进入请点击 Bosch SSO 登录。');
+        setError('已退出中台登录。再次进入请点击 企业 SSO 登录。');
       } else if (status === 'expired' || status === 'failed' || status === 'disabled') {
         setError(status === 'disabled' ? '此账号已停用，请联系管理员。' : status === 'expired'
-          ? 'SSO 登录请求已过期，请重新点击 Bosch SSO 登录。' : 'Bosch SSO 登录失败，请重试或使用工号密码登录。');
+          ? 'SSO 登录请求已过期，请重新点击 企业 SSO 登录。' : '企业 SSO 登录失败，请重试或使用工号密码登录。');
       }
       }, 0);
     return () => { active = false; window.clearTimeout(timer); };
@@ -100,16 +100,16 @@ export function LoginEntry({ autoSso = false }: { autoSso?: boolean }) {
           </div>
         </header>
         <div className="login-copy">
-          <span>BHSS UNIFIED ACCESS</span>
+          <span>AIGC UNIFIED ACCESS</span>
           <h1>登录 AIGC Agent Hub</h1>
-          <p>{autoSso ? '正在通过 Bosch SSO 验证企业身份。' : '使用企业工号进入应用门户与管理控制台。'}</p>
+          <p>{autoSso ? '正在通过 企业 SSO 验证企业身份。' : '使用企业工号进入应用门户与管理控制台。'}</p>
         </div>
         {ssoEnabled && <div className="login-sso">
           <a className="primary-action" aria-disabled={submitting} tabIndex={submitting ? -1 : 0}
             href={portalSsoStartUrl(returnTo)} onClick={event => {
               if (submitting) { event.preventDefault(); return; }
               setError(''); setSubmitting(true);
-            }}>使用 Bosch SSO 登录</a>
+            }}>使用 企业 SSO 登录</a>
           {!autoSso && <span>或使用工号密码登录</span>}
         </div>}
         {!autoSso && <form onSubmit={submit}>

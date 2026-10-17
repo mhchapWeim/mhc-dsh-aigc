@@ -56,7 +56,7 @@ export default function DesktopDownloadPage() {
           <div className={styles.actions}>{action}<a href="#getting-started" className={styles.guide}>了解如何安装<ArrowDown size={16} /></a></div>
           <div className={styles.status} aria-live="polite">
             {release && state === 'ready' && <p>版本 {release.version} <span>·</span> {(release.bytes / 1024 / 1024).toFixed(0)} MB <span>·</span> Windows x64 安装程序</p>}
-            {state === 'signed-out' && <p>使用 Bosch SSO 登录，获取分配给你的已发布版本。</p>}
+            {state === 'signed-out' && <p>使用企业 SSO 登录，获取分配给你的已发布版本。</p>}
             {state === 'empty' && <p>当前账号暂无可下载的 Windows x64 版本，请联系管理员发布并授权。</p>}
             {state === 'error' && <p role="alert">{message}</p>}
             {state !== 'error' && message && <p role="status">{message}</p>}
@@ -67,16 +67,16 @@ export default function DesktopDownloadPage() {
       </section>
       <section className={styles.benefits} aria-label="客户端能力">
         <article><FolderOpen size={24} /><h2>围绕工作区开展工作</h2><p>把任务放在熟悉的目录里，查看历史会话，继续之前的工作。</p></article>
-        <article><ShieldCheck size={24} /><h2>企业账号，统一接入</h2><p>通过 Bosch SSO 登录，使用中台为你授权的模型和插件。</p></article>
+        <article><ShieldCheck size={24} /><h2>企业账号，统一接入</h2><p>通过企业 SSO 登录，使用中台为你授权的模型和插件。</p></article>
         <article><Undo2 size={24} /><h2>历史随工作延续</h2><p>支持会话备份与工作区迁移，迁移前先预览，保留原始数据。</p></article>
       </section>
       <section id="getting-started" className={styles.setup} aria-labelledby="setup-title">
         <div><p className={styles.eyebrow}>开始使用</p><h2 id="setup-title">三步，让弯崽加入工作。</h2><p>目前提供 Windows x64 版本。无需自行安装 Node.js 或配置命令行环境。</p></div>
-        <ol><li><span>01</span><div><h3>下载并安装</h3><p>登录后下载安装程序，按向导完成安装。升级前请保存工作并退出旧客户端。</p></div></li><li><span>02</span><div><h3>使用企业身份登录</h3><p>打开弯崽工作伙伴，选择 SSO 认证，在浏览器完成 Bosch 登录。</p></div></li><li><span>03</span><div><h3>从第一段对话开始</h3><p>进入默认工作区，选择可用模型，输入你的任务。Windows 默认工作区为 <code>D:\wanzaiwork</code>。</p></div></li></ol>
+        <ol><li><span>01</span><div><h3>下载并安装</h3><p>登录后下载安装程序，按向导完成安装。升级前请保存工作并退出旧客户端。</p></div></li><li><span>02</span><div><h3>使用企业身份登录</h3><p>打开弯崽工作伙伴，选择 SSO 认证，在浏览器完成企业身份登录。</p></div></li><li><span>03</span><div><h3>从第一段对话开始</h3><p>进入默认工作区，选择可用模型，输入你的任务。Windows 默认工作区为 <code>D:\wanzaiwork</code>。</p></div></li></ol>
       </section>
       {release && <section className={styles.release} aria-labelledby="release-title"><div><p className={styles.eyebrow}>当前可下载版本</p><h2 id="release-title">{release.version}</h2><p>{new Date(release.createdAt).toLocaleDateString('zh-CN')} 发布 · Windows x64</p></div><div><p className={styles.notes}>{release.notes || '本版本暂无更新说明。'}</p><details><summary>安装包校验信息</summary><dl><dt>文件名</dt><dd>{release.fileName}</dd><dt>SHA-512（Base64）</dt><dd><code>{release.sha512}</code></dd></dl></details></div></section>}
       <section className={styles.bottom}><div><h2>准备好开始了吗？</h2><p>把下一件工作，交给你和弯崽。</p></div>{action}</section>
     </main>
-    <footer className={styles.footer}><span>弯崽工作伙伴 · BHSS AIGC</span><Link href="/">返回中台</Link><span>Windows x64</span></footer>
+    <footer className={styles.footer}><span>弯崽工作伙伴 · AIGC Agent Hub</span><Link href="/">返回中台</Link><span>Windows x64</span></footer>
   </div>;
 }

@@ -26,15 +26,15 @@ beforeEach(() => {
   mocks.login.mockResolvedValue(session);
 });
 
-it('offers Bosch SSO alongside the existing password login', async () => {
+it('offers 企业 SSO alongside the existing password login', async () => {
   window.history.replaceState({}, '', '/login?returnTo=%2Fadmin%2Fmodels');
   render(<LoginPage />);
-  expect(await screen.findByRole('link', { name: '使用 Bosch SSO 登录' })).toHaveAttribute('href', '/api/auth/sso/start?returnTo=%2Fadmin%2Fmodels');
+  expect(await screen.findByRole('link', { name: '使用 企业 SSO 登录' })).toHaveAttribute('href', '/api/auth/sso/start?returnTo=%2Fadmin%2Fmodels');
   expect(screen.getByLabelText('企业工号')).toBeInTheDocument();
   expect(screen.getByLabelText('密码')).toBeInTheDocument();
 });
 
-it('automatically redirects the default login route to Bosch SSO once', async () => {
+it('automatically redirects the default login route to 企业 SSO once', async () => {
   window.history.replaceState({}, '', '/login?returnTo=%2Fadmin%2Fmodels');
   render(<StrictMode><AutoLoginPage /></StrictMode>);
   await waitFor(() => expect(mocks.redirect).toHaveBeenCalledWith('/admin/models'));
@@ -47,8 +47,8 @@ it.each(['query', 'session'] as const)('stays signed out after explicit logout u
   if (kind === 'query') window.history.replaceState({}, '', '/login?sso=logged-out');
   else window.sessionStorage.setItem('aigc-explicit-logout', '1');
   render(<StrictMode><AutoLoginPage /></StrictMode>);
-  await screen.findByText('已退出中台登录。再次进入请点击 Bosch SSO 登录。');
-  await screen.findByRole('link', { name: '使用 Bosch SSO 登录' });
+  await screen.findByText('已退出中台登录。再次进入请点击 企业 SSO 登录。');
+  await screen.findByRole('link', { name: '使用 企业 SSO 登录' });
   expect(mocks.redirect).not.toHaveBeenCalled();
   expect(mocks.complete).not.toHaveBeenCalled();
 });
@@ -56,7 +56,7 @@ it.each(['query', 'session'] as const)('stays signed out after explicit logout u
 it('does not automatically redirect the local login route', async () => {
   window.history.replaceState({}, '', '/login/local');
   render(<LoginPage />);
-  await screen.findByRole('link', { name: '使用 Bosch SSO 登录' });
+  await screen.findByRole('link', { name: '使用 企业 SSO 登录' });
   expect(mocks.redirect).not.toHaveBeenCalled();
   expect(screen.getByLabelText('密码')).toBeInTheDocument();
 });
@@ -72,7 +72,7 @@ it('completes the default SSO callback without starting another SSO flow', async
 it('keeps an explicit local login link when default SSO is unavailable', async () => {
   mocks.config.mockRejectedValue(new Error('offline'));
   render(<AutoLoginPage />);
-  expect(await screen.findByRole('status')).toHaveTextContent('Bosch SSO 服务暂时不可用');
+  expect(await screen.findByRole('status')).toHaveTextContent('企业 SSO 服务暂时不可用');
   expect(screen.getByRole('link', { name: '使用工号密码登录' })).toHaveAttribute('href', '/login/local?returnTo=%2F');
   expect(mocks.redirect).not.toHaveBeenCalled();
 });
@@ -99,7 +99,7 @@ it('keeps password login usable when SSO configuration is unavailable', async ()
 it('shows callback failure without saving credentials or looping back to SSO', async () => {
   window.history.replaceState({}, '', '/login?sso=failed');
   render(<LoginPage />);
-  expect(await screen.findByRole('status')).toHaveTextContent('Bosch SSO 登录失败');
+  expect(await screen.findByRole('status')).toHaveTextContent('企业 SSO 登录失败');
   expect(mocks.complete).not.toHaveBeenCalled();
   expect(mocks.save).not.toHaveBeenCalled();
 });
