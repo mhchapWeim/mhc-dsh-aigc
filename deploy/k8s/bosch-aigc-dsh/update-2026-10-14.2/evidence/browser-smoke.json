@@ -1,0 +1,7 @@
+{
+  "packagedPortal": true,
+  "explicitLogoutStaysOnLogin": true,
+  "tabLogoutStateSurvivesNavigation": true,
+  "automaticSsoStarts": 0,
+  "externalSsoConfiguration": "simulated; real CAS not contacted"
+}

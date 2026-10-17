@@ -1,0 +1,15 @@
+{
+  "name": "弯崽工作伙伴",
+  "short_name": "弯崽工作伙伴",
+  "start_url": "./",
+  "scope": "./",
+  "display": "fullscreen",
+  "icons": [
+    {
+      "src": "favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

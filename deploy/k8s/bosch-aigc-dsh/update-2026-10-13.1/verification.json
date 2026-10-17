@@ -1,0 +1,18 @@
+{
+  "downloadStatus": 200,
+  "deduplicatedCount": 1,
+  "apiTag": "2026-10-13.1",
+  "oldUserIdNullable": "NO",
+  "redaction": "passed",
+  "adminDisplayName": "安装器（未登录）",
+  "duplicateIngest": 200,
+  "portalLogin": 200,
+  "platform": "linux/amd64",
+  "oldApiHealth": 200,
+  "newUserIdNullable": "YES",
+  "apiHealth": 200,
+  "anonymousIngest": 200,
+  "date": "2026-10-13T02:42:55.4421989+00:00",
+  "productionDeployment": "not performed",
+  "portalTag": "2026-10-13.1"
+}

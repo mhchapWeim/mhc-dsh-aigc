@@ -1,0 +1,24 @@
+{
+  "version": "0.1.7-alpha.2.20261014.2",
+  "platform": "win32-x64",
+  "unsigned": true,
+  "workspaceRegression": {
+    "files": 11,
+    "passed": 358,
+    "failed": 0
+  },
+  "clientTypecheck": "passed",
+  "docBudgets": "passed",
+  "officialBuild": "passed",
+  "preparedRuntimeSmoke": "passed",
+  "packagedRuntimeSmoke": "passed",
+  "officeConversions": [
+    "DOCX to PDF",
+    "XLSX to PDF",
+    "PPTX to PDF"
+  ],
+  "packagedWorkspaceFix": "verified in final ASAR",
+  "packagingRun": "2026-10-14T03-49-37.587Z-Jk5vY1",
+  "installedOnUserProfile": false,
+  "published": false
+}

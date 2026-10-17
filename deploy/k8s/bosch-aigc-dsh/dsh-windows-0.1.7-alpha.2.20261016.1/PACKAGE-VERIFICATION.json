@@ -1,0 +1,64 @@
+{
+  "version": "0.1.7-alpha.2.20261016.1",
+  "archive": "apps/desktop/.desktop-build/targets/win-x64/unsigned-artifacts/win-unpacked/resources/app.asar",
+  "checks": [
+    {
+      "name": "diagnostic version",
+      "passed": true
+    },
+    {
+      "name": "new AIGC endpoint",
+      "passed": true
+    },
+    {
+      "name": "pi-ai onStreamFailure",
+      "passed": true
+    },
+    {
+      "name": "pi-ai llm-request-diagnostic",
+      "passed": true
+    },
+    {
+      "name": "pi-ai lastChunkAgoMs",
+      "passed": true
+    },
+    {
+      "name": "pi-ai sdkTimeoutMs",
+      "passed": true
+    },
+    {
+      "name": "pi-ai httpStatus",
+      "passed": true
+    },
+    {
+      "name": "pi-ai signalEvidence",
+      "passed": true
+    },
+    {
+      "name": "managed route diagnostics",
+      "passed": true
+    },
+    {
+      "name": "desktop Host present",
+      "passed": true
+    },
+    {
+      "name": "timestamped Host context",
+      "passed": true
+    },
+    {
+      "name": "readable failure strings",
+      "passed": true
+    },
+    {
+      "name": "manual authentication menu",
+      "passed": true
+    },
+    {
+      "name": "data migration application menu",
+      "passed": true
+    }
+  ],
+  "passed": true,
+  "scope": "Static packaged-code checks; does not prove live model connectivity or reproduction."
+}

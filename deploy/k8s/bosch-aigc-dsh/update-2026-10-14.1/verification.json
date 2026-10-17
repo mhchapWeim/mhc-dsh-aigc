@@ -1,0 +1,25 @@
+{
+  "version": "2026-10-14.1",
+  "platform": "linux/amd64",
+  "backendTests": {
+    "passed": 82,
+    "failed": 0
+  },
+  "portalTestsPreviouslyPassed": 20,
+  "deploymentScriptSyntax": "passed",
+  "deploymentPreflight": "passed",
+  "imageArchiveReload": "passed",
+  "isolatedApiHealth": 200,
+  "isolatedPortalLocalLoginPage": 200,
+  "portalAndDshUserLogCorrelation": "passed",
+  "archivePersistsAcrossRestart": "passed",
+  "finalImageSmoke": "passed",
+  "fileLogLimits": {
+    "retentionDays": 14,
+    "maxFiles": 50,
+    "maxFileSizeBytes": 20971520
+  },
+  "productionDeployed": false,
+  "realBoschSsoVerified": false,
+  "dshInstallerIncluded": false
+}

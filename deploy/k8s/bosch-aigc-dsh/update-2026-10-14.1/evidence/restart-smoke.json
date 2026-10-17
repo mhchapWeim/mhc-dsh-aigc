@@ -1,0 +1,5 @@
+{
+  "restartHealth": 200,
+  "filesAfterRestart": 2,
+  "previousPortalAndDshTracesPreserved": true
+}

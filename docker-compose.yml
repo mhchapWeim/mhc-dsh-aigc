@@ -1,0 +1,94 @@
+services:
+  litellm:
+    image: ghcr.io/berriai/litellm:v1.101.0
+    container_name: aigc-hub-litellm
+    command: ["--config", "/app/config.yaml", "--port", "4000"]
+    environment:
+      DATABASE_URL: postgresql://litellm:${LITELLM_DATABASE_PASSWORD:-litellm_dev}@litellm-postgres:5432/litellm
+      STORE_MODEL_IN_DB: "True"
+      LITELLM_MASTER_KEY: ${LITELLM_MASTER_KEY:-sk-aigc-hub-development}
+      LITELLM_UPSTREAM_MODEL: ${LITELLM_UPSTREAM_MODEL:-openai/gpt-4o-mini}
+      LITELLM_UPSTREAM_BASE_URL: ${LITELLM_UPSTREAM_BASE_URL:-https://api.openai.com/v1}
+      LITELLM_UPSTREAM_API_KEY: ${LITELLM_UPSTREAM_API_KEY:-}
+    ports:
+      - "4000:4000"
+    volumes:
+      - ./litellm-config.yaml:/app/config.yaml:ro
+    depends_on:
+      litellm-postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:4000/health/liveliness', timeout=3)"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  litellm-postgres:
+    image: postgres:17-alpine
+    container_name: aigc-hub-litellm-postgres
+    environment:
+      POSTGRES_DB: litellm
+      POSTGRES_USER: litellm
+      POSTGRES_PASSWORD: ${LITELLM_DATABASE_PASSWORD:-litellm_dev}
+    volumes:
+      - aigc_hub_litellm_postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U litellm -d litellm"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  postgres:
+    image: postgres:17-alpine
+    container_name: aigc-hub-postgres
+    environment:
+      POSTGRES_DB: aigc_hub
+      POSTGRES_USER: aigc_hub
+      POSTGRES_PASSWORD: aigc_hub_dev
+    ports:
+      - "5432:5432"
+    volumes:
+      - aigc_hub_postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U aigc_hub -d aigc_hub"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  api:
+    build:
+      context: ./server/AigcHub.Api
+    container_name: aigc-hub-api
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__PostgreSql: Host=postgres;Port=5432;Database=aigc_hub;Username=aigc_hub;Password=aigc_hub_dev
+      Jwt__Key: development-only-change-this-key-to-at-least-32-characters
+      Callback__Secret: development-callback-secret
+      Chat__BaseUrl: ${CHAT_BASE_URL:-}
+      Chat__ApiKey: ${CHAT_API_KEY:-}
+      Chat__Model: ${CHAT_MODEL:-}
+      LiteLlm__BaseUrl: ${AIGC_LITELLM_BASE_URL:-http://litellm:4000/v1}
+      LiteLlm__ApiKey: ${AIGC_LITELLM_API_KEY:-sk-aigc-hub-development}
+      LiteLlm__TimeoutSeconds: ${AIGC_LITELLM_TIMEOUT_SECONDS:-20}
+      Plugins__StoragePath: /var/lib/aigc-hub/plugins
+      DesktopReleases__Root: /var/lib/aigc-hub/desktop-releases
+      DataProtection__KeysPath: /var/lib/aigc-hub/data-protection
+    ports:
+      - "5080:8080"
+    volumes:
+      - aigc_hub_plugins:/var/lib/aigc-hub/plugins
+      - aigc_hub_data_protection:/var/lib/aigc-hub/data-protection
+      - aigc_hub_desktop_releases:/var/lib/aigc-hub/desktop-releases
+    depends_on:
+      litellm:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+
+volumes:
+  aigc_hub_postgres:
+  aigc_hub_litellm_postgres:
+  aigc_hub_desktop_releases:
+  aigc_hub_plugins:
+  aigc_hub_data_protection:

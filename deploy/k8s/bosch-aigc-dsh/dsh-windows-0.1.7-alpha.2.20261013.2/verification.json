@@ -1,0 +1,28 @@
+{
+  "installedOnUserMachine": false,
+  "renderedChineseFont": "Microsoft YaHei",
+  "localDevelopmentWorkspaceRoot": "D:\\wanzaiwork",
+  "platform": "win-x64",
+  "focusedTests": 19,
+  "productionDeployment": false,
+  "unsigned": true,
+  "defaultAppliesTo": [
+    "fresh-install",
+    "registered-upgrade",
+    "repeat-install"
+  ],
+  "defaultDirectory": "D:\\Program Files (x86)\\wanzai",
+  "legacyMigration": "passed: old-process blocking, data preservation, registry and shortcut target",
+  "completeBuildExitCode": 0,
+  "published": false,
+  "bilingualDocumentation": "passed",
+  "packagedRuntimeSmoke": "passed",
+  "version": "0.1.7-alpha.2.20261013.2",
+  "legacyMigrationLanguages": [
+    "en_US",
+    "zh_CN"
+  ],
+  "officeDocxXlsxPptxToPdf": "passed",
+  "workspaceTests": 72,
+  "bootPageTests": 7
+}

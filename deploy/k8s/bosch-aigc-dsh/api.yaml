@@ -1,0 +1,69 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: aigc-api
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: aigc-api
+  template:
+    metadata:
+      labels:
+        app: aigc-api
+    spec:
+      nodeSelector:
+        kubernetes.io/hostname: bosch-k8s-node-nj304
+      containers:
+        - name: api
+          image: aigc-api:2026-09-28.2
+          imagePullPolicy: Never
+          ports:
+            - name: http
+              containerPort: 8080
+          envFrom:
+            - configMapRef:
+                name: aigc-settings
+            - secretRef:
+                name: aigc-secrets
+          volumeMounts:
+            - name: logs
+              mountPath: /var/log/aigc-hub
+            - name: data-protection
+              mountPath: /var/lib/aigc-hub/data-protection
+            - name: uploads
+              mountPath: /var/lib/aigc-hub/dsh-uploads
+          startupProbe:
+            httpGet:
+              path: /health
+              port: http
+            periodSeconds: 5
+            failureThreshold: 36
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            periodSeconds: 20
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              memory: 1Gi
+      volumes:
+        - name: logs
+          persistentVolumeClaim:
+            claimName: aigc-logs
+        - name: data-protection
+          persistentVolumeClaim:
+            claimName: aigc-data-protection
+        - name: uploads
+          persistentVolumeClaim:
+            claimName: aigc-dsh-uploads

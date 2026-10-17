@@ -1,0 +1,25 @@
+.feedback-filters { display: flex; flex-wrap: wrap; align-items: end; gap: 16px; padding: 20px; margin-bottom: 20px; }
+.feedback-filters label { display: grid; gap: 8px; min-width: 0; font-size: 13px; }
+.feedback-filters label:first-child { flex: 1 1 280px; max-width: 480px; }
+.feedback-filters input, .feedback-filters select { width: 100%; min-height: 38px; border: 1px solid var(--line); border-radius: 6px; padding: 8px 10px; background: var(--surface); color: var(--ink); font: inherit; }
+.feedback-filters input:focus-visible, .feedback-filters select:focus-visible { outline: 2px solid var(--blue-600); outline-offset: 2px; }
+.feedback-table { overflow-x: auto; }
+.feedback-table .data-grid { min-width: 800px; }
+.feedback-table th:first-child { width: 180px; }
+.feedback-table th:last-child { width: 130px; }
+.feedback-table .secondary-action { white-space: nowrap; }
+.feedback-table td { vertical-align: top; }
+.feedback-table small { color: var(--muted); }
+.feedback-category { display: inline-block; padding: 4px 9px; border-radius: 6px; background: var(--page); font-size: 12px; white-space: nowrap; }
+.feedback-excerpt { max-width: 480px; white-space: pre-wrap; overflow-wrap: anywhere; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.modal.feedback-dialog { display: flex; flex-direction: column; width: min(960px, 100%); max-height: calc(100dvh - 40px); overflow: hidden; }
+.feedback-dialog > header, .feedback-dialog-footer { flex: none; }
+.feedback-dialog-body { flex: 1 1 auto; min-height: 0; overflow: auto; overscroll-behavior: contain; padding: 24px; }
+.feedback-metadata { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px 28px; margin: 0 0 24px; padding: 20px; background: var(--page); border: 1px solid var(--line); border-radius: 10px; }
+.feedback-metadata dt { color: var(--muted); font-size: 12px; }
+.feedback-metadata dd { margin: 5px 0 0; overflow-wrap: anywhere; font-size: 13px; line-height: 1.6; }
+.feedback-dialog h3 { margin: 20px 0 10px; font-size: 14px; font-weight: 650; }
+.feedback-text, .feedback-log { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; padding: 16px; border: 1px solid var(--line); border-radius: 8px; background: var(--page); font-size: 13px; line-height: 1.75; }
+.feedback-log { font-family: ui-monospace, Consolas, monospace; font-size: 12px; }
+.feedback-dialog-footer { display: flex; justify-content: flex-end; padding: 16px 24px; border-top: 1px solid var(--line); }
+@media (max-width: 600px) { .feedback-filters label { flex: 1 1 100%; } .feedback-filters label:first-child { max-width: none; } .feedback-metadata { grid-template-columns: 1fr; } .feedback-dialog-body { padding: 16px; } .feedback-dialog-footer { padding: 14px 16px; } }

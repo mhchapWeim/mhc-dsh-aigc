@@ -1,0 +1,45 @@
+{
+  "spec": {
+    "template": {
+      "spec": {
+        "initContainers": [
+          {
+            "name": "prepare-desktop-releases",
+            "image": "aigc-api:2026-10-08.1",
+            "imagePullPolicy": "Never",
+            "command": [
+              "sh",
+              "-c",
+              "mkdir -p /persist/desktop-releases"
+            ],
+            "volumeMounts": [
+              {
+                "name": "uploads",
+                "mountPath": "/persist"
+              }
+            ]
+          }
+        ],
+        "containers": [
+          {
+            "name": "api",
+            "image": "aigc-api:2026-10-08.1",
+            "env": [
+              {
+                "name": "DesktopReleases__Root",
+                "value": "/var/lib/aigc-hub/desktop-releases"
+              }
+            ],
+            "volumeMounts": [
+              {
+                "name": "uploads",
+                "mountPath": "/var/lib/aigc-hub/desktop-releases",
+                "subPath": "desktop-releases"
+              }
+            ]
+          }
+        ]
+      }
+    }
+  }
+}

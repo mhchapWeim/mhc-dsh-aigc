@@ -1,0 +1,48 @@
+# No StorageClass exists in this cluster. Provision dedicated static PVs before applying.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: aigc-logs
+spec:
+  storageClassName: ""
+  volumeName: bosch-aigc-dsh-logs
+  accessModes: [ReadWriteOnce]
+  resources:
+    requests:
+      storage: 2Gi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: aigc-postgres
+spec:
+  storageClassName: ""
+  volumeName: bosch-aigc-dsh-postgres
+  accessModes: [ReadWriteOnce]
+  resources:
+    requests:
+      storage: 20Gi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: aigc-data-protection
+spec:
+  storageClassName: ""
+  volumeName: bosch-aigc-dsh-data-protection
+  accessModes: [ReadWriteOnce]
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: aigc-dsh-uploads
+spec:
+  storageClassName: ""
+  volumeName: bosch-aigc-dsh-uploads
+  accessModes: [ReadWriteOnce]
+  resources:
+    requests:
+      storage: 20Gi

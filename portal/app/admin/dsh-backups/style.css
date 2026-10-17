@@ -1,0 +1,12 @@
+.backup-filters { display:flex; gap:16px; align-items:flex-end; flex-wrap:wrap; padding:20px; margin-bottom:20px; }
+.backup-filters label { display:grid; gap:8px; }
+.backup-filters input { min-height:38px; padding:8px 10px; border:1px solid var(--line); border-radius:6px; color:var(--ink); background:var(--surface); font:inherit; }
+.backup-table { overflow-x:auto; }
+.backup-actions { display:flex; gap:8px; }
+.modal.backup-dialog { display:flex; flex-direction:column; overflow:hidden; width:min(760px, calc(100vw - 40px)); max-height:calc(100dvh - 40px); }
+.backup-dialog-body { flex:1 1 auto; min-height:0; overflow:auto; padding:20px; overflow-wrap:anywhere; }
+.backup-dialog-body dl { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px; }
+.backup-dialog-body dt { color:var(--muted); }
+.backup-dialog-body dd { margin:4px 0 0; }
+.backup-dialog footer { flex:none; padding:16px 20px; border-top:1px solid var(--line); }
+@media(max-width:600px) { .backup-filters label { width:100%; } .backup-dialog-body dl { grid-template-columns:minmax(0,1fr); } }

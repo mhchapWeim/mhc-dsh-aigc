@@ -1,0 +1,25 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: aigc-api
+spec:
+  type: ClusterIP
+  selector:
+    app: aigc-api
+  ports:
+    - name: http
+      port: 8080
+      targetPort: http
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: aigc-portal
+spec:
+  type: ClusterIP
+  selector:
+    app: aigc-portal
+  ports:
+    - name: http
+      port: 3000
+      targetPort: http

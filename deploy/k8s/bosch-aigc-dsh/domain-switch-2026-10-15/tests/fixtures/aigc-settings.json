@@ -1,0 +1,29 @@
+{
+  "apiVersion": "v1",
+  "kind": "ConfigMap",
+  "metadata": {
+    "name": "aigc-settings"
+  },
+  "data": {
+    "ASPNETCORE_ENVIRONMENT": "Production",
+    "ASPNETCORE_URLS": "http://+:8080",
+    "BochaSearch__Endpoint": "https://litellm.boschhuayu-steering.com/__aigc/bocha-search",
+    "BochaSearch__VerifySsl": "true",
+    "LiteLlm__BaseUrl": "http://172.28.12.33:4000/v1",
+    "LiteLlm__PublicBaseUrl": "http://172.28.12.33:4000/v1",
+    "LiteLlm__VerifySsl": "true",
+    "LiteLlm__TimeoutSeconds": "20",
+    "Cas__Enabled": "true",
+    "Cas__ServiceUrl": "https://aigcbackend.boschhuayu-steering.com/v1/auth/cas/callback",
+    "Cas__PublicBaseUrl": "https://aigcbackend.boschhuayu-steering.com",
+    "Cas__PortalBaseUrl": "https://aigcbackend.boschhuayu-steering.com",
+    "Cas__VerifySsl": "false",
+    "Cors__Origins__0": "https://aigcbackend.boschhuayu-steering.com",
+    "DataProtection__KeysPath": "/var/lib/aigc-hub/data-protection",
+    "DshUploads__Root": "/var/lib/aigc-hub/dsh-uploads",
+    "FileLogging__Directory": "/var/log/aigc-hub",
+    "FileLogging__MaxFileSizeBytes": "20971520",
+    "FileLogging__MaxFiles": "50",
+    "FileLogging__RetentionDays": "14"
+  }
+}

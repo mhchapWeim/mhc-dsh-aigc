@@ -1,0 +1,18 @@
+{
+  "version": "0.1.7-alpha.2.20261014.3",
+  "platform": "win32-x64",
+  "unsigned": true,
+  "officialBuild": "passed",
+  "packageClosure": "passed",
+  "preparedRuntimeSmoke": "passed",
+  "packagedRuntimeSmoke": "passed",
+  "officeConversions": [
+    "DOCX to PDF",
+    "XLSX to PDF",
+    "PPTX to PDF"
+  ],
+  "packagedLatestFixes": "verified in final ASAR",
+  "packagingRun": "2026-10-14T06-34-22.069Z-Q62bGU",
+  "installedOnUserProfile": false,
+  "published": false
+}

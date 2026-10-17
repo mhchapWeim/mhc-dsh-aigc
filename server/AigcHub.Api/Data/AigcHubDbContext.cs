@@ -1,0 +1,106 @@
+using AigcHub.Api.Domain;
+using Microsoft.EntityFrameworkCore;
+
+namespace AigcHub.Api.Data;
+
+public sealed class AigcHubDbContext(DbContextOptions<AigcHubDbContext> options) : DbContext(options)
+{
+    public DbSet<DshBackup> DshBackups => Set<DshBackup>();
+    public DbSet<AppUser> Users => Set<AppUser>();
+    public DbSet<Role> Roles => Set<Role>();
+    public DbSet<Permission> Permissions => Set<Permission>();
+    public DbSet<UserRole> UserRoles => Set<UserRole>();
+    public DbSet<RolePermission> RolePermissions => Set<RolePermission>();
+    public DbSet<Department> Departments => Set<Department>();
+    public DbSet<AppCategory> Categories => Set<AppCategory>();
+    public DbSet<ProcessDefinition> ProcessDefinitions => Set<ProcessDefinition>();
+    public DbSet<PublicationRequest> PublicationRequests => Set<PublicationRequest>();
+    public DbSet<PublicationAccessGrant> PublicationAccessGrants => Set<PublicationAccessGrant>();
+    public DbSet<WorkflowInstance> WorkflowInstances => Set<WorkflowInstance>();
+    public DbSet<WorkflowTask> WorkflowTasks => Set<WorkflowTask>();
+    public DbSet<WorkflowTaskCandidate> WorkflowTaskCandidates => Set<WorkflowTaskCandidate>();
+    public DbSet<WorkflowCallbackSubscription> CallbackSubscriptions => Set<WorkflowCallbackSubscription>();
+    public DbSet<WorkflowCallbackInbox> CallbackInbox => Set<WorkflowCallbackInbox>();
+    public DbSet<WorkflowHistory> WorkflowHistory => Set<WorkflowHistory>();
+    public DbSet<InboxNotification> Notifications => Set<InboxNotification>();
+    public DbSet<ChatConversation> ChatConversations => Set<ChatConversation>();
+    public DbSet<ChatMessage> ChatMessages => Set<ChatMessage>();
+    public DbSet<ChatToolExecution> ChatToolExecutions => Set<ChatToolExecution>();
+    public DbSet<OperationAudit> OperationAudits => Set<OperationAudit>();
+    public DbSet<ManagedVirtualKey> ManagedVirtualKeys => Set<ManagedVirtualKey>();
+    public DbSet<VirtualKeyOrganization> VirtualKeyOrganizations => Set<VirtualKeyOrganization>();
+    public DbSet<VirtualKeyOrganizationMember> VirtualKeyOrganizationMembers => Set<VirtualKeyOrganizationMember>();
+    public DbSet<AiModelConfiguration> ModelConfigurations => Set<AiModelConfiguration>();
+    public DbSet<UserModelGrant> UserModelGrants => Set<UserModelGrant>();
+    public DbSet<AccessGrant> AccessGrants => Set<AccessGrant>();
+    public DbSet<WebSearchConfiguration> WebSearchConfigurations => Set<WebSearchConfiguration>();
+    public DbSet<ManagedPlugin> ManagedPlugins => Set<ManagedPlugin>();
+    public DbSet<ManagedPluginVersion> ManagedPluginVersions => Set<ManagedPluginVersion>();
+    public DbSet<ManagedPluginReport> ManagedPluginReports => Set<ManagedPluginReport>();
+    public DbSet<DshAccessToken> DshAccessTokens => Set<DshAccessToken>();
+    public DbSet<DshPersistentSession> DshPersistentSessions => Set<DshPersistentSession>();
+    public DbSet<DshUpload> DshUploads => Set<DshUpload>();
+    public DbSet<SensitiveWord> SensitiveWords => Set<SensitiveWord>();
+    public DbSet<DesktopAnnouncement> DesktopAnnouncements => Set<DesktopAnnouncement>();
+    public DbSet<DesktopAnnouncementRecipient> DesktopAnnouncementRecipients => Set<DesktopAnnouncementRecipient>();
+    public DbSet<DesktopRelease> DesktopReleases => Set<DesktopRelease>();
+    public DbSet<DesktopReleaseRecipient> DesktopReleaseRecipients => Set<DesktopReleaseRecipient>();
+    public DbSet<DesktopClientReport> DesktopClientReports => Set<DesktopClientReport>();
+    public DbSet<DshFailure> DshFailures => Set<DshFailure>();
+    public DbSet<DshFeedback> DshFeedbacks => Set<DshFeedback>();
+
+    protected override void OnModelCreating(ModelBuilder builder)
+    {
+        builder.HasDefaultSchema("aigc_hub");
+        builder.Entity<ManagedPlugin>().HasIndex(x => x.PackageName).IsUnique();
+        builder.Entity<ManagedPluginVersion>().HasIndex(x => new { x.PluginId, x.Version }).IsUnique();
+        builder.Entity<ManagedPluginVersion>().HasOne(x => x.Plugin).WithMany(x => x.Versions).HasForeignKey(x => x.PluginId);
+        builder.Entity<ManagedPluginReport>().HasKey(x => new { x.UserId, x.DeviceId, x.PluginId });
+        builder.Entity<DshFailure>().HasIndex(x => new { x.UserId, x.EventId }).IsUnique();
+        builder.Entity<DshFailure>().HasIndex(x => x.EventId).IsUnique().HasFilter("\"UserId\" IS NULL");
+        builder.Entity<DshFailure>().HasIndex(x => x.OccurredAt);
+        builder.Entity<DshFailure>().HasIndex(x => new { x.UserId, x.OccurredAt });
+        builder.Entity<DshFailure>().HasOne(x => x.User).WithMany().HasForeignKey(x => x.UserId).OnDelete(DeleteBehavior.Cascade);
+        builder.Entity<UserRole>().HasKey(x => new { x.UserId, x.RoleId });
+        builder.Entity<RolePermission>().HasKey(x => new { x.RoleId, x.PermissionId });
+        builder.Entity<AppUser>().HasIndex(x => x.EmployeeNo).IsUnique();
+        builder.Entity<AppUser>().HasIndex(x => x.Email).IsUnique();
+        builder.Entity<Role>().HasIndex(x => x.Code).IsUnique();
+        builder.Entity<Permission>().HasIndex(x => x.Code).IsUnique();
+        builder.Entity<Department>().HasIndex(x => x.Code).IsUnique();
+        builder.Entity<AppCategory>().HasIndex(x => x.Code).IsUnique();
+        builder.Entity<ProcessDefinition>().HasIndex(x => new { x.Key, x.Version }).IsUnique();
+        builder.Entity<PublicationRequest>().HasIndex(x => x.RequestNo).IsUnique();
+        builder.Entity<PublicationAccessGrant>().HasIndex(x => new { x.PublicationRequestId, x.SubjectType, x.SubjectId }).IsUnique();
+        builder.Entity<ChatConversation>().HasMany(x => x.Messages).WithOne(x => x.Conversation).HasForeignKey(x => x.ConversationId).OnDelete(DeleteBehavior.Cascade);
+        builder.Entity<ChatConversation>().HasIndex(x => new { x.UserId, x.UpdatedAt });
+        builder.Entity<ChatToolExecution>().HasIndex(x => new { x.UserId, x.CreatedAt });
+        builder.Entity<OperationAudit>().HasIndex(x => new { x.UserId, x.CreatedAt });
+        builder.Entity<ManagedVirtualKey>().HasIndex(x => x.Alias).IsUnique();
+        builder.Entity<VirtualKeyOrganization>().HasIndex(x => x.Name).IsUnique();
+        builder.Entity<VirtualKeyOrganizationMember>().HasKey(x => new { x.OrganizationId, x.UserId });
+        builder.Entity<AiModelConfiguration>().HasIndex(x => x.Name).IsUnique();
+        builder.Entity<UserModelGrant>().HasKey(x => new { x.UserId, x.ModelId });
+        builder.Entity<AccessGrant>().HasKey(x => new { x.ResourceKey, x.SubjectType, x.SubjectId });
+        builder.Entity<UserModelGrant>().HasOne(x => x.User).WithMany().HasForeignKey(x => x.UserId).OnDelete(DeleteBehavior.Cascade);
+        builder.Entity<UserModelGrant>().HasOne(x => x.Model).WithMany().HasForeignKey(x => x.ModelId).OnDelete(DeleteBehavior.Cascade);
+        builder.Entity<DshAccessToken>().HasKey(x => x.TokenHash);
+        builder.Entity<DshPersistentSession>().HasIndex(x => x.RefreshTokenHash).IsUnique();
+        builder.Entity<DshPersistentSession>().HasOne<AppUser>().WithMany().HasForeignKey(x => x.UserId).OnDelete(DeleteBehavior.Cascade);
+        builder.Entity<DshAccessToken>().HasOne(x => x.User).WithMany().HasForeignKey(x => x.UserId).OnDelete(DeleteBehavior.Cascade);
+        builder.Entity<DshAccessToken>().HasIndex(x => x.ExpiresAt);
+        builder.Entity<DshUpload>().HasIndex(x => new { x.UserId, x.ClientUploadId }).IsUnique();
+        builder.Entity<DshUpload>().HasOne(x => x.User).WithMany().HasForeignKey(x => x.UserId).OnDelete(DeleteBehavior.Cascade);
+        builder.Entity<SensitiveWord>().HasIndex(x => x.NormalizedTerm).IsUnique();
+        builder.Entity<DesktopAnnouncementRecipient>().HasKey(x => new { x.AnnouncementId, x.UserId });
+        builder.Entity<DesktopAnnouncementRecipient>().HasOne(x => x.Announcement).WithMany(x => x.Recipients).HasForeignKey(x => x.AnnouncementId).OnDelete(DeleteBehavior.Cascade);
+        builder.Entity<DesktopReleaseRecipient>().HasKey(x => new { x.ReleaseId, x.UserId });
+        builder.Entity<DesktopReleaseRecipient>().HasOne(x => x.Release).WithMany(x => x.Recipients).HasForeignKey(x => x.ReleaseId).OnDelete(DeleteBehavior.Cascade);
+        builder.Entity<DesktopRelease>().HasIndex(x => new { x.Version, x.Platform, x.Arch }).IsUnique();
+        builder.Entity<DesktopClientReport>().HasKey(x => new { x.UserId, x.DeviceId });
+        builder.Entity<WorkflowCallbackSubscription>().HasIndex(x => x.CorrelationId).IsUnique();
+        builder.Entity<WorkflowCallbackInbox>().HasIndex(x => x.EventId).IsUnique();
+        builder.Entity<PublicationRequest>().Property(x => x.ConcurrencyToken).IsConcurrencyToken();
+        builder.Entity<WorkflowInstance>().Property(x => x.ConcurrencyToken).IsConcurrencyToken();
+    }
+}

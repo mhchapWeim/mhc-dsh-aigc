@@ -1,0 +1,7 @@
+{
+  "model": "REPLACE_WITH_GRANTED_MODEL_NAME",
+  "messages": [
+    { "role": "user", "content": "请用三句话介绍你能帮助我完成哪些工作。" }
+  ],
+  "stream": true
+}

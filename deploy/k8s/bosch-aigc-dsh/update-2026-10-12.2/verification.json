@@ -1,0 +1,9 @@
+{
+  "portalLogin": 200,
+  "refreshSucceeded": true,
+  "apiHealth": 200,
+  "images": "linux/amd64",
+  "tag": "2026-10-12.2",
+  "logoutRefreshStatus": 401,
+  "feedbackStored": true
+}

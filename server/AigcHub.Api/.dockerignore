@@ -1,0 +1,11 @@
+bin
+obj
+Data/dsh-uploads
+.data-protection
+App_Data
+data
+.env*
+.vs
+*.user
+*.suo
+*.log

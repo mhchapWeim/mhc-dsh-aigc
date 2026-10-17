@@ -1,0 +1,9 @@
+- id: web
+  config:
+    searchProvider: aigc-managed
+    fetchProvider: http
+- id: web-search-deepseek
+  disabled: true
+- insert:
+    - id: web-search-managed
+      name: '@bhss/dsh-plugin-managed-search'

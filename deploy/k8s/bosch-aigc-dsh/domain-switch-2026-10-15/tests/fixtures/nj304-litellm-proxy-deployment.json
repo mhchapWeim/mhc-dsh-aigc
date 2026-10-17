@@ -1,0 +1,94 @@
+{
+  "apiVersion": "apps/v1",
+  "kind": "Deployment",
+  "metadata": {
+    "name": "nj304-litellm-proxy",
+    "namespace": "bosch-aigc-dsh"
+  },
+  "spec": {
+    "replicas": 1,
+    "selector": {
+      "matchLabels": {
+        "app": "nj304-litellm-proxy"
+      }
+    },
+    "template": {
+      "metadata": {
+        "labels": {
+          "app": "nj304-litellm-proxy"
+        }
+      },
+      "spec": {
+        "nodeSelector": {
+          "kubernetes.io/hostname": "bosch-k8s-node-nj304"
+        },
+        "containers": [
+          {
+            "name": "nginx",
+            "image": "nginx:stable-alpine",
+            "ports": [
+              {
+                "name": "https",
+                "containerPort": 8443
+              }
+            ],
+            "resources": {
+              "requests": {
+                "cpu": "100m",
+                "memory": "64Mi"
+              },
+              "limits": {
+                "cpu": "1",
+                "memory": "256Mi"
+              }
+            },
+            "readinessProbe": {
+              "httpGet": {
+                "path": "/healthz",
+                "port": "https",
+                "scheme": "HTTPS"
+              },
+              "initialDelaySeconds": 3,
+              "periodSeconds": 10
+            },
+            "livenessProbe": {
+              "httpGet": {
+                "path": "/healthz",
+                "port": "https",
+                "scheme": "HTTPS"
+              },
+              "initialDelaySeconds": 10,
+              "periodSeconds": 20
+            },
+            "volumeMounts": [
+              {
+                "name": "config",
+                "mountPath": "/etc/nginx/conf.d",
+                "readOnly": true
+              },
+              {
+                "name": "tls",
+                "mountPath": "/etc/nginx/tls",
+                "readOnly": true
+              }
+            ]
+          }
+        ],
+        "volumes": [
+          {
+            "name": "config",
+            "configMap": {
+              "name": "nj304-litellm-proxy"
+            }
+          },
+          {
+            "name": "tls",
+            "secret": {
+              "secretName": "aigc-edge-tls"
+            }
+          }
+        ]
+      }
+    }
+  }
+}

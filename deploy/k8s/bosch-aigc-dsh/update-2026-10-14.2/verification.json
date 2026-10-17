@@ -1,0 +1,33 @@
+{
+  "version": "2026-10-14.2",
+  "platform": "linux/amd64",
+  "images": [
+    "aigc-api:2026-10-14.2",
+    "aigc-portal:2026-10-14.2"
+  ],
+  "backendTests": {
+    "passed": 82,
+    "failed": 0,
+    "configuration": "Release"
+  },
+  "portalTests": {
+    "failed": 0,
+    "passed": 21
+  },
+  "portalTypecheck": "passed",
+  "portalLint": "passed",
+  "imageArchiveReload": "passed",
+  "deploymentScriptSyntax": "passed",
+  "deploymentPreflight": "passed",
+  "isolatedApiHealth": 200,
+  "isolatedAuthenticatedProfile": 200,
+  "packagedPortalLogoutBrowser": "passed with simulated SSO config",
+  "realBoschSsoVerified": false,
+  "productionDeployed": false,
+  "dshIncluded": false,
+  "logLimits": {
+    "maxFileSizeBytes": 20971520,
+    "maxFiles": 50,
+    "retentionDays": 14
+  }
+}

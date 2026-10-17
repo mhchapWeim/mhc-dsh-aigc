@@ -1,0 +1,30 @@
+{
+  "release": "2026-10-10.1",
+  "publicApiUrl": "https://aigcbackend.boschhuayu-steering.com",
+  "images": [
+    {
+      "tags": [
+        "aigc-api:2026-10-10.1"
+      ],
+      "id": "sha256:1c4dde827d26bb2ba48f5d0f256a00adffe8e2b684e93869d9b91993f6b2d3ac",
+      "os": "linux",
+      "architecture": "amd64"
+    },
+    {
+      "tags": [
+        "aigc-portal:2026-10-10.1"
+      ],
+      "id": "sha256:17ff595b0a8fd46158855234d085bde5da6351cad9915ed848096e82e2a631ad",
+      "os": "linux",
+      "architecture": "amd64"
+    }
+  ],
+  "validation": {
+    "portalLoginHttpStatus": 200,
+    "apiHealthHttpStatus": 200,
+    "postgresPluginTables": 3,
+    "bashSyntax": "passed",
+    "persistentStoragePreflight": "passed"
+  },
+  "deployedToCluster": false
+}

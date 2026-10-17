@@ -1,0 +1,21 @@
+{
+  "version": "0.1.7-alpha.2.20261016.1",
+  "productVersion": "0.1.7-alpha.2",
+  "commit": "00102833dfaee1da9f48a3a8eae9d34005a75218",
+  "dirty": true,
+  "platform": "win32",
+  "arch": "x64",
+  "unsigned": true,
+  "published": false,
+  "managedBackend": "https://aigcplatform.boschhuayu-steering.com",
+  "testsPassed": 82,
+  "probeTestsPassed": 4,
+  "packagedChecksPassed": 14,
+  "packagedRuntimeSmoke": true,
+  "officeConversionSmoke": true,
+  "liveInternalModelReproduced": false,
+  "preparationRun": "2026-10-16T04-49-06.025Z-yXdJ9U",
+  "successfulResumeRun": "2026-10-16T05-00-39.803Z-Pp8Xm7",
+  "resumeReason": "pnpm dependency metadata SQLite access blocked in sandbox; dependency query verified outside sandbox, resumed builder and packaged smoke without changing runtime inputs",
+  "completedAt": "2026-10-16T05:04:18.673Z"
+}

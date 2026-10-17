@@ -1,0 +1,9 @@
+{
+  "namespace": "bosch-aigc-dsh",
+  "node": "bosch-k8s-node-nj304",
+  "ip": "172.28.2.33",
+  "oldHost": "aigcbackend.boschhuayu-steering.com",
+  "newHost": "aigcplatform.boschhuayu-steering.com",
+  "apiImage": "docker.io/library/aigc-api:2026-10-15-domain.1",
+  "portalImage": "docker.io/library/aigc-portal:2026-10-15-domain.1"
+}

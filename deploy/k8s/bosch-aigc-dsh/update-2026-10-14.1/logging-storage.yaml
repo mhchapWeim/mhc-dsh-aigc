@@ -1,0 +1,32 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: bosch-aigc-dsh-logs
+spec:
+  capacity:
+    storage: 2Gi
+  accessModes: [ReadWriteOnce]
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: ""
+  local:
+    path: /var/lib/aigc-hub/logs
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+        - matchExpressions:
+            - key: kubernetes.io/hostname
+              operator: In
+              values: [bosch-k8s-node-nj304]
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: aigc-logs
+  namespace: bosch-aigc-dsh
+spec:
+  storageClassName: ""
+  volumeName: bosch-aigc-dsh-logs
+  accessModes: [ReadWriteOnce]
+  resources:
+    requests:
+      storage: 2Gi

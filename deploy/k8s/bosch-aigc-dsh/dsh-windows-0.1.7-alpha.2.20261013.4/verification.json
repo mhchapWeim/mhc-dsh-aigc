@@ -1,0 +1,19 @@
+{
+  "unsigned": true,
+  "oldClientUpgrade": "one-time manual installation may be required",
+  "platform": "win-x64",
+  "desktopCleanupGraceMs": 30000,
+  "installerBuildExitCode": 0,
+  "failureExitCode": 1,
+  "cleanupFailureLogs": "reason, elapsed time and original error",
+  "productionDeployment": false,
+  "typecheck": "CLI, Host and Desktop passed",
+  "shutdownRegressionTests": 46,
+  "runtimeInventory": "recomputed and verified",
+  "updateHandoffAndMainTests": 103,
+  "supervisorWaitMs": 35000,
+  "packagedRuntimeSmoke": "passed",
+  "affectedMachineReproduction": false,
+  "version": "0.1.7-alpha.2.20261013.4",
+  "docxXlsxPptxToPdf": "passed"
+}

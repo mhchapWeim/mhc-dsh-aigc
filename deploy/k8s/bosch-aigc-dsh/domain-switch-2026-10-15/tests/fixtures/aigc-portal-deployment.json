@@ -1,0 +1,77 @@
+{
+  "apiVersion": "apps/v1",
+  "kind": "Deployment",
+  "metadata": {
+    "name": "aigc-portal"
+  },
+  "spec": {
+    "replicas": 1,
+    "selector": {
+      "matchLabels": {
+        "app": "aigc-portal"
+      }
+    },
+    "template": {
+      "metadata": {
+        "labels": {
+          "app": "aigc-portal"
+        }
+      },
+      "spec": {
+        "nodeSelector": {
+          "kubernetes.io/hostname": "bosch-k8s-node-nj304"
+        },
+        "containers": [
+          {
+            "name": "portal",
+            "image": "aigc-portal:2026-09-28.2",
+            "imagePullPolicy": "Never",
+            "ports": [
+              {
+                "name": "http",
+                "containerPort": 3000
+              }
+            ],
+            "env": [
+              {
+                "name": "NODE_ENV",
+                "value": "production"
+              },
+              {
+                "name": "HOST",
+                "value": "0.0.0.0"
+              },
+              {
+                "name": "PORT",
+                "value": "3000"
+              }
+            ],
+            "readinessProbe": {
+              "httpGet": {
+                "path": "/",
+                "port": "http"
+              },
+              "periodSeconds": 10
+            },
+            "livenessProbe": {
+              "httpGet": {
+                "path": "/",
+                "port": "http"
+              },
+              "periodSeconds": 20
+            },
+            "resources": {
+              "requests": {
+                "cpu": "100m",
+                "memory": "256Mi"
+              },
+              "limits": {
+                "memory": "1Gi"
+              }
+            }
+          }
+        ]
+      }
+    }
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "spec": {
+    "template": {
+      "spec": {
+        "containers": [
+          {
+            "name": "api",
+            "image": "aigc-api:2026-10-09.1",
+            "imagePullPolicy": "Never"
+          }
+        ]
+      }
+    }
+  }
+}

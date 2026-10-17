@@ -1,0 +1,21 @@
+{
+  "tag": "2026-10-12.3",
+  "images": "linux/amd64",
+  "apiHealth": 200,
+  "portalLogin": 200,
+  "feedbackStored": true,
+  "refreshSucceeded": true,
+  "logoutRefreshStatus": 401,
+  "productionDeployment": false,
+  "archiveVerifiedBlobs": 21,
+  "scriptSyntaxChecked": true,
+  "desktopVersion": "0.1.7-alpha.2.20261012.2",
+  "desktopUnsigned": true,
+  "desktopPackagingPassed": true,
+  "desktopRuntimeSmokePassed": true,
+  "officePdfRoundTrips": [
+    "DOCX",
+    "XLSX",
+    "PPTX"
+  ]
+}

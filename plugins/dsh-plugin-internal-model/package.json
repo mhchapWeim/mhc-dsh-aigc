@@ -1,0 +1,47 @@
+{
+  "name": "@bhss/dsh-plugin-internal-model",
+  "version": "1.0.6",
+  "description": "AIGC 本地模型授权与 DSH 内网直连",
+  "type": "module",
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/index.d.ts",
+      "default": "./lib/index.js"
+    }
+  },
+  "files": [
+    "lib",
+    "cordis.patch.yml"
+  ],
+  "scripts": {
+    "build": "node build.mjs",
+    "pack": "npm run build && npm pack --ignore-scripts"
+  },
+  "engines": {
+    "node": "^22.19.0 || >=24.0.0"
+  },
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "^4.0.1",
+    "@deepseek-ai/schemastery": "^3.18.1",
+    "@deepseek-ai/dsh-credentials": "0.1.7-alpha.2",
+    "@deepseek-ai/dsh-llm": "0.1.7-alpha.2",
+    "@deepseek-ai/dsh-llm-pi-ai": "0.1.7-alpha.2",
+    "@deepseek-ai/dsh-llm-managed-backend": "0.1.7-alpha.2"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  },
+  "aigc": {
+    "dshVersion": "0.1.7-alpha.2",
+    "kind": "host",
+    "capabilities": [
+      "internal-model"
+    ],
+    "serverAdapter": "internal-model"
+  },
+  "license": "MIT"
+}

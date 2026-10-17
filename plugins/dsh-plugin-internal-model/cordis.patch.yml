@@ -1,0 +1,3 @@
+- insert:
+    - id: llm-internal-model
+      name: '@bhss/dsh-plugin-internal-model'

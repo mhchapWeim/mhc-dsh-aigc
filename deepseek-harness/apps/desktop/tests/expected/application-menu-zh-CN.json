@@ -1,0 +1,18 @@
+[
+  {
+    "role": "hide",
+    "label": "隐藏 弯崽工作伙伴"
+  },
+  {
+    "role": "hideOthers",
+    "label": "隐藏其他"
+  },
+  {
+    "role": "unhide",
+    "label": "显示全部"
+  },
+  {
+    "role": "quit",
+    "label": "退出 弯崽工作伙伴"
+  }
+]

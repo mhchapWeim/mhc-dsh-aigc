@@ -1,0 +1,12 @@
+{
+  "apiHealth": 200,
+  "anonymousMetadata": 401,
+  "portalIdentityFirstInstall": true,
+  "publishedAudienceSelection": true,
+  "cookieDownloadRange": 206,
+  "pausedReleaseDownload": 404,
+  "portalDownloadPage": 200,
+  "homepageDownloadEntry": true,
+  "binary": "isolated MZ fixture; not the production installer",
+  "realCasContacted": false
+}

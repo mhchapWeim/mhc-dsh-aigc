@@ -1,0 +1,16 @@
+{
+  "version": "0.1.7-alpha.2.20261013.3",
+  "passwordAndSsoFirstLogin": "passed",
+  "settingsControllerTypecheck": "passed",
+  "packagedRuntimeSmoke": "passed",
+  "platform": "win-x64",
+  "existingDefaultWorkspaceReuse": "passed",
+  "installerBuildExitCode": 0,
+  "shutdownIssueFix": "not included; analysis only",
+  "statusRecovery": "passed",
+  "productionDeployment": false,
+  "docxXlsxPptxToPdf": "passed",
+  "loginTests": 19,
+  "runtimeInventory": "verified after rebuilding settings controller",
+  "unsigned": true
+}

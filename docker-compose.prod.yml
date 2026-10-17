@@ -1,0 +1,76 @@
+name: aigc-hub
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-aigc_hub}
+      POSTGRES_USER: ${POSTGRES_USER:-aigc_hub}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env.production}
+    volumes:
+      - aigc_hub_postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build:
+      context: ./server/AigcHub.Api
+    restart: unless-stopped
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__PostgreSql: Host=postgres;Port=5432;Database=${POSTGRES_DB:-aigc_hub};Username=${POSTGRES_USER:-aigc_hub};Password=${POSTGRES_PASSWORD}
+      Jwt__Key: ${JWT_KEY:?set JWT_KEY in .env.production}
+      Callback__Secret: ${CALLBACK_SECRET:?set CALLBACK_SECRET in .env.production}
+      LiteLlm__BaseUrl: ${AIGC_LITELLM_BASE_URL:-http://host.docker.internal:4000/v1}
+      LiteLlm__PublicBaseUrl: ${AIGC_LITELLM_PUBLIC_BASE_URL:-http://172.28.12.33:4000/v1}
+      LiteLlm__ApiKey: ${AIGC_LITELLM_API_KEY:?set AIGC_LITELLM_API_KEY in .env.production}
+      LiteLlm__ManagementApiKey: ${AIGC_LITELLM_MASTER_KEY:?set AIGC_LITELLM_MASTER_KEY in .env.production}
+      LiteLlm__TimeoutSeconds: ${AIGC_LITELLM_TIMEOUT_SECONDS:-20}
+      Cas__Enabled: ${CAS_ENABLED:-true}
+      Cas__ServiceUrl: ${CAS_SERVICE_URL:-http://172.28.12.33:5080/v1/auth/cas/callback}
+      Cas__PublicBaseUrl: ${CAS_PUBLIC_BASE_URL:-http://172.28.12.33:5080}
+      Cas__VerifySsl: ${CAS_VERIFY_SSL:-true}
+      Cors__Origins__0: ${PORTAL_ORIGIN:-http://172.28.12.33:3000}
+      Plugins__StoragePath: /var/lib/aigc-hub/plugins
+      DesktopReleases__Root: /var/lib/aigc-hub/desktop-releases
+      DataProtection__KeysPath: /var/lib/aigc-hub/data-protection
+      DshUploads__Root: /var/lib/aigc-hub/dsh-uploads
+    ports:
+      - "5080:8080"
+    volumes:
+      - aigc_hub_plugins:/var/lib/aigc-hub/plugins
+      - aigc_hub_data_protection:/var/lib/aigc-hub/data-protection
+      - aigc_hub_desktop_releases:/var/lib/aigc-hub/desktop-releases
+      - aigc_hub_dsh_uploads:/var/lib/aigc-hub/dsh-uploads
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  portal:
+    build:
+      context: ./portal
+      args:
+        NEXT_PUBLIC_API_BASE_URL: ${AIGC_PUBLIC_API_URL:-http://172.28.12.33:5080}
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      HOST: 0.0.0.0
+      PORT: 3000
+    ports:
+      - "3000:3000"
+    depends_on:
+      - api
+
+volumes:
+  aigc_hub_postgres:
+  aigc_hub_desktop_releases:
+  aigc_hub_plugins:
+  aigc_hub_data_protection:
+  aigc_hub_dsh_uploads:

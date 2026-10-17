@@ -1,0 +1,23 @@
+.failure-filters { display: flex; gap: 16px; flex-wrap: wrap; align-items: end; padding: 20px; margin-bottom: 20px; }
+.failure-filters label { display: grid; gap: 8px; font-size: 13px; }
+.failure-filters input, .failure-filters select { min-height: 38px; max-width: 230px; border: 1px solid #dce3ee; border-radius: 6px; padding: 8px 10px; background: white; color: #172b4d; }
+.failure-table { overflow-x: auto; }
+.failure-operation { max-width: 280px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.failure-dialog { position: fixed; inset: 0; margin: auto; width: min(960px, calc(100vw - 48px)); max-height: calc(100dvh - 64px); overflow: hidden; border: 1px solid var(--line, #dce3ee); border-radius: 16px; padding: 0; color: var(--ink, #172b4d); background: var(--surface, #fff); box-shadow: 0 20px 70px #15223d40; }
+.failure-dialog[open] { display: flex; flex-direction: column; }
+.failure-dialog::backdrop { background: #172b4d70; }
+.failure-dialog-header { display: flex; flex: none; align-items: center; justify-content: space-between; gap: 20px; padding: 20px 24px; border-bottom: 1px solid var(--line, #dce3ee); }
+.failure-dialog-header h2 { margin: 0; font-size: 20px; font-weight: 650; }
+.failure-dialog-header p { margin: 6px 0 0; color: var(--muted, #6b7a90); font-size: 13px; }
+.failure-dialog-body { min-height: 0; overflow: auto; overscroll-behavior: contain; padding: 24px; }
+.failure-dialog h3 { margin: 20px 0 10px; font-size: 14px; font-weight: 650; }
+.failure-dialog pre { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; background: var(--surface-soft, #f4f7fb); border: 1px solid var(--line, #dce3ee); border-radius: 8px; padding: 16px; font-family: ui-monospace, Consolas, monospace; font-size: 12px; line-height: 1.75; max-height: 320px; overflow: auto; }
+.failure-metadata { display: grid; grid-template-columns: 1fr 1fr; gap: 18px 28px; margin: 0 0 24px; padding: 20px; background: var(--surface-soft, #f8fafc); border: 1px solid var(--line, #dce3ee); border-radius: 10px; }
+.failure-metadata > div { min-width: 0; }
+.failure-metadata dt { color: #6b7a90; font-size: 12px; }
+.failure-metadata dd { margin: 5px 0 0; overflow-wrap: anywhere; font-size: 13px; line-height: 1.6; }
+.failure-dialog-footer { flex: none; display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 16px 24px; border-top: 1px solid var(--line, #dce3ee); }
+.failure-dialog-footer > span { color: var(--muted, #6b7a90); font-size: 12px; }
+.failure-operation small { display: block; margin-top: 5px; font-size: 11px; color: var(--muted, #6b7a90); overflow: hidden; text-overflow: ellipsis; }
+.failure-category { display: inline-block; padding: 4px 9px; border-radius: 6px; background: var(--surface-soft, #f0f4fa); font-size: 12px; white-space: nowrap; }
+@media (max-width: 600px) { .failure-metadata { grid-template-columns: 1fr; } .failure-dialog { width: calc(100vw - 24px); max-height: calc(100dvh - 24px); } .failure-dialog-body { padding: 16px; } .failure-dialog-footer { flex-wrap: wrap; padding: 14px 16px; } }

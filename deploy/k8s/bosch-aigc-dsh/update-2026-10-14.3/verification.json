@@ -1,0 +1,31 @@
+{
+  "version": "2026-10-14.3",
+  "platform": "linux/amd64",
+  "images": [
+    "aigc-api:2026-10-14.3",
+    "aigc-portal:2026-10-14.3"
+  ],
+  "desktopDistributionTests": {
+    "failed": 0,
+    "passed": 12
+  },
+  "portalDownloadAndLoginTests": {
+    "failed": 0,
+    "passed": 21
+  },
+  "portalTypecheck": "passed",
+  "portalLint": "passed",
+  "imageArchiveReload": "passed",
+  "deploymentScriptSyntax": "passed",
+  "deploymentPreflight": "passed",
+  "isolatedApiAndPostgreSqlDownload": "passed",
+  "portalDownloadPage": 200,
+  "homepageDownloadEntry": "passed",
+  "anonymousDownloadMetadata": 401,
+  "authorizedCookieRangeDownload": 206,
+  "pausedVersionDownload": 404,
+  "realBoschSsoVerified": false,
+  "productionDeployed": false,
+  "dshInstallerIncluded": false,
+  "dshReleasePublished": false
+}

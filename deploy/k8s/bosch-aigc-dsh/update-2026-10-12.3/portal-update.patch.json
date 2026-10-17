@@ -1,0 +1,15 @@
+{
+  "spec": {
+    "template": {
+      "spec": {
+        "containers": [
+          {
+            "name": "portal",
+            "image": "aigc-portal:2026-10-12.3",
+            "imagePullPolicy": "Never"
+          }
+        ]
+      }
+    }
+  }
+}
