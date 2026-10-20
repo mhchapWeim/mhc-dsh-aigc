@@ -15,7 +15,7 @@ vi.mock('../../lib/api-client', () => ({
 describe('virtual key department authorization', () => {
   it('uses existing departments and preserves legacy group users when saving the new scope', async () => {
     const user = userEvent.setup(); render(<VirtualKeysPage />);
-    await user.click(await screen.findByRole('button', { name: '授权' }));
+    await user.click(await screen.findByRole('button', { name: /^授权/ }));
     expect(screen.queryByRole('tab', { name: /组织/ })).not.toBeInTheDocument();
     expect(screen.getByRole('link', { name: '部门管理' })).toHaveAttribute('href', '/admin/departments');
     await user.click(screen.getByRole('tab', { name: /角色/ }));

@@ -140,9 +140,10 @@ public static class DshFailureEndpoints
     }
 
     private static async Task<IResult> ListAsync(AigcHubDbContext db, CancellationToken ct, string? user = null, string? device = null,
-        string? version = null, string? category = null, DateTimeOffset? from = null, DateTimeOffset? to = null, int page = 1)
+        string? version = null, string? category = null, DateTimeOffset? from = null, DateTimeOffset? to = null, int page = 1, int pageSize = 5)
     {
         if (page < 1 || page > 100_000 || (from.HasValue && to.HasValue && from > to)) return Results.BadRequest();
+        pageSize = Math.Clamp(pageSize, 1, 100);
         var query = db.DshFailures.AsNoTracking().Where(x => x.OccurredAt >= DshFailureCleanup.Cutoff);
         if (!string.IsNullOrWhiteSpace(user)) query = query.Where(x => x.User != null && (x.User.EmployeeNo.Contains(user) || x.User.Name.Contains(user)));
         if (!string.IsNullOrWhiteSpace(device)) query = query.Where(x => x.DeviceId.Contains(device));
@@ -151,10 +152,10 @@ public static class DshFailureEndpoints
         if (from.HasValue) query = query.Where(x => x.OccurredAt >= from.Value.ToUniversalTime());
         if (to.HasValue) query = query.Where(x => x.OccurredAt <= to.Value.ToUniversalTime());
         var total = await query.CountAsync(ct);
-        var items = await query.OrderByDescending(x => x.OccurredAt).ThenBy(x => x.Id).Skip((page - 1) * 20).Take(20)
+        var items = await query.OrderByDescending(x => x.OccurredAt).ThenBy(x => x.Id).Skip((page - 1) * pageSize).Take(pageSize)
             .Select(x => new { x.Id, x.EventId, x.DeviceId, x.AppVersion, x.Category, x.Operation, x.SessionId, x.OccurredAt, x.ReceivedAt,
                 username = x.User == null ? "" : x.User.EmployeeNo, displayName = x.User == null ? "安装器（未登录）" : x.User.Name }).ToArrayAsync(ct);
-        return Results.Ok(new { items, total, page, pageSize = 20, retentionDays = 7 });
+        return Results.Ok(new { items, total, page, pageSize, retentionDays = 7 });
     }
 
     private static async Task<IResult> DetailAsync(Guid id, AigcHubDbContext db, CancellationToken ct)

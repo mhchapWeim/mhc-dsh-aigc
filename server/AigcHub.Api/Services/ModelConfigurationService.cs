@@ -9,11 +9,11 @@ using Microsoft.Extensions.Options;
 namespace AigcHub.Api.Services;
 
 public sealed record AvailableChatModel(Guid Id, string Name, string ProviderKind, string ModelIdentifier,
-    bool SupportsTools, bool IsDefault);
+    bool SupportsTools, bool IsDefault, string ImageInputMode = "Auto", string Multiplier = "");
 
 public sealed record ResolvedChatModel(Guid Id, string Name, string ProviderKind, string BaseUrl,
     string EndpointPath, string ModelIdentifier, string ApiKey, string AuthType, string ApiKeyHeader,
-    bool SupportsTools, double Temperature, int? MaxTokens, int TimeoutSeconds);
+    bool SupportsTools, double Temperature, int? MaxTokens, int TimeoutSeconds, string ImageInputMode = "Auto", string Multiplier = "");
 
 public sealed class ModelConfigurationService(
     AigcHubDbContext db,
@@ -44,7 +44,7 @@ public sealed class ModelConfigurationService(
             if (Guid.TryParse(key["model:".Length..], out var id)) allowed.Add(id);
         var items = await db.ModelConfigurations.AsNoTracking().Where(x => x.IsEnabled && allowed.Contains(x.Id))
             .OrderByDescending(x => x.IsDefault).ThenBy(x => x.SortOrder).ThenBy(x => x.Name)
-            .Select(x => new AvailableChatModel(x.Id, x.Name, x.ProviderKind, x.ModelIdentifier, x.SupportsTools, x.IsDefault))
+            .Select(x => new AvailableChatModel(x.Id, x.Name, x.ProviderKind, x.ModelIdentifier, x.SupportsTools, x.IsDefault, x.ImageInputMode, x.Multiplier))
             .ToListAsync(ct);
         return items;
     }
@@ -99,6 +99,7 @@ public sealed class ModelConfigurationService(
         var entity = id.HasValue
             ? await db.ModelConfigurations.SingleOrDefaultAsync(x => x.Id == id, ct) ?? throw new WorkflowException("模型配置不存在", 404)
             : new AiModelConfiguration { Name = "", BaseUrl = "", ModelIdentifier = "" };
+        if (input.Multiplier is not null) entity.Multiplier = input.Multiplier.Trim();
         entity.Name = input.Name.Trim();
         entity.ProviderKind = input.ProviderKind;
         entity.BaseUrl = input.BaseUrl.TrimEnd('/');
@@ -106,6 +107,8 @@ public sealed class ModelConfigurationService(
         entity.ModelIdentifier = input.ModelIdentifier.Trim();
         entity.AuthType = input.AuthType;
         entity.ApiKeyHeader = string.IsNullOrWhiteSpace(input.ApiKeyHeader) ? "X-API-Key" : input.ApiKeyHeader.Trim();
+        if (input.Multiplier?.Length > 32) throw new WorkflowException("倍率文本不能超过 32 个字符");
+        if (input.ImageInputMode is not null) entity.ImageInputMode = input.ImageInputMode;
         entity.SupportsTools = input.SupportsTools;
         entity.IsEnabled = input.IsEnabled;
         entity.IsDefault = input.IsDefault;
@@ -157,14 +160,15 @@ public sealed class ModelConfigurationService(
         }
         return new ResolvedChatModel(entity.Id, entity.Name, entity.ProviderKind, entity.BaseUrl, entity.EndpointPath,
             entity.ModelIdentifier, key, entity.AuthType, entity.ApiKeyHeader, entity.SupportsTools,
-            entity.Temperature, entity.MaxTokens, _legacy.TimeoutSeconds);
+            entity.Temperature, entity.MaxTokens, _legacy.TimeoutSeconds, entity.ImageInputMode, entity.Multiplier);
     }
 
     public static object View(AiModelConfiguration value, LiteLlmModelCapability? capability = null) => new
     {
         value.Id, value.Name, value.ProviderKind, value.Protocol, value.BaseUrl, value.EndpointPath,
         value.ModelIdentifier, HasApiKey = !string.IsNullOrWhiteSpace(value.ApiKeyProtected), value.AuthType,
-        value.ApiKeyHeader, value.SupportsTools, value.IsEnabled, value.IsDefault, value.Temperature,
+        value.ApiKeyHeader, value.Multiplier, value.SupportsTools, value.ImageInputMode,
+        ImageInput = ModelImageCapability.Resolve(value.ImageInputMode, capability), value.IsEnabled, value.IsDefault, value.Temperature,
         value.MaxTokens, value.SortOrder, value.CreatedAt, value.UpdatedAt,
         LiteLlmCapabilities = capability is null ? null : new
         {
@@ -176,6 +180,9 @@ public sealed class ModelConfigurationService(
     {
         if (string.IsNullOrWhiteSpace(input.Name) || string.IsNullOrWhiteSpace(input.ModelIdentifier))
             throw new WorkflowException("模型名称和模型标识不能为空");
+        if (input.Multiplier?.Length > 32) throw new WorkflowException("倍率文本不能超过 32 个字符");
+        if (input.ImageInputMode is not null && !new[] { "Auto", "Supported", "Unsupported" }.Contains(input.ImageInputMode))
+            throw new WorkflowException("图片理解配置无效");
         if (!new[] { "Local", "Online", "LiteLLM" }.Contains(input.ProviderKind)) throw new WorkflowException("接入类型无效");
         if (!new[] { "None", "Bearer", "Header" }.Contains(input.AuthType)) throw new WorkflowException("认证方式无效");
         if (!Uri.TryCreate(input.BaseUrl, UriKind.Absolute, out var uri)) throw new WorkflowException("服务地址无效");

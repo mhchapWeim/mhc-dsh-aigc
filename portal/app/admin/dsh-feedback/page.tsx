@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { getDshFeedback, getDshFeedbackDetail, type DshFeedbackRow } from "../../lib/api-client";
 
+import { usePageSize } from '../../components/use-page-size';
 import { AntPagination } from "../../components/ant-pagination";
 import "./style.css";
 import { Modal } from "../../components/modal";
@@ -10,6 +11,7 @@ import { Modal } from "../../components/modal";
 const categories: Record<string, string> = { "task-result": "任务结果", "instruction-following": "指令理解与遵循", "product-interaction": "产品功能与交互", "service-stability": "稳定性和速度", "resource-cost": "资源使用与费用", "security-privacy-permission": "安全隐私与权限", other: "其他" };
 
 export default function DshFeedbackPage() {
+  const [pageSize, setPageSize] = usePageSize();
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("");
   const [page, setPage] = useState(1);
@@ -24,11 +26,11 @@ export default function DshFeedbackPage() {
   useEffect(() => {
     let active = true;
     setLoading(true);
-    getDshFeedback(search, category, page).then(result => { if (active) { setRows(result.items); setTotal(result.total); setError(""); } })
+    getDshFeedback(search, category, page, pageSize).then(result => { if (active) { setRows(result.items); setTotal(result.total); setError(""); } })
       .catch(cause => { if (active) { setRows([]); setTotal(0); setError(cause instanceof Error ? cause.message : "加载失败"); } })
       .finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
-  }, [search, category, page, refresh]);
+  }, [search, category, page, refresh, pageSize]);
   useEffect(() => {
     if (!selected) return;
     let active = true;
@@ -52,7 +54,7 @@ export default function DshFeedbackPage() {
       </tbody></table></div>
       {loading && <div className="empty-state" role="status">正在加载用户反馈…</div>}
       {!loading && !rows.length && !error && <div className="empty-state"><strong>暂无匹配的用户反馈</strong></div>}
-      <AntPagination ariaLabel="用户反馈分页" current={page} total={total} pageSize={20} onChange={setPage} />
+      <AntPagination onPageSizeChange={setPageSize} ariaLabel="用户反馈分页" current={page} total={total} pageSize={pageSize} onChange={setPage} />
     </section>
     {selected && <Modal title="反馈详情" className="feedback-dialog" onClose={() => setSelected(null)}>
       <div className="feedback-dialog-body" tabIndex={0} aria-label="反馈详情内容">

@@ -76,6 +76,7 @@ it('mounts and withdraws the managed provider through a Loader composition', asy
     const id = '11111111-1111-1111-1111-111111111111'
     let connectionCalls = 0
     let revoked = false
+    let imageState = 'supported'
     const send = vi.spyOn(globalThis, 'fetch').mockImplementation(async (url, init) => {
       const target = String(url)
       if (target.startsWith('http://models.example.test/')) {
@@ -93,7 +94,7 @@ it('mounts and withdraws the managed provider through a Loader composition', asy
           return Response.json({ modelIdentifier: 'MiniMax', baseURL: 'https://internal.example/v1', apiKey: 'test-internal-key',
             authType: 'Bearer', apiKeyHeader: 'X-API-Key', supportsTools: true, temperature: 0.3, maxTokens: 1024, timeoutSeconds: 30 })
         }
-        return Response.json({ models: [{ id, name: '内部 MiniMax' }] })
+        return Response.json({ models: [{ id, name: '内部 MiniMax', input: ['text', 'image'], imageInput: { state: imageState } }] })
       }
       expect(target).toBe('https://internal.example/v1/chat/completions')
       expect(new Headers(init?.headers).get('authorization')).toBe('Bearer test-internal-key')
@@ -119,6 +120,13 @@ it('mounts and withdraws the managed provider through a Loader composition', asy
       for await (const chunk of llm.stream({ provider: 'managed-internal', model: id, messages: [] })) chunks.push(chunk)
       expect(chunks).toContainEqual(expect.objectContaining({ type: 'text-delta', text: '内网直连成功' }))
       expect(connectionCalls).toBe(1)
+      expect(await llm.resolveModelInfo('managed-internal', id)).toMatchObject({ imageInputState: 'supported', inputModalities: ['text', 'image'] })
+      imageState = 'unknown'
+      const unknown: StreamChunk[] = []
+      for await (const chunk of llm.stream({ provider: 'managed-internal', model: id,
+        messages: [{ role: 'user', content: [{ type: 'image' }] }] as never })) unknown.push(chunk)
+      expect(unknown.at(-1)).toMatchObject({ type: 'finish', reason: { kind: 'error', failure: { code: 'MODEL_IMAGE_CAPABILITY_UNKNOWN' } } })
+      imageState = 'supported'
       revoked = true
       await expect(ctx.llm.prepareCall({ provider: 'managed-internal', model: id })).rejects.toMatchObject({ code: 'MODEL_UNAUTHORIZED' })
       await [...ctx.loader.entries()].find(entry => entry.options.id === 'internal')!.fiber!.dispose()

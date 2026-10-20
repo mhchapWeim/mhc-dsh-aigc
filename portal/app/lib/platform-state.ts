@@ -8,6 +8,10 @@ export type PlatformUser = {
   employeeNo: string;
   email: string;
   department: string;
+  departmentId?: string | null;
+  roleIds?: string[];
+  modelIds?: string[];
+  virtualKeyIds?: string[];
   role: UserRole;
   status: UserStatus;
   lastLogin: string;

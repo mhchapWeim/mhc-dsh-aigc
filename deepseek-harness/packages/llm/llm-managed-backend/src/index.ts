@@ -4,7 +4,7 @@ import { Context } from '@deepseek-ai/cordis'
 import z from '@deepseek-ai/schemastery'
 import { credentialKey, credentialRef } from '@deepseek-ai/dsh-credentials'
 import { launchEnvironmentOf } from '@deepseek-ai/dsh-launch-environment'
-import { APP_IDENTITY, LlmAdapter, LlmError, resolveImageAttachmentAccess } from '@deepseek-ai/dsh-llm'
+import { APP_IDENTITY, contentHasImage, LlmAdapter, LlmError, resolveImageAttachmentAccess } from '@deepseek-ai/dsh-llm'
 import type { GenerateOptions, LlmModelInfo, LlmResolvedModelInfo, PreparedAdapterCall, StreamChunk } from '@deepseek-ai/dsh-llm'
 import { authContextFrom, credentialStoreFrom, PiAiAdapter, resolveProfiles } from '@deepseek-ai/dsh-llm-pi-ai'
 import type {} from '@deepseek-ai/dsh-fs'
@@ -64,10 +64,12 @@ export const Config: z<Config> = z.object({
 })
 
 interface BackendModel {
+  multiplier?: string
   id: string
   name: string
   description?: string
   input?: ('text' | 'image')[]
+  imageInput?: { state: 'supported' | 'unsupported' | 'unknown'; source: string; reason: string }
   /** Maximum combined request and response context the backend discloses for this model. */
   contextWindow?: number
   /** Maximum output tokens the backend discloses for this model. */
@@ -139,15 +141,23 @@ function modelList(value: unknown, provider: string): LlmModelInfo[] {
   return value.models.map((entry: unknown): LlmModelInfo => {
     if (typeof entry !== 'object' || entry === null || !('id' in entry) || typeof entry.id !== 'string'
       || entry.id.length === 0 || !('name' in entry) || typeof entry.name !== 'string' || entry.name.length === 0
+      || ('multiplier' in entry && entry.multiplier !== undefined && (typeof entry.multiplier !== 'string' || entry.multiplier.length > 32))
       || ('description' in entry && entry.description !== undefined && typeof entry.description !== 'string')
       || ('contextWindow' in entry && !isCapacity(entry.contextWindow))
       || ('maxOutputTokens' in entry && !isCapacity(entry.maxOutputTokens))
+      || ('input' in entry && entry.input !== undefined && (!Array.isArray(entry.input)
+        || entry.input.length === 0 || entry.input.some(value => value !== 'text' && value !== 'image')))
+      || ('imageInput' in entry && entry.imageInput !== undefined && (typeof entry.imageInput !== 'object'
+        || entry.imageInput === null || !('state' in entry.imageInput)
+        || !['supported', 'unsupported', 'unknown'].includes(String(entry.imageInput.state))))
       || ids.has(entry.id)) {
       throw new LlmError('managed backend returned an invalid model catalog', 'MALFORMED_RESPONSE')
     }
     ids.add(entry.id)
     const model = entry as BackendModel
     return { provider, id: model.id, name: model.name,
+      ...model.multiplier === undefined ? {} : { multiplier: model.multiplier },
+      ...model.imageInput === undefined ? {} : { imageInputState: model.imageInput.state },
       ...model.input === undefined ? {} : { inputModalities: [...model.input] },
       ...model.description === undefined ? {} : { description: model.description } }
   })
@@ -257,7 +267,11 @@ export class ManagedBackendAdapter extends LlmAdapter {
     })
     const prepared = await direct.prepareCall(provider, model, signal)
     signal?.throwIfAborted()
-    return { model: prepared.model, stream: options => prepared.stream(options) }
+    return { model: { ...prepared.model, ...allowed }, stream: options => {
+      if (allowed.imageInputState === 'unknown' && options.messages.some(message => contentHasImage(message.content)))
+        throw new LlmError('图片能力尚未确认，请管理员在 AIGC 模型管理中配置图片理解能力', 'MODEL_IMAGE_CAPABILITY_UNKNOWN')
+      return prepared.stream(options)
+    } }
   }
 
   override async * stream(options: GenerateOptions): AsyncGenerator<StreamChunk> {

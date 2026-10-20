@@ -9,6 +9,37 @@ import { Config, InternalModelAdapter } from '../../../../../plugins/dsh-plugin-
 
 afterEach(() => vi.restoreAllMocks())
 const id = '11111111-1111-1111-1111-111111111111'
+
+it('sends durable images with model credentials and preserves image capability through preparation', async () => {
+  const { ctx, adapter } = await setup()
+  const attachment = { attachmentId: 'image-1', mediaType: 'image/png', bytes: 3, width: 1, height: 1 }
+  ctx.provide('attachments', {
+    imageHostPath: () => undefined,
+    readImageRequest: async () => ({ variantId: 'variant-1', attachment, data: Uint8Array.of(1, 2, 3),
+      mediaType: 'image/png', bytes: 3, width: 1, height: 1, depth: 'uchar', space: 'srgb', hasAlpha: false }),
+  } as never)
+  const upstream = vi.spyOn(globalThis, 'fetch').mockImplementation(async (url, init) => {
+    if (String(url).startsWith('https://aigc.example/')) return Response.json(String(url).endsWith('/connection')
+      ? { modelIdentifier: 'vision-alias', baseURL: 'https://gpu.example/v1', apiKey: 'model-key', authType: 'Bearer',
+        apiKeyHeader: 'X-API-Key', supportsTools: true, temperature: 0.3, timeoutSeconds: 30 }
+      : { models: [{ id, name: 'Vision', multiplier: '0.5×', input: ['text', 'image'], imageInput: { state: 'supported' } }] })
+    expect(new Headers(init?.headers).get('authorization')).toBe('Bearer model-key')
+    const body = JSON.parse(String(init?.body))
+    expect(body.model).toBe('vision-alias')
+    expect(body.messages[0].content).toContainEqual({ type: 'image_url', image_url: { url: 'data:image/png;base64,AQID' } })
+    return new Response('data: {"choices":[{"index":0,"delta":{"content":"seen"},"finish_reason":null}]}\n\ndata: {"choices":[{"index":0,"delta":{},"finish_reason":"stop"}]}\n\ndata: [DONE]\n\n',
+      { headers: { 'content-type': 'text/event-stream' } })
+  })
+  try {
+    const prepared = await adapter.prepareCall('managed-internal', id)
+    expect(prepared.model).toMatchObject({ inputModalities: ['text', 'image'], imageInputState: 'supported', multiplier: '0.5×' })
+    const chunks: StreamChunk[] = []
+    for await (const chunk of prepared.stream({ provider: 'managed-internal', model: id,
+      messages: [{ role: 'user', content: [{ type: 'image', attachment }] }] as never })) chunks.push(chunk)
+    expect(chunks).toContainEqual(expect.objectContaining({ type: 'text-delta', text: 'seen' }))
+    expect(upstream).toHaveBeenCalledTimes(3)
+  } finally { await ctx.fiber.dispose() }
+})
 async function setup(generationTimeoutSeconds?: number, streamIdleTimeoutSeconds?: number) {
   const ctx = new Context()
   const credentials = new MemoryCredentials(ctx)

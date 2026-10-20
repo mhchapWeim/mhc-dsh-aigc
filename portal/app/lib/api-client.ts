@@ -3,7 +3,7 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL?.replace(/\/$/, "");
 export const hasBackend = Boolean(API_BASE_URL);
 
 export type DshBackupRow = { id: string; userId: string; userName: string; employeeNo: string; lastLoginAt: string | null; createdAt: string; bytes: number; sessionCount: number; scope: string; sha256: string; canDownload: boolean };
-export const getDshBackups = (page: number, search: string) => apiRequest<BackendPage<DshBackupRow>>(`/api/dsh-backups?${new URLSearchParams({ page: String(page), search })}`);
+export const getDshBackups = (page: number, search: string, pageSize = 5) => apiRequest<BackendPage<DshBackupRow>>(`/api/dsh-backups?${new URLSearchParams({ page: String(page), search, pageSize: String(pageSize) })}`);
 export const deleteDshBackup = (id: string) => apiRequest<void>(`/api/dsh-backups/${encodeURIComponent(id)}`, { method: 'DELETE' });
 export async function downloadDshBackup(id: string): Promise<void> {
   const value = await apiRequest<{ payload: string; sha256: string }>(`/api/dsh-backups/${encodeURIComponent(id)}/download`);
@@ -27,7 +27,7 @@ export async function startDesktopDownload(id: string): Promise<void> {
 }
 
 export type DshFeedbackRow = { id: string; sessionId: string; category: string; text: string; createdAt: string; userName: string; employeeNo: string; sessionLog?: string };
-export const getDshFeedback = (search: string, category: string, page: number) => apiRequest<BackendPage<DshFeedbackRow>>(`/api/dsh-feedback?${new URLSearchParams({ search, category, page: String(page) })}`);
+export const getDshFeedback = (search: string, category: string, page: number, pageSize = 5) => apiRequest<BackendPage<DshFeedbackRow>>(`/api/dsh-feedback?${new URLSearchParams({ search, category, page: String(page), pageSize: String(pageSize) })}`);
 export const getDshFeedbackDetail = (id: string) => apiRequest<DshFeedbackRow>(`/api/dsh-feedback/${encodeURIComponent(id)}`);
 
 export type BackendLogin = {
@@ -46,9 +46,10 @@ export type DshFailureDetail = {
   occurredAt: string; category: string; operation: string; sessionId: string; operationId: string;
   error: string; context: string[]; durationMs?: number; status?: number; platform?: string; arch?: string;
 };
-export const getDshFailures = (filters: Record<string, string>, page: number) => {
+export const getDshFailures = (filters: Record<string, string>, page: number, pageSize = 5) => {
   const query = new URLSearchParams(Object.entries(filters).filter(([, value]) => value.length > 0));
   query.set('page', String(page));
+  query.set('pageSize', String(pageSize));
   return apiRequest<BackendPage<DshFailureRow> & { retentionDays: number }>(`/api/dsh-failures?${query}`);
 };
 export const getDshFailure = (id: string) => apiRequest<DshFailureDetail>(`/api/dsh-failures/${encodeURIComponent(id)}`);
@@ -96,7 +97,7 @@ export type BackendPublication = {
 export type BackendDepartment = { id: string; code: string; name: string; description: string; managerId?: string; isEnabled: boolean };
 export type BackendRole = { id: string; code: string; name: string; description: string; isBuiltIn: boolean; userCount: number; permissions: string[] };
 export type BackendPermission = { id: string; code: string; name: string; pagePath: string };
-export type BackendUser = { id: string; employeeNo: string; name: string; email: string; departmentId: string; department: string; isEnabled: boolean; lastLoginAt?: string; roles: Array<{ roleId: string; name: string }> };
+export type BackendUser = { id: string; employeeNo: string; name: string; email: string; departmentId: string | null; department: string; isEnabled: boolean; lastLoginAt?: string; roles: Array<{ roleId: string; name: string }> };
 export type BackendCategory = { id: string; code: string; name: string; description: string; color: string; sortOrder: number; isEnabled: boolean };
 export type BackendCatalogApp = {
   id: string; name: string; description: string; category: string; categoryColor: string;
@@ -109,6 +110,9 @@ export type BackendChatTool = {
 export type BackendChatModel = { id: string; name: string; providerKind: string; modelIdentifier: string; supportsTools: boolean; isDefault: boolean };
 export type BackendChatConversation = { id: string; title: string; modelId?: string | null; isArchived: boolean; createdAt: string; updatedAt: string };
 export type BackendModelConfiguration = BackendChatModel & {
+  multiplier?: string;
+  imageInputMode?: "Auto" | "Supported" | "Unsupported";
+  imageInput?: { state: "supported" | "unsupported" | "unknown"; source: string; reason: string };
   protocol: string; baseUrl: string; endpointPath: string; hasApiKey: boolean; authType: string;
   apiKeyHeader: string; isEnabled: boolean; temperature: number; maxTokens?: number; sortOrder: number;
   createdAt: string; updatedAt: string;
@@ -236,10 +240,10 @@ export const getPublicationAccessOptions = () =>
   apiRequest<PublicationAccessOptions>("/api/publication-requests/access-options");
 
 export const getMyPublications = (page = 1, pageSize = 100) =>
-  apiRequest<BackendPage<BackendPublication>>(`/api/publication-requests/mine?page=${page}&pageSize=${pageSize}`);
+  (page === 1 && pageSize === 100 ? allPages<BackendPublication>("/api/publication-requests/mine") : apiRequest<BackendPage<BackendPublication>>(`/api/publication-requests/mine?page=${page}&pageSize=${pageSize}`));
 
 export const getReviewablePublications = (page = 1, pageSize = 100) =>
-  apiRequest<BackendPage<BackendPublication>>(`/api/publication-requests/reviewable?page=${page}&pageSize=${pageSize}`);
+  (page === 1 && pageSize === 100 ? allPages<BackendPublication>("/api/publication-requests/reviewable") : apiRequest<BackendPage<BackendPublication>>(`/api/publication-requests/reviewable?page=${page}&pageSize=${pageSize}`));
 
 export const submitPublication = (input: {
   appName: string; categoryId: string; summary: string; accessUrl?: string;
@@ -257,21 +261,38 @@ export const completeWorkflowTask = (taskId: string, action: "approve" | "reject
     method: "POST", body: JSON.stringify({ action, comment, variables: null }),
   });
 
-export const getUsers = () => apiRequest<BackendPage<BackendUser>>("/api/users?page=1&pageSize=100");
-export const saveUser = (id: string | null, input: { employeeNo: string; name: string; email: string; password?: string; departmentId: string; roleIds: string[]; isEnabled: boolean }) =>
+export type UserAccessOption = { id: string; name: string; isEnabled: boolean; selected: boolean; inherited: boolean; departmentIds?: string[]; roleIds?: string[]; organizationInherited?: boolean };
+export type UserAccessOptions = { departments?: Array<{ id: string; name: string }>; roles?: Array<{ id: string; name: string }>; models: UserAccessOption[]; virtualKeys: UserAccessOption[] };
+export const getUserAccessOptions = (userId?: string) => apiRequest<UserAccessOptions>(`/api/users/access-options${userId ? `?userId=${encodeURIComponent(userId)}` : ''}`);
+async function allPages<T>(path: string): Promise<BackendPage<T>> {
+  const separator = path.includes('?') ? '&' : '?';
+  const first = await apiRequest<BackendPage<T>>(`${path}${separator}page=1&pageSize=100`);
+  const items = [...first.items];
+  for (let page = 2; items.length < first.total; page++) {
+    const next = await apiRequest<BackendPage<T>>(`${path}${separator}page=${page}&pageSize=100`);
+    if (!next.items.length) break;
+    items.push(...next.items);
+  }
+  return { ...first, items };
+}
+
+export const getUsers = () => allPages<BackendUser>("/api/users");
+export const resetUserPassword = (id: string, newPassword: string) => apiRequest<void>(`/api/users/${encodeURIComponent(id)}/password`, { method: "PUT", body: JSON.stringify({ newPassword }) });
+export const changeMyPassword = (currentPassword: string, newPassword: string) => apiRequest<void>("/api/auth/password", { method: "PUT", body: JSON.stringify({ currentPassword, newPassword }) });
+export const saveUser = (id: string | null, input: { employeeNo: string; name: string; email: string; password?: string; departmentId: string | null; roleIds: string[]; isEnabled: boolean; modelIds?: string[]; virtualKeyIds?: string[] }) =>
   apiRequest<void>(id ? `/api/users/${id}` : "/api/users", { method: id ? "PUT" : "POST", body: JSON.stringify(input) });
 
-export const getDepartments = () => apiRequest<BackendPage<BackendDepartment>>("/api/departments?page=1&pageSize=100");
+export const getDepartments = () => allPages<BackendDepartment>("/api/departments");
 export const saveDepartment = (id: string | null, input: Omit<BackendDepartment, "id">) =>
   apiRequest<void>(id ? `/api/departments/${id}` : "/api/departments", { method: id ? "PUT" : "POST", body: JSON.stringify(input) });
 
-export const getRoles = () => apiRequest<BackendPage<BackendRole>>("/api/roles?page=1&pageSize=100");
+export const getRoles = () => allPages<BackendRole>("/api/roles");
 export const getPermissions = () => apiRequest<BackendPermission[]>("/api/roles/permissions");
 export const saveRole = (id: string | null, input: { code: string; name: string; description: string; permissionCodes: string[] }) =>
   apiRequest<void>(id ? `/api/roles/${id}` : "/api/roles", { method: id ? "PUT" : "POST", body: JSON.stringify(input) });
 export const deleteRole = (id: string) => apiRequest<void>(`/api/roles/${id}`, { method: "DELETE" });
 
-export const getCategories = () => apiRequest<BackendPage<BackendCategory>>("/api/categories?page=1&pageSize=100");
+export const getCategories = () => allPages<BackendCategory>("/api/categories");
 export const saveCategory = (id: string | null, input: Omit<BackendCategory, "id">) =>
   apiRequest<void>(id ? `/api/categories/${id}` : "/api/categories", { method: id ? "PUT" : "POST", body: JSON.stringify(input) });
 export const deleteCategory = (id: string) => apiRequest<void>(`/api/categories/${id}`, { method: "DELETE" });
@@ -293,11 +314,19 @@ export const sendChatMessage = (conversationId: string | null, content: string, 
   apiRequest<BackendChatResponse>("/api/chat/messages", { method: "POST", body: JSON.stringify({ conversationId, content, modelId: modelId || null }) });
 export const getModelConfigurations = () => apiRequest<BackendModelConfiguration[]>("/api/models");
 export type ManagedVirtualKey = { id: string; alias: string; isEnabled: boolean; createdAt: string };
+export type VirtualKeyPolicy = { models: string[]; allModels: boolean; maxBudget: number | null; budgetDuration: string | null;
+  rpmLimit: number | null; tpmLimit: number | null; duration: string | null; clearExpiry: boolean };
+export type VirtualKeyPolicyView = Omit<VirtualKeyPolicy, 'duration' | 'clearExpiry'> & { expires: string | null };
+export const getVirtualKeyModels = () => apiRequest<string[]>("/api/virtual-keys/model-options");
+export const getVirtualKeyPolicy = (id: string) => apiRequest<VirtualKeyPolicyView>(`/api/virtual-keys/${id}/policy`);
+export const updateVirtualKeyPolicy = (id: string, policy: VirtualKeyPolicy) => apiRequest<VirtualKeyPolicyView>(`/api/virtual-keys/${id}/policy`, {
+  method: "PUT", body: JSON.stringify(policy),
+});
 export type VirtualKeyOrganization = { id: string; name: string; userIds: string[] };
 export type VirtualKeyGrants = { userIds: string[]; departmentIds: string[]; roleIds?: string[]; organizationIds: string[] };
 export const getManagedVirtualKeys = () => apiRequest<ManagedVirtualKey[]>("/api/virtual-keys");
-export const createManagedVirtualKey = (alias: string, customKey: string) => apiRequest<ManagedVirtualKey>("/api/virtual-keys", {
-  method: "POST", body: JSON.stringify({ alias, customKey: customKey || null }),
+export const createManagedVirtualKey = (alias: string, customKey: string, policy?: VirtualKeyPolicy) => apiRequest<ManagedVirtualKey>("/api/virtual-keys", {
+  method: "POST", body: JSON.stringify({ alias, customKey: customKey || null, ...(policy ? { policy } : {}) }),
 });
 export const setManagedVirtualKeyEnabled = (id: string, enabled: boolean) => apiRequest<void>(`/api/virtual-keys/${id}/enabled?enabled=${enabled}`, { method: "PUT" });
 export const getVirtualKeyGrants = (id: string) => apiRequest<VirtualKeyGrants>(`/api/virtual-keys/${id}/grants`);
@@ -311,8 +340,8 @@ export const updateVirtualKeyOrganization = (id: string, name: string, userIds: 
 });
 export type OperationAuditRow = { id: string; userId: string; actorName: string; action: string; entityType: string; entityId: string | null; detailJson: string; actionLabel: string; entityLabel: string; detailLabel: string; succeeded: boolean; createdAt: string };
 export type OperationAuditPage = { items: OperationAuditRow[]; total: number; page: number; pageSize: number };
-export const getOperationAudits = async (page = 1): Promise<OperationAuditPage> => {
-  const response = await apiRequest<unknown>(`/api/operation-audits?page=${page}`);
+export const getOperationAudits = async (page = 1, pageSize = 5): Promise<OperationAuditPage> => {
+  const response = await apiRequest<unknown>(`/api/operation-audits?page=${page}&pageSize=${pageSize}`);
   if (!response || typeof response !== 'object' || Array.isArray(response)
     || !('items' in response) || !Array.isArray(response.items)
     || !('total' in response) || typeof response.total !== 'number'
@@ -370,12 +399,13 @@ export const testModelConfiguration = (id: string) => apiRequest<{ message: stri
 export type LiteLlmModelSyncResult = { discovered: number; created: number; updated: number; disabled: number };
 export const syncLiteLlmModels = () =>
   apiRequest<LiteLlmModelSyncResult>("/api/models/sync-litellm", { method: "POST" });
-export type ModelGrantUser = { id: string; employeeNo: string; name: string };
-export type GrantSubject = { id: string; code: string; name: string };
+export type SelectionAvailability = { disabled?: boolean; disabledReason?: string | null };
+export type ModelGrantUser = SelectionAvailability & { id: string; employeeNo: string; name: string };
+export type GrantSubject = SelectionAvailability & { id: string; code: string; name: string };
 export type GrantOptions = { users: ModelGrantUser[]; roles: GrantSubject[]; departments: GrantSubject[] };
 export type GrantSelection = { userIds: string[]; roleIds: string[]; departmentIds: string[] };
 export const getGrantOptions = () => apiRequest<GrantOptions>("/api/models/grant-options");
-export const getVirtualKeyGrantOptions = () => apiRequest<GrantOptions>("/api/virtual-keys/grant-options");
+export const getVirtualKeyGrantOptions = (keyId?: string) => apiRequest<GrantOptions>(`/api/virtual-keys/grant-options${keyId ? `?keyId=${encodeURIComponent(keyId)}` : ""}`);
 export const getModelGrants = (id: string) => apiRequest<GrantSelection>(`/api/models/${id}/grants`);
 export const saveModelGrants = (id: string, selection: GrantSelection) =>
   apiRequest<void>(`/api/models/${id}/grants`, { method: "PUT", body: JSON.stringify(selection) });
@@ -397,7 +427,7 @@ export const cancelChatTool = (id: string) =>
   apiRequest<BackendChatToolExecution>(`/api/chat/tool-executions/${id}/cancel`, { method: "POST" });
 
 export type DesktopRecipientOption = { id: string; name: string; employeeNo: string };
-export type DesktopAudienceOptions = { users: Array<DesktopRecipientOption & { departmentId: string; roleIds: string[] }>; roles: GrantSubject[]; departments: GrantSubject[] };
+export type DesktopAudienceOptions = { users: Array<DesktopRecipientOption & { departmentId: string | null; roleIds: string[] }>; roles: GrantSubject[]; departments: GrantSubject[] };
 export type DesktopAnnouncementRecipient = { userId: string; name: string; employeeNo: string; deliveredAt: string | null; readAt: string | null; confirmedAt: string | null };
 export type DesktopAnnouncement = { id: string; title: string; body: string; important: boolean; status: string; startsAt: string; endsAt: string | null; createdAt: string; audience: GrantSelection; recipients: DesktopAnnouncementRecipient[] };
 export type DesktopAnnouncementInput = { title: string; body: string; important: boolean; startsAt: string; endsAt: string | null } & GrantSelection;

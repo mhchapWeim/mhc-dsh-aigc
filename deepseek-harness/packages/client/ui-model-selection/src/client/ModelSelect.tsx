@@ -431,6 +431,7 @@ export function ModelSelect(
                             <span className={css.optionCopy}>
                               <span className={css.modelName}>{model.name}</span>
                             </span>
+                            {model.multiplier && <span className={css.multiplier}>{model.multiplier}</span>}
                             <span className={css.check}>
                               {selected ? <IconCheckOutlineRegular /> : null}
                             </span>

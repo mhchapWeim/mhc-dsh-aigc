@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import { Check, Edit3, Filter, KeyRound, Plus, Search, ShieldCheck, Trash2, UsersRound } from 'lucide-react';
+import { usePageSize } from '../../components/use-page-size';
 import { AntPagination } from '../../components/ant-pagination';
 import { Modal } from '../../components/modal';
 import { ModernSelect, type SelectOption } from '../../components/modern-select';
@@ -25,7 +26,6 @@ export const adminPageOptions: Array<{ path: AdminPath; label: string; descripti
   { path: '/admin/sensitive-words', label: '敏感词管理', description: '配置 DSH 输入内容过滤规则' },
 ];
 
-const pageSize = 3;
 const typeOptions: SelectOption[] = [
   { value: '全部类型', label: '全部类型' },
   { value: '系统角色', label: '系统角色' },
@@ -34,6 +34,7 @@ const typeOptions: SelectOption[] = [
 const emptyRole = (): PlatformRole => ({ id: `role-${Date.now()}`, name: '', description: '', permissions: ['/admin'], builtIn: false });
 
 export default function RoleManagementPage() {
+  const [pageSize, setPageSize] = usePageSize();
   const { roles, users, dispatch, notice } = usePlatform();
   const [query, setQuery] = useState('');
   const [roleType, setRoleType] = useState('全部类型');
@@ -101,7 +102,7 @@ export default function RoleManagementPage() {
           </table>
         </div>
         {!visibleRoles.length && <div className="table-empty"><ShieldCheck size={28} /><strong>没有匹配的角色</strong><span>请调整搜索词或角色类型。</span></div>}
-        <AntPagination ariaLabel="角色分页" current={currentPage} pageSize={pageSize} total={filtered.length} onChange={setPage} />
+        <AntPagination onPageSizeChange={setPageSize} ariaLabel="角色分页" current={currentPage} pageSize={pageSize} total={filtered.length} onChange={setPage} />
       </section>
 
       {notice && <div className="inline-toast" role="status">{notice}</div>}

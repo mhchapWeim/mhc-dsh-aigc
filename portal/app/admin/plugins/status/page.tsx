@@ -2,14 +2,15 @@
 
 import { useEffect, useState } from 'react';
 import { RefreshCw } from 'lucide-react';
+import { usePageSize } from '../../../components/use-page-size';
 import { AntPagination } from '../../../components/ant-pagination';
 import { getPlugins, getPluginGrantOptions, getPluginReports, type PluginReportPage } from '../../../lib/plugin-api';
 import '../plugins.css';
 
 const statuses: Record<string, string> = { Active: '已生效', Disabled: '已停用', RestartRequired: '等待重启', Incompatible: '版本不兼容', Failed: '失败' };
-const pageSize = 20;
 
 export default function PluginStatusPage() {
+  const [pageSize, setPageSize] = usePageSize();
   const [page, setPage] = useState(1);
   const [refresh, setRefresh] = useState(0);
   const [result, setResult] = useState<PluginReportPage>({ items: [], total: 0, page: 1, pageSize });
@@ -28,7 +29,7 @@ export default function PluginStatusPage() {
     }).catch(error => { if (active) setError(error instanceof Error ? error.message : String(error)); })
       .finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
-  }, [page, refresh]);
+  }, [page, refresh, pageSize]);
   return <div className="plugin-market">
     <div className="page-title"><div><span className="section-kicker">DSH PLUGIN STATUS</span><h1>插件状态</h1><p>查看客户端上报的实际运行状态。离线客户端以最后上报时间为准。</p></div>
       <button type="button" className="secondary-action" disabled={loading} onClick={() => setRefresh(value => value + 1)}><RefreshCw size={16} />刷新</button></div>
@@ -44,7 +45,7 @@ export default function PluginStatusPage() {
           <td>{new Date(report.updatedAt).toLocaleString()}</td><td>{report.error || '—'}</td>
         </tr>)}</tbody></table></div>
         {result.items.length === 0 && <p className="table-empty">尚无客户端回报。</p>}
-        <AntPagination ariaLabel="插件状态分页" current={result.page} pageSize={result.pageSize} total={result.total} onChange={setPage} />
+        <AntPagination onPageSizeChange={setPageSize} ariaLabel="插件状态分页" current={result.page} pageSize={pageSize} total={result.total} onChange={setPage} />
       </>}
     </section>
   </div>;

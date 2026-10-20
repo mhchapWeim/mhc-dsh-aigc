@@ -5490,7 +5490,7 @@ tbody tr:hover {
     margin-right: auto;
   }
   .ant-pagination__size {
-    display: none;
+    display: flex;
   }
 }
 
@@ -8105,6 +8105,26 @@ tbody tr:hover {
 .recipient-list small { color: var(--muted); font-size: 11px; }
 .recipient-list label > svg { color: var(--blue-600); visibility: hidden; flex: none; }
 .recipient-list label.is-selected > svg { visibility: visible; }
+.entity-form .recipient-list label.is-unavailable { background: var(--page); cursor: not-allowed; }
+.recipient-list .recipient-disabled-reason { color: var(--muted); white-space: normal; overflow-wrap: anywhere; }
+.modal.virtual-key-policy-modal { width: min(900px, calc(100vw - 32px)); max-height: calc(100dvh - 40px); display: flex; flex-direction: column; overflow: hidden; }
+.virtual-key-policy-modal > header { flex: none; }
+.entity-form.virtual-key-policy-form { padding: 0; display: flex; flex: 1 1 auto; flex-direction: column; min-height: 0; overflow: hidden; }
+.virtual-key-policy-body { padding: 24px; display: flex; flex-direction: column; gap: 16px; overflow-y: auto; min-height: 0; flex: 1 1 auto; }
+.virtual-key-policy-body > * { flex-shrink: 0; }
+.virtual-key-policy-body .form-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.virtual-key-models { min-width: 0; border: 1px solid var(--line); border-radius: 10px; padding: 12px 16px; display: flex; flex-direction: column; gap: 10px; }
+.virtual-key-models legend { color: var(--ink); padding: 0 6px; font-weight: 600; }
+.virtual-key-policy-body label.virtual-key-inline { display: flex; flex-direction: row; align-items: center; gap: 10px; font-weight: 400; overflow-wrap: anywhere; }
+.virtual-key-inline input[type=checkbox], .virtual-key-inline input[type=radio] { width: 16px; height: 16px; min-height: 0; flex: none; accent-color: var(--blue-600); }
+.virtual-key-model-list { max-height: 150px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
+.virtual-key-policy-form > .modal-actions { flex: none; padding: 16px 24px; margin: 0; border-top: 1px solid var(--line); background: var(--surface); }
+.modal.virtual-key-grant-modal { width: min(760px, calc(100vw - 32px)); max-height: calc(100dvh - 40px); display: flex; flex-direction: column; overflow: hidden; }
+.virtual-key-grant-modal > header { flex: none; }
+.entity-form.virtual-key-grant-form { padding: 0; gap: 0; flex: 1 1 auto; min-height: 0; overflow: hidden; }
+.virtual-key-grant-body { padding: 24px; flex: 1 1 auto; min-height: 0; overflow-y: auto; }
+.virtual-key-grant-form > .modal-actions { flex: none; margin: 0; bottom: auto; padding: 16px 24px; border-top: 1px solid var(--line); background: var(--surface); }
+@media (max-width: 600px) { .virtual-key-policy-body { padding: 16px; } .virtual-key-policy-body .form-grid { grid-template-columns: 1fr; } }
 .recipient-selected { display: flex; flex-wrap: wrap; gap: 6px; padding: 12px 16px; border-top: 1px solid var(--line); }
 .recipient-selected button { display: flex; align-items: center; gap: 6px; padding: 5px 8px; border: 1px solid var(--line); border-radius: 6px; background: var(--page); color: var(--ink-soft); font-size: 11px; }
 .recipient-selected .recipient-clear { border: 0; background: transparent; color: var(--blue-600); }
@@ -8219,3 +8239,27 @@ tbody tr:hover {
 .admin-nav-flyout a:hover, .admin-nav-flyout a:focus-visible { background: #213854; color: #fff; }
 .admin-nav-flyout a[aria-current="page"] { background: #28538a; color: #fff; }
 .admin-nav-flyout svg { flex-shrink: 0; }
+.ant-pagination__size select { width: 110px; min-height: 30px; padding: 4px 6px; border: 1px solid var(--line); border-radius: 6px; color: var(--ink); background: var(--surface); font: inherit; }
+.ant-pagination__size { padding: 0; border: 0; background: transparent; flex: none; }
+.user-access-modal { display: flex; flex-direction: column; max-height: calc(100dvh - 40px); overflow: hidden; }
+.user-access-modal > header { flex: none; }
+.user-access-modal .entity-form { display: flex; flex-direction: column; min-height: 0; overflow: hidden; padding: 0; }
+.user-access-modal .user-edit-body { min-height: 0; overflow: auto; padding: 20px; }
+.user-access-modal .modal-actions { flex: none; margin: 0; padding: 16px 20px; border-top: 1px solid var(--line); }
+.user-access-fields { display: grid; gap: 16px; margin-top: 20px; }
+.user-access-fields p, .user-access-fields small { color: var(--muted); font-size: 12px; }
+.user-access-fields select { width: 100%; min-height: 38px; padding: 8px; border: 1px solid var(--line); border-radius: 6px; color: var(--ink); background: var(--surface); }
+.modern-multi-popup { position: fixed; z-index: 1000; display: flex; flex-direction: column; gap: 6px; padding: 8px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); color: var(--ink); box-shadow: var(--shadow-2); overflow: hidden; }
+.modern-multi-popup .modern-select__options { min-height: 0; flex: 1; overflow: auto; max-height: none; }
+.modern-multi-popup .modern-select__search { flex: none; }
+.modern-multi-popup__hint { padding: 2px 6px; color: var(--muted); font-size: 12px; }
+.modern-multi-popup .modern-select__options button:disabled { opacity: .5; cursor: not-allowed; }
+.password-change-modal, .profile-password-modal { display: flex; flex-direction: column; max-height: calc(100dvh - 40px); overflow: hidden; }
+.password-change-modal > header, .profile-password-modal > header { flex: none; }
+.password-change-modal > .password-change-form, .profile-password-modal > .profile-center { overflow: auto; min-height: 0; }
+.password-change-form { display: grid; gap: 14px; padding: 20px; }
+.password-change-form > p { margin: 0; font-size: 12px; color: var(--muted); }
+.password-change-form label { display: grid; gap: 6px; font-size: 13px; }
+.password-change-form input { width: 100%; min-height: 38px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 6px; color: var(--ink); background: var(--surface); }
+.profile-password-section { padding: 16px 0 0; border-top: 1px solid var(--line); }
+.profile-password-section .password-change-form { padding: 12px 0; }

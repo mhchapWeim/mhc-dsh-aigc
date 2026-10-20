@@ -30,6 +30,8 @@ export interface SubagentModelCandidate extends AllowedSubagentModel {
   providerName: string
   /** Adapter-owned model display name. */
   modelName: string
+  /** Display-only model rate label. */
+  multiplier?: string
   /** Whether the current adapter catalog advertises this exact route. */
   available: boolean
   /** Whether the current draft authorizes this route. */
@@ -99,6 +101,7 @@ export function subagentModelCandidates(
       key,
       providerName: group.name,
       modelName: model.name,
+      ...model.multiplier === undefined ? {} : { multiplier: model.multiplier },
       available: true,
       selected: selected.has(key),
     }

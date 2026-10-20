@@ -1,30 +1,71 @@
 'use client';
 
-import { useMemo, useState } from 'react';
-import { Edit3, Filter, Plus, Search, Shield, UserCheck, UserX } from 'lucide-react';
+import { useMemo, useRef, useState } from 'react';
+import { Edit3, Filter, Plus, Search, Shield, KeyRound, UserCheck, UserX } from 'lucide-react';
+import { usePageSize } from '../../components/use-page-size';
 import { AntPagination } from '../../components/ant-pagination';
+import { UserModelPicker } from './user-model-picker';
+import { PasswordChangeForm } from '../../components/password-change-form';
 import { Modal } from '../../components/modal';
 import { ModernSelect, type SelectOption } from '../../components/modern-select';
 import { usePlatform } from '../../components/platform-provider';
+import { getUserAccessOptions, hasBackend, type UserAccessOptions } from '../../lib/api-client';
 import type { PlatformUser, UserRole } from '../../lib/platform-state';
 
-const pageSize = 5;
 const toOptions = (items: Array<string | { name: string; enabled?: boolean }>): SelectOption[] => items.filter((item) => typeof item === 'string' || item.enabled !== false).map((item) => { const label = typeof item === 'string' ? item : item.name; return { value: label, label }; });
-const emptyUser = (): PlatformUser => ({ id: `u-${Date.now()}`, name: '', employeeNo: '', email: '', department: '数字化办公室', role: '普通用户', status: '启用', lastLogin: '尚未登录' });
+const emptyUser = (): PlatformUser => ({ id: `u-${Date.now()}`, name: '', employeeNo: '', email: '', department: '', role: '普通用户', status: '启用', lastLogin: '尚未登录' });
 
 export default function UserManagementPage() {
+  const [pageSize, setPageSize] = usePageSize();
   const { users, departments, roles, dispatch, notice } = usePlatform();
   const [query, setQuery] = useState('');
   const [department, setDepartment] = useState('全部部门');
   const [status, setStatus] = useState('全部状态');
   const [page, setPage] = useState(1);
+  const [passwordUser, setPasswordUser] = useState<PlatformUser | null>(null);
   const [editing, setEditing] = useState<PlatformUser | null>(null);
-  const departmentFilters = useMemo(() => toOptions(['全部部门', ...new Set(users.map((user) => user.department))]), [users]);
+  const [access, setAccess] = useState<UserAccessOptions | null>(null);
+  const [accessLoading, setAccessLoading] = useState(false);
+  const [accessError, setAccessError] = useState('');
+  const [saving, setSaving] = useState(false);
+  const accessRequest = useRef(0);
+  const open = async (user: PlatformUser) => {
+    const request = ++accessRequest.current;
+    setEditing({ ...user }); setAccess(null); setAccessError('');
+    if (!hasBackend) { setAccess({ models: [], virtualKeys: [] }); return; }
+    setAccessLoading(true);
+    try {
+      const options = await getUserAccessOptions(users.some(item => item.id === user.id) ? user.id : undefined);
+      if (request !== accessRequest.current) return;
+      setAccess(options);
+      setEditing(current => current?.id === user.id ? { ...current, roleIds: current.roleIds ?? (options.roles ?? roles).filter(item => item.name === current.role).map(item => item.id), modelIds: options.models.filter(item => item.selected).map(item => item.id), virtualKeyIds: options.virtualKeys.filter(item => item.selected).map(item => item.id) } : current);
+    } catch (error) { if (request === accessRequest.current) setAccessError(error instanceof Error ? error.message : '授权选项加载失败'); }
+    finally { if (request === accessRequest.current) setAccessLoading(false); }
+  };
+  const effectiveOption = (item: UserAccessOptions['models'][number]) => ({ ...item,
+    inherited: item.departmentIds === undefined && item.roleIds === undefined ? item.inherited
+      : Boolean(item.organizationInherited || item.departmentIds?.includes(editing?.departmentId ?? '') || item.roleIds?.some(id => editing?.roleIds?.includes(id))) });
+  const viewAccess = access && { ...access, models: access.models.map(effectiveOption), virtualKeys: access.virtualKeys.map(effectiveOption) };
+  const availableDepartments = access?.departments ?? departments;
+  const availableRoles = access?.roles ?? roles;
+  const departmentFilters = useMemo(() => [{ value: '全部部门', label: '全部部门' }, { value: '', label: '未分配部门' }, ...toOptions([...new Set(users.map(user => user.department).filter(Boolean))])], [users]);
   const filtered = useMemo(() => users.filter((user) => (!query || `${user.name}${user.employeeNo}${user.email}`.toLowerCase().includes(query.toLowerCase())) && (department === '全部部门' || user.department === department) && (status === '全部状态' || user.status === status)), [department, query, status, users]);
   const pageCount = Math.max(1, Math.ceil(filtered.length / pageSize));
   const currentPage = Math.min(page, pageCount);
   const visible = filtered.slice((currentPage - 1) * pageSize, currentPage * pageSize);
-  const save = async (event: React.FormEvent) => { event.preventDefault(); if (editing?.name.trim() && editing.employeeNo.trim() && editing.email.trim()) { try { await dispatch({ type: 'save-user', user: editing }); setEditing(null); } catch { /* 后端错误由全局提示展示 */ } } };
+  const save = async (event: React.FormEvent) => {
+    event.preventDefault(); if (!editing || saving || accessLoading || !access) return;
+    setSaving(true);
+    try { await dispatch({ type: 'save-user', user: editing }); setEditing(null); }
+    catch (error) { setAccessError(error instanceof Error ? error.message : '保存失败'); }
+    finally { setSaving(false); }
+  };
 
-  return <div className="admin-page page-enter"><div className="page-title"><div><span className="section-kicker">IDENTITY & ACCESS</span><h1>用户管理</h1><p>维护平台用户、所属部门和角色状态。</p></div><button className="primary-action" type="button" onClick={() => setEditing(emptyUser())}><Plus size={18} />新增用户</button></div><section className="admin-panel table-panel"><div className="toolbar"><label className="table-search"><Search size={18} /><input type="search" aria-label="搜索用户" placeholder="搜索姓名、工号或邮箱" value={query} onChange={(event) => { setQuery(event.target.value); setPage(1); }} /></label><div className="toolbar-filters"><Filter size={16} /><ModernSelect compact ariaLabel="部门筛选" value={department} options={departmentFilters} onChange={(value) => { setDepartment(value); setPage(1); }} /><ModernSelect compact ariaLabel="状态筛选" value={status} options={toOptions(['全部状态', '启用', '停用'])} onChange={(value) => { setStatus(value); setPage(1); }} /></div></div><div className="table-meta"><span>共 {filtered.length} 位用户</span><span><Shield size={14} />角色变更将在下次登录后生效</span></div><div className="table-wrap"><table aria-label="用户数据表格"><thead><tr><th>用户</th><th>工号</th><th>部门</th><th>角色</th><th>状态</th><th>最近登录</th><th><span className="sr-only">操作</span></th></tr></thead><tbody>{visible.map((user) => <tr key={user.id}><td><div className="user-cell"><span className="table-avatar">{user.name.slice(0, 1)}</span><span><strong>{user.name}</strong><small>{user.email}</small></span></div></td><td>{user.employeeNo}</td><td>{user.department}</td><td><span className="role-badge">{user.role}</span></td><td><span className={`state-badge ${user.status === '启用' ? 'is-enabled' : 'is-disabled'}`}>{user.status}</span></td><td>{user.lastLogin}</td><td><div className="row-actions"><button type="button" aria-label={`编辑${user.name}`} onClick={() => setEditing(user)}><Edit3 size={16} /></button><button type="button" aria-label={`${user.status === '启用' ? '停用' : '启用'}${user.name}`} onClick={() => dispatch({ type: 'toggle-user-status', id: user.id })}>{user.status === '启用' ? <UserX size={16} /> : <UserCheck size={16} />}</button></div></td></tr>)}</tbody></table></div>{!visible.length && <div className="table-empty"><UserX size={28} /><strong>没有匹配的用户</strong><span>请调整搜索或筛选条件。</span></div>}<AntPagination ariaLabel="用户分页" current={currentPage} pageSize={pageSize} total={filtered.length} onChange={setPage} /></section>{notice && <div className="inline-toast" role="status">{notice}</div>}{editing && <Modal title={users.some((user) => user.id === editing.id) ? '编辑用户' : '新增用户'} onClose={() => setEditing(null)}><form className="entity-form" onSubmit={save}><div className="form-grid"><label><span>姓名 *</span><input required value={editing.name} onChange={(event) => setEditing({ ...editing, name: event.target.value })} /></label><label><span>工号 *</span><input required value={editing.employeeNo} onChange={(event) => setEditing({ ...editing, employeeNo: event.target.value })} /></label><label className="form-span"><span>企业邮箱 *</span><input required type="email" value={editing.email} onChange={(event) => setEditing({ ...editing, email: event.target.value })} /></label><div className="form-field"><span>部门</span><ModernSelect ariaLabel="部门" value={editing.department} options={toOptions(departments)} onChange={(value) => setEditing({ ...editing, department: value })} /></div><div className="form-field"><span>角色</span><ModernSelect ariaLabel="角色" value={editing.role} options={toOptions(roles)} onChange={(value) => setEditing({ ...editing, role: value as UserRole })} /></div></div><footer className="modal-actions"><button type="button" onClick={() => setEditing(null)}>取消</button><button className="primary-action" type="submit">保存用户</button></footer></form></Modal>}</div>;
+  return <div className="admin-page page-enter"><div className="page-title"><div><span className="section-kicker">IDENTITY & ACCESS</span><h1>用户管理</h1><p>维护平台用户、所属部门和角色状态。</p></div><button className="primary-action" type="button" onClick={() => { void open(emptyUser()); }}><Plus size={18} />新增用户</button></div><section className="admin-panel table-panel"><div className="toolbar"><label className="table-search"><Search size={18} /><input type="search" aria-label="搜索用户" placeholder="搜索姓名、工号或邮箱" value={query} onChange={(event) => { setQuery(event.target.value); setPage(1); }} /></label><div className="toolbar-filters"><Filter size={16} /><ModernSelect compact ariaLabel="部门筛选" value={department} options={departmentFilters} onChange={(value) => { setDepartment(value); setPage(1); }} /><ModernSelect compact ariaLabel="状态筛选" value={status} options={toOptions(['全部状态', '启用', '停用'])} onChange={(value) => { setStatus(value); setPage(1); }} /></div></div><div className="table-meta"><span>共 {filtered.length} 位用户</span><span><Shield size={14} />角色变更将在下次登录后生效</span></div><div className="table-wrap"><table aria-label="用户数据表格"><thead><tr><th>用户</th><th>工号</th><th>部门</th><th>角色</th><th>状态</th><th>最近登录</th><th><span className="sr-only">操作</span></th></tr></thead><tbody>{visible.map((user) => <tr key={user.id}><td><div className="user-cell"><span className="table-avatar">{user.name.slice(0, 1)}</span><span><strong>{user.name}</strong><small>{user.email}</small></span></div></td><td>{user.employeeNo}</td><td>{user.department || '未分配'}</td><td><span className="role-badge">{user.role}</span></td><td><span className={`state-badge ${user.status === '启用' ? 'is-enabled' : 'is-disabled'}`}>{user.status}</span></td><td>{user.lastLogin}</td><td><div className="row-actions"><button type="button" title="修改密码" aria-label={`修改${user.name}密码`} onClick={() => setPasswordUser(user)}><KeyRound size={16} /></button><button type="button" aria-label={`编辑${user.name}`} onClick={() => { void open(user); }}><Edit3 size={16} /></button><button type="button" aria-label={`${user.status === '启用' ? '停用' : '启用'}${user.name}`} onClick={() => dispatch({ type: 'toggle-user-status', id: user.id })}>{user.status === '启用' ? <UserX size={16} /> : <UserCheck size={16} />}</button></div></td></tr>)}</tbody></table></div>{!visible.length && <div className="table-empty"><UserX size={28} /><strong>没有匹配的用户</strong><span>请调整搜索或筛选条件。</span></div>}<AntPagination onPageSizeChange={setPageSize} ariaLabel="用户分页" current={currentPage} pageSize={pageSize} total={filtered.length} onChange={setPage} /></section>{notice && <div className="inline-toast" role="status">{notice}</div>}{passwordUser && <Modal title={`修改密码 · ${passwordUser.name}`} className="password-change-modal" onClose={() => setPasswordUser(null)}><PasswordChangeForm userId={passwordUser.id} /></Modal>}{editing && <Modal title={users.some((user) => user.id === editing.id) ? '编辑用户' : '新增用户'} className="user-access-modal" onClose={() => setEditing(null)}><form className="entity-form" onSubmit={save}><div className="user-edit-body" tabIndex={0} aria-label="用户资料和授权"><div className="form-grid"><label><span>姓名 *</span><input required value={editing.name} onChange={(event) => setEditing({ ...editing, name: event.target.value })} /></label><label><span>工号 *</span><input required value={editing.employeeNo} onChange={(event) => setEditing({ ...editing, employeeNo: event.target.value })} /></label><label className="form-span"><span>企业邮箱 *</span><input required type="email" value={editing.email} onChange={(event) => setEditing({ ...editing, email: event.target.value })} /></label><div className="form-field"><span>部门</span><ModernSelect ariaLabel="部门" value={editing.department} options={[{ value: '', label: '未分配部门' }, ...toOptions(availableDepartments)]} onChange={(value) => setEditing({ ...editing, department: value, departmentId: availableDepartments.find(item => item.name === value)?.id ?? null })} /></div><div className="form-field"><span>角色</span><ModernSelect ariaLabel="角色" value={editing.role} options={toOptions(availableRoles)} onChange={(value) => setEditing({ ...editing, role: value as UserRole, roleIds: availableRoles.filter(item => item.name === value).map(item => item.id) })} /></div></div><section className="user-access-fields" aria-label="模型和虚拟 Key 授权">
+      {accessLoading && <p role="status">正在加载授权选项…</p>}
+      {accessError && <p role="alert" className="model-form-error">{accessError}</p>}
+      {viewAccess && <><UserModelPicker models={viewAccess.models} selected={editing.modelIds ?? []} busy={saving} onChange={modelIds => setEditing({ ...editing, modelIds })} /><label className="form-field"><span>虚拟 Key 组</span><select aria-label="虚拟 Key 组" value={editing.virtualKeyIds?.[0] ?? ''} disabled={saving} onChange={event => setEditing({ ...editing, virtualKeyIds: event.target.value ? [event.target.value] : [] })}>
+        <option value="">不直接分配</option>{viewAccess.virtualKeys.map(item => <option key={item.id} value={item.id} disabled={(!item.isEnabled && !item.selected) || viewAccess.virtualKeys.some(key => key.inherited && key.id !== item.id)}>{item.name}{item.inherited ? '（继承归属）' : ''}{!item.isEnabled ? '（已停用）' : ''}</option>)}
+      </select><small>{viewAccess.virtualKeys.filter(item => item.inherited).map(item => `已通过部门、角色或分组归属：${item.name}`).join('；') || '一个用户只能归属一个虚拟 Key 组'}</small></label></>}
+      </section></div><footer className="modal-actions"><button type="button" onClick={() => setEditing(null)}>取消</button><button className="primary-action" type="submit" disabled={saving || accessLoading || !access}>保存用户</button></footer></form></Modal>}</div>;
 }

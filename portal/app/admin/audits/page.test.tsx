@@ -20,9 +20,9 @@ it('shows actor names and uses the shared pagination controls', async () => {
   expect(screen.queryByText('5356da7b')).not.toBeInTheDocument();
   expect(screen.getByText('执行网页搜索')).toBeInTheDocument();
   expect(screen.getByRole('navigation', { name: '审计记录分页' })).toBeInTheDocument();
-  expect(screen.getByText('10 条 / 页')).toBeInTheDocument();
+  expect(screen.getByRole('combobox', { name: '审计记录分页每页条数' })).toHaveValue('5');
   await user.click(screen.getByRole('button', { name: '下一页' }));
-  await waitFor(() => expect(mocks.list).toHaveBeenCalledWith(2));
+  await waitFor(() => expect(mocks.list).toHaveBeenCalledWith(2, 5));
   expect(screen.getByRole('button', { name: '第 2 页' })).toHaveAttribute('aria-current', 'page');
 });
 

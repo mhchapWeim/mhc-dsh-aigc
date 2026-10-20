@@ -375,7 +375,7 @@ public sealed class CreateUserTool(
     AigcHubDbContext db,
     IPasswordHasher<AppUser> hasher) : IChatTool
 {
-    private sealed record Arguments(string EmployeeNo, string Name, string Email, string Department,
+    private sealed record Arguments(string EmployeeNo, string Name, string Email, string? Department,
         string[] Roles, string? InitialPassword, bool IsEnabled = true);
     /// <summary>新建用户工具的必填字段及权限定义。</summary>
     public ChatToolDefinition Definition { get; } = new(
@@ -390,20 +390,21 @@ public sealed class CreateUserTool(
                 roles = new { type = "array", items = new { type = "string" } },
                 initialPassword = new { type = "string" }, isEnabled = new { type = "boolean" }
             },
-            @required = new[] { "employeeNo", "name", "email", "department", "roles" }
+            @required = new[] { "employeeNo", "name", "email", "roles" }
         }));
 
     /// <summary>校验工号、邮箱、部门和角色后将新用户持久化。</summary>
     public async Task<ChatToolResult> ExecuteAsync(Guid userId, JsonElement arguments, CancellationToken ct)
     {
         // 先拦截空字段和已有工号、邮箱，避免创建不完整或重复的账号。
+        await using var mutation = await VirtualKeyGrantRules.BeginMutationAsync(db, ct);
         var input = ToolJson.Read<Arguments>(arguments);
         if (string.IsNullOrWhiteSpace(input.EmployeeNo) || string.IsNullOrWhiteSpace(input.Name) || string.IsNullOrWhiteSpace(input.Email))
             throw new WorkflowException("工号、姓名和邮箱不能为空");
         if (await db.Users.AnyAsync(x => x.EmployeeNo == input.EmployeeNo || x.Email == input.Email, ct))
             throw new WorkflowException("工号或邮箱已存在", 409);
         var departmentItems = await db.Departments.Where(x => x.IsEnabled).ToListAsync(ct);
-        var department = departmentItems.FirstOrDefault(x => x.Id.ToString() == input.Department || x.Code.Equals(input.Department, StringComparison.OrdinalIgnoreCase) || x.Name.Equals(input.Department, StringComparison.OrdinalIgnoreCase))
+        var department = string.IsNullOrWhiteSpace(input.Department) ? null : departmentItems.FirstOrDefault(x => x.Id.ToString() == input.Department || x.Code.Equals(input.Department, StringComparison.OrdinalIgnoreCase) || x.Name.Equals(input.Department, StringComparison.OrdinalIgnoreCase))
             ?? throw new WorkflowException("部门不存在或已停用");
         var requestedRoles = input.Roles.Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
         // 部门和角色支持 ID、编码或名称，但都必须匹配数据库中的真实记录。
@@ -413,13 +414,15 @@ public sealed class CreateUserTool(
         var user = new AppUser
         {
             EmployeeNo = input.EmployeeNo.Trim(), Name = input.Name.Trim(), Email = input.Email.Trim(),
-            DepartmentId = department.Id, PasswordHash = "", IsEnabled = input.IsEnabled
+            DepartmentId = department?.Id, PasswordHash = "", IsEnabled = input.IsEnabled
         };
         // 只存储密码哈希，不在用户表中保存明文初始密码。
         user.PasswordHash = hasher.HashPassword(user, string.IsNullOrWhiteSpace(input.InitialPassword) ? "Bhss@123" : input.InitialPassword);
         user.Roles = roles.Select(x => new UserRole { User = user, Role = x }).ToList();
+        await VirtualKeyGrantRules.AssertUserAssignmentAsync(db, user.Id, user.DepartmentId, roles.Select(x => x.Id).ToArray(), ct);
         db.Users.Add(user);
         await db.SaveChangesAsync(ct);
+        await mutation.CommitAsync(ct);
         return new ChatToolResult($"用户 {user.Name}（{user.EmployeeNo}）已创建", new { user.Id, user.EmployeeNo, user.Name });
     }
 }

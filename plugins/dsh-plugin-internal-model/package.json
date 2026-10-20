@@ -1,6 +1,6 @@
 {
   "name": "@bhss/dsh-plugin-internal-model",
-  "version": "1.0.6",
+  "version": "1.0.8",
   "description": "AIGC 本地模型授权与 DSH 内网直连",
   "type": "module",
   "main": "lib/index.js",

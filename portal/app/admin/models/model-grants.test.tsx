@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import ModelManagementPage from './page';
 
 const mocks = vi.hoisted(() => ({
+  save: vi.fn(),
   saveGrants: vi.fn(),
   models: vi.fn(),
   users: vi.fn(),
@@ -14,6 +15,7 @@ const mocks = vi.hoisted(() => ({
 
 vi.mock('../../lib/api-client', () => ({
   hasBackend: true,
+  saveModelConfiguration: mocks.save,
   getModelConfigurations: mocks.models,
   getGrantOptions: mocks.users,
   getModelGrants: mocks.grants,
@@ -60,7 +62,7 @@ it('shows LiteLLM-declared capability tags and explains each action', async () =
     liteLlmCapabilities: { mode: 'chat', supportedFeatures: ['supports_vision', 'supports_function_calling'],
       contextWindow: 128000, maxOutputTokens: 8192 } }]);
   render(<ModelManagementPage />);
-  expect(await screen.findByText('视觉')).toBeInTheDocument();
+  expect(await screen.findByText('图片能力未确认')).toBeInTheDocument();
   expect(screen.getByText('工具调用')).toBeInTheDocument();
   expect(screen.getByText('上下文 128,000')).toBeInTheDocument();
   expect(screen.getByText('输出 8,192')).toBeInTheDocument();
@@ -112,4 +114,18 @@ it('syncs the LiteLLM catalog and reports the import summary', async () => {
 
   await waitFor(() => expect(mocks.sync).toHaveBeenCalledWith());
   expect(await screen.findByText('LiteLLM 同步完成：发现 2，新增 2，更新 0，停用 0')).toBeInTheDocument();
+});
+
+it('saves an explicit image capability override from model management', async () => {
+  mocks.models.mockResolvedValue([{ id: 'vision', name: 'Vision', providerKind: 'Local', modelIdentifier: 'alias',
+    baseUrl: 'http://gpu.test/v1', endpointPath: '/chat/completions', authType: 'None', temperature: 0.3,
+    sortOrder: 0, imageInputMode: 'Auto', imageInput: { state: 'unknown', reason: '未披露' } }]);
+  mocks.save.mockResolvedValue({});
+  const user = userEvent.setup();
+  render(<ModelManagementPage />);
+  await user.click(await screen.findByRole('button', { name: '编辑Vision' }));
+  await user.click(screen.getByRole('combobox', { name: '图片理解' }));
+  await user.click(screen.getByRole('option', { name: '支持图片' }));
+  await user.click(screen.getByRole('button', { name: '保存配置' }));
+  await waitFor(() => expect(mocks.save).toHaveBeenCalledWith('vision', expect.objectContaining({ imageInputMode: 'Supported' })));
 });

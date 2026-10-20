@@ -1,6 +1,6 @@
 import z from '@deepseek-ai/schemastery';
 import { credentialKey } from '@deepseek-ai/dsh-credentials';
-import { LlmAdapter, LlmError } from '@deepseek-ai/dsh-llm';
+import { contentHasImage, LlmAdapter, LlmError, resolveImageAttachmentAccess } from '@deepseek-ai/dsh-llm';
 import { PiAiAdapter, resolveProfiles, credentialStoreFrom, authContextFrom } from '@deepseek-ai/dsh-llm-pi-ai';
 
 export const name = 'llm-internal-model';
@@ -87,11 +87,20 @@ function catalog(value) {
     throw new LlmError('AIGC 内网模型目录无效', 'MALFORMED_RESPONSE');
   const ids = new Set();
   return value.models.map(model => {
+    if (model.multiplier !== undefined && (typeof model.multiplier !== 'string' || model.multiplier.length > 32))
+      throw new LlmError('invalid internal model multiplier', 'MALFORMED_RESPONSE')
     if (typeof model.id !== 'string' || !/^[0-9a-f-]{36}$/i.test(model.id)
       || ids.has(model.id) || typeof model.name !== 'string' || !model.name)
       throw new LlmError('AIGC 内网模型目录无效', 'MALFORMED_RESPONSE');
+    if (model.input !== undefined && (!Array.isArray(model.input) || model.input.length === 0
+      || model.input.some(value => value !== 'text' && value !== 'image')))
+      throw new LlmError('AIGC 内网模型输入能力无效', 'MALFORMED_RESPONSE');
+    if (model.imageInput !== undefined && (!model.imageInput
+      || !['supported', 'unsupported', 'unknown'].includes(model.imageInput.state)))
+      throw new LlmError('AIGC 内网模型图片能力无效', 'MALFORMED_RESPONSE');
     ids.add(model.id);
-    return { provider, id: model.id, name: model.name, inputModalities: ['text'] };
+    return { provider, id: model.id, name: model.name, ...(model.multiplier === undefined ? {} : { multiplier: model.multiplier }), inputModalities: model.input ?? ['text'],
+      ...(model.imageInput === undefined ? {} : { imageInputState: model.imageInput.state }) };
   });
 }
 function connection(value) {
@@ -212,7 +221,7 @@ export class InternalModelAdapter extends LlmAdapter {
       streamIdleTimeoutMs: (this.config.streamIdleTimeoutSeconds ?? 300) * 1000,
       displayName: 'AIGC 内网模型', api: 'openai-completions', baseURL: route.baseURL, headers,
       defaultContextWindow: info.context.contextWindow, defaultMaxTokens: this.config.maxOutputTokens,
-      models: [{ id: route.modelIdentifier, name: info.name, input: ['text'] }],
+      models: [{ id: route.modelIdentifier, name: info.name, input: [...info.inputModalities] }],
     } });
     const direct = new PiAiAdapter({ profiles: () => profiles,
       onStreamFailure: value => {
@@ -225,12 +234,17 @@ export class InternalModelAdapter extends LlmAdapter {
         return fetch(url, { ...init, headers, redirect: 'error' });
       },
       resolveApiKey: async () => route.authType === 'Bearer' ? route.apiKey : 'local-no-auth',
+      resolveAttachments: () => this.ctx.get('attachments'),
+      resolveImageAccess: (attachments, ref) => resolveImageAttachmentAccess(
+        attachments, hostPath => this.ctx.get('fs')?.processPathFromHostPath(hostPath), ref),
       auth: { credentials: credentialStoreFrom(this.ctx), authContext: authContextFrom(this.ctx) },
     });
     const prepared = await direct.prepareCall(provider, route.modelIdentifier, signal);
     signal?.throwIfAborted();
     return { model: { ...prepared.model, ...info, ...(route.maxTokens == null ? {} : { defaultMaxTokens: route.maxTokens }) },
       stream: options => {
+        if (info.imageInputState === 'unknown' && options.messages.some(message => contentHasImage(message.content)))
+          throw new LlmError('图片能力尚未确认，请管理员在 AIGC 模型管理中配置图片理解能力', 'MODEL_IMAGE_CAPABILITY_UNKNOWN');
         if (!route.supportsTools && options.tools?.length)
           throw new LlmError('此内网模型未启用工具调用，请在 AIGC 模型管理中开启', 'UNSUPPORTED_OPTION');
         return streamWithDeadline(this.ctx, prepared, { ...route,

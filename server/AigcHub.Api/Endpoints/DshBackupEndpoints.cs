@@ -18,10 +18,10 @@ public static class DshBackupEndpoints
     {
         var client = app.MapGroup("/v1/backups").WithTags("客户端云端备份");
         client.MapPost("/", UploadAsync).WithMetadata(new RequestSizeLimitAttribute(MaxBytes * 2L));
-        client.MapGet("/", async (int? page, HttpRequest request, AigcHubDbContext db, CancellationToken ct) =>
+        client.MapGet("/", async (int? page, int? pageSize, HttpRequest request, AigcHubDbContext db, CancellationToken ct) =>
         {
             var user = await DshManagedEndpoints.UserAsync(request, db, ct);
-            return user is null ? Results.Unauthorized() : await ListAsync(user.Id, false, page ?? 1, "", db, ct);
+            return user is null ? Results.Unauthorized() : await ListAsync(user.Id, false, page ?? 1, pageSize ?? 20, "", db, ct);
         });
         client.MapGet("/{id:guid}", async (Guid id, HttpRequest request, AigcHubDbContext db, CancellationToken ct) =>
         {
@@ -34,8 +34,8 @@ public static class DshBackupEndpoints
             return user is null ? Results.Unauthorized() : await DeleteAsync(id, user.Id, false, db, ct);
         });
         var portal = app.MapGroup("/api/dsh-backups").RequireAuthorization().WithTags("客户端备份管理");
-        portal.MapGet("/", (int? page, string? search, HttpContext http, ICurrentUser current, AigcHubDbContext db, CancellationToken ct) =>
-            ListAsync(current.Id, CanManage(http), page ?? 1, search ?? "", db, ct));
+        portal.MapGet("/", (int? page, int? pageSize, string? search, HttpContext http, ICurrentUser current, AigcHubDbContext db, CancellationToken ct) =>
+            ListAsync(current.Id, CanManage(http), page ?? 1, pageSize ?? 5, search ?? "", db, ct));
         portal.MapGet("/{id:guid}", async (Guid id, HttpContext http, ICurrentUser current, AigcHubDbContext db, CancellationToken ct) =>
         {
             var all = CanManage(http);
@@ -76,15 +76,16 @@ public static class DshBackupEndpoints
         return Results.Ok(new { row.Id, row.CreatedAt, row.Bytes, row.SessionCount, row.Scope, row.Sha256 });
     }
 
-    private static async Task<IResult> ListAsync(Guid userId, bool all, int page, string search, AigcHubDbContext db, CancellationToken ct)
+    private static async Task<IResult> ListAsync(Guid userId, bool all, int page, int pageSize, string search, AigcHubDbContext db, CancellationToken ct)
     {
         page = Math.Clamp(page, 1, 1000000);
+        pageSize = Math.Clamp(pageSize, 1, 100);
         var query = db.DshBackups.AsNoTracking().Where(x => all || x.UserId == userId);
         if (!string.IsNullOrWhiteSpace(search)) query = query.Where(x => x.User.Name.Contains(search) || x.User.EmployeeNo.Contains(search));
         var total = await query.CountAsync(ct);
-        var items = await query.OrderByDescending(x => x.CreatedAt).ThenBy(x => x.Id).Skip((page - 1) * 20).Take(20)
+        var items = await query.OrderByDescending(x => x.CreatedAt).ThenBy(x => x.Id).Skip((page - 1) * pageSize).Take(pageSize)
             .Select(x => new { x.Id, x.UserId, userName = x.User.Name, x.User.EmployeeNo, x.User.LastLoginAt, x.CreatedAt, x.Bytes, x.SessionCount, x.Scope, x.Sha256, canDownload = x.UserId == userId }).ToArrayAsync(ct);
-        return Results.Ok(new { items, total, page, pageSize = 20 });
+        return Results.Ok(new { items, total, page, pageSize });
     }
 
     private static async Task<IResult> DownloadAsync(Guid id, Guid userId, AigcHubDbContext db, CancellationToken ct)

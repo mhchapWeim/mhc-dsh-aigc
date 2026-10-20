@@ -75,7 +75,7 @@ public static class DesktopDistributionEndpoints
             || await db.Roles.CountAsync(x => roles.Contains(x.Id), ct) != roles.Distinct().Count()
             || await db.Departments.CountAsync(x => departments.Contains(x.Id) && x.IsEnabled, ct) != departments.Distinct().Count()) return null;
         var ids = await db.Users.AsNoTracking().Where(x => x.IsEnabled && (users.Contains(x.Id)
-            || departments.Contains(x.DepartmentId) || x.Roles.Any(r => roles.Contains(r.RoleId)))).Select(x => x.Id).ToArrayAsync(ct);
+            || (x.DepartmentId.HasValue && departments.Contains(x.DepartmentId.Value)) || x.Roles.Any(r => roles.Contains(r.RoleId)))).Select(x => x.Id).ToArrayAsync(ct);
         return ids.Length is > 0 and <= 10000 ? ids : null;
     }
 

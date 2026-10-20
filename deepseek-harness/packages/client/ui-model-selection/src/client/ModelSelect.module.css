@@ -287,3 +287,13 @@
   height: 12px;
   color: var(--dsw-alias-label-tertiary);
 }
+.multiplier {
+  flex: none;
+  max-width: 12em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--dsw-alias-label-tertiary);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}

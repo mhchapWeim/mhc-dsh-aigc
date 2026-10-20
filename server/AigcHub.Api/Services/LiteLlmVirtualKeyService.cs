@@ -12,10 +12,10 @@ namespace AigcHub.Api.Services;
 public sealed record LiteLlmSessionCredential(string BaseUrl, string ApiKey, DateTimeOffset? ExpiresAt);
 
 /// <summary>Capabilities LiteLLM reports for one model name; a field is absent when LiteLLM does not disclose it.</summary>
-public sealed record LiteLlmModelCapability(bool SupportsVision, int? ContextWindow, int? MaxOutputTokens,
+public sealed record LiteLlmModelCapability(bool? SupportsVision, int? ContextWindow, int? MaxOutputTokens,
     string? Mode, string[] SupportedFeatures);
 
-public sealed class LiteLlmVirtualKeyService(IHttpClientFactory clients, IOptions<LiteLlmOptions> configured,
+public sealed partial class LiteLlmVirtualKeyService(IHttpClientFactory clients, IOptions<LiteLlmOptions> configured,
     AigcHubDbContext db, IDataProtectionProvider protection,
     ILogger<LiteLlmVirtualKeyService> logger)
 {
@@ -57,8 +57,13 @@ public sealed class LiteLlmVirtualKeyService(IHttpClientFactory clients, IOption
                     if (!item.TryGetProperty("model_name", out var name) || name.ValueKind != JsonValueKind.String) continue;
                     var info = item.TryGetProperty("model_info", out var declared) && declared.ValueKind == JsonValueKind.Object
                         ? declared : default;
-                    var vision = info.ValueKind == JsonValueKind.Object
-                        && info.TryGetProperty("supports_vision", out var flag) && flag.ValueKind == JsonValueKind.True;
+                    bool? vision = info.ValueKind == JsonValueKind.Object
+                        && info.TryGetProperty("supports_vision", out var flag)
+                        && flag.ValueKind is JsonValueKind.True or JsonValueKind.False ? flag.GetBoolean() : null;
+                    // One public alias may route to several deployments. Do not let response order
+                    // enable images when their capabilities disagree or are undisclosed.
+                    if (models.TryGetValue(name.GetString()!, out var previous) && previous.SupportsVision != vision)
+                        vision = null;
                     models[name.GetString()!] = new LiteLlmModelCapability(vision,
                         PositiveTokenCount(info, "max_input_tokens"),
                         PositiveTokenCount(info, "max_output_tokens") ?? PositiveTokenCount(info, "max_tokens"),
@@ -74,7 +79,8 @@ public sealed class LiteLlmVirtualKeyService(IHttpClientFactory clients, IOption
             _capabilityCache = (DateTimeOffset.UtcNow.AddMinutes(5), models);
             return models;
         }
-        catch (Exception exception) when (exception is HttpRequestException or JsonException)
+        catch (Exception exception) when (exception is HttpRequestException or JsonException
+            || exception is OperationCanceledException && !ct.IsCancellationRequested)
         {
             logger.LogWarning(exception, "LiteLLM model capability lookup failed; DSH models report no capabilities");
             return NoCapabilities;
@@ -115,24 +121,20 @@ public sealed class LiteLlmVirtualKeyService(IHttpClientFactory clients, IOption
         return new LiteLlmSessionCredential(publicBase.ToString().TrimEnd('/'), _protector.Unprotect(keys[0].KeyProtected), null);
     }
 
-    public async Task<string> CreateAsync(string alias, string? customKey, CancellationToken ct)
+    public async Task<string> CreateAsync(string alias, string? customKey, CancellationToken ct, VirtualKeyPolicy? policy = null)
     {
-        var options = configured.Value;
-        if (!Uri.TryCreate(options.BaseUrl, UriKind.Absolute, out var internalBase)
-            || string.IsNullOrWhiteSpace(options.ManagementApiKey))
-            throw new WorkflowException("LiteLLM 管理接口未配置", 503);
-        var root = internalBase.ToString().TrimEnd('/');
-        if (root.EndsWith("/v1", StringComparison.OrdinalIgnoreCase)) root = root[..^3];
-        using var request = new HttpRequestMessage(HttpMethod.Post, $"{root}/key/generate");
-        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", options.ManagementApiKey.Trim());
-        request.Content = new StringContent(JsonSerializer.Serialize(new Dictionary<string, object?>
+        if (policy is not null)
         {
-            ["key_alias"] = alias, ["key"] = customKey,
-            ["metadata"] = new { source = "aigc-managed" }
-        }), Encoding.UTF8, "application/json");
-        using var response = await clients.CreateClient("litellm-key-management").SendAsync(request, ct);
-        if (!response.IsSuccessStatusCode) throw new WorkflowException($"LiteLLM 虚拟 Key 创建失败（{(int)response.StatusCode}）", 502);
-        using var body = await JsonDocument.ParseAsync(await response.Content.ReadAsStreamAsync(ct), cancellationToken: ct);
+            ValidatePolicy(policy);
+            if (!policy.AllModels && policy.Models.Except(await PolicyModelOptionsAsync(ct), StringComparer.Ordinal).Any())
+                throw new WorkflowException("所选模型已不在 LiteLLM 目录中，请刷新模型列表", 400);
+        }
+        var payload = policy is null ? new Dictionary<string, object?>() : PolicyPayload(policy);
+        payload["key_alias"] = alias;
+        payload["key"] = customKey;
+        payload["metadata"] = new { source = "aigc-managed" };
+        if (policy?.Duration is not null) payload["duration"] = policy.Duration;
+        using var body = await PolicyRequestAsync(HttpMethod.Post, "/key/generate", payload, ct);
         if (!body.RootElement.TryGetProperty("key", out var value) || value.ValueKind != JsonValueKind.String
             || string.IsNullOrWhiteSpace(value.GetString())) throw new WorkflowException("LiteLLM 响应缺少 Key", 502);
         return _protector.Protect(value.GetString()!);

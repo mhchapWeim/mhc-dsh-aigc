@@ -8,7 +8,7 @@ namespace AigcHub.Api.Endpoints;
 
 public static class VirtualKeyEndpoints
 {
-    private sealed record CreateKeyInput(string Alias, string? CustomKey);
+    private sealed record CreateKeyInput(string Alias, string? CustomKey, VirtualKeyPolicy? Policy = null);
     private sealed record KeyGrantsInput(Guid[] UserIds, Guid[] DepartmentIds, Guid[] OrganizationIds, Guid[]? RoleIds = null);
     private sealed record OrganizationInput(string Name, Guid[] UserIds);
     private sealed record ToolAuditInput(string SessionId, string CallId, string ToolName, bool Succeeded, string? ErrorCode);
@@ -23,24 +23,27 @@ public static class VirtualKeyEndpoints
         group.MapPut("/{id:guid}/enabled", SetEnabledAsync);
         group.MapGet("/{id:guid}/grants", GetGrantsAsync);
         group.MapPut("/{id:guid}/grants", SetGrantsAsync);
-        group.MapGet("/grant-options", async (AigcHubDbContext db, CancellationToken ct) => Results.Ok(new
+        group.MapGet("/grant-options", async (Guid? keyId, AigcHubDbContext db, CancellationToken ct) =>
+            Results.Ok(await VirtualKeyGrantRules.GrantOptionsAsync(db, keyId, ct)));
+        group.MapGet("/model-options", async (LiteLlmVirtualKeyService service, CancellationToken ct) =>
+            Results.Ok(await service.PolicyModelOptionsAsync(ct)));
+        group.MapGet("/{id:guid}/policy", async (Guid id, AigcHubDbContext db, LiteLlmVirtualKeyService service, CancellationToken ct) =>
         {
-            users = await db.Users.AsNoTracking().Where(x => x.IsEnabled).OrderBy(x => x.EmployeeNo)
-                .Select(x => new { x.Id, x.Name, x.EmployeeNo }).ToArrayAsync(ct),
-            departments = await db.Departments.AsNoTracking().Where(x => x.IsEnabled).OrderBy(x => x.Name)
-                .Select(x => new { x.Id, x.Name, x.Code }).ToArrayAsync(ct),
-            roles = await db.Roles.AsNoTracking().OrderBy(x => x.Name).Select(x => new { x.Id, x.Name, x.Code }).ToArrayAsync(ct)
-        }));
+            var key = await db.ManagedVirtualKeys.AsNoTracking().SingleOrDefaultAsync(x => x.Id == id, ct);
+            return key is null ? Results.NotFound() : Results.Ok(await service.GetPolicyAsync(key.KeyProtected, ct));
+        });
+        group.MapPut("/{id:guid}/policy", UpdatePolicyAsync);
         group.MapGet("/organizations", async (AigcHubDbContext db, CancellationToken ct) => Results.Ok(
             await db.VirtualKeyOrganizations.AsNoTracking().OrderBy(x => x.Name)
                 .Select(x => new { x.Id, x.Name, userIds = db.VirtualKeyOrganizationMembers.Where(m => m.OrganizationId == x.Id)
                     .Select(m => m.UserId).ToArray() }).ToArrayAsync(ct)));
         group.MapPost("/organizations", CreateOrganizationAsync);
         group.MapPut("/organizations/{id:guid}", UpdateOrganizationAsync);
-        app.MapGet("/api/operation-audits", async (int? page, AigcHubDbContext db, CancellationToken ct) =>
+        app.MapGet("/api/operation-audits", async (int? page, int? pageSize, AigcHubDbContext db, CancellationToken ct) =>
         {
             var number = Math.Clamp(page ?? 1, 1, 100000);
-            const int pageSize = 10;
+            pageSize = Math.Clamp(pageSize ?? 5, 1, 100);
+            var size = pageSize.Value;
             var total = await db.OperationAudits.AsNoTracking().CountAsync(ct);
             var items = await (from audit in db.OperationAudits.AsNoTracking()
                 join user in db.Users.AsNoTracking() on audit.UserId equals user.Id into actors
@@ -49,7 +52,7 @@ public static class VirtualKeyEndpoints
                 select new { audit.Id, audit.UserId, ActorName = actor == null ? "已删除用户" : actor.Name,
                     audit.Action, audit.EntityType, audit.EntityId, audit.DetailJson,
                     audit.Succeeded, audit.CreatedAt })
-                .Skip((number - 1) * pageSize).Take(pageSize).ToArrayAsync(ct);
+                .Skip((number - 1) * size).Take(size).ToArrayAsync(ct);
             var users = await db.Users.AsNoTracking().ToDictionaryAsync(x => x.Id, x => x.Name, ct);
             var departments = await db.Departments.AsNoTracking().ToDictionaryAsync(x => x.Id, x => x.Name, ct);
             var organizations = await db.VirtualKeyOrganizations.AsNoTracking().ToDictionaryAsync(x => x.Id, x => x.Name, ct);
@@ -75,24 +78,38 @@ public static class VirtualKeyEndpoints
         if (await db.ManagedVirtualKeys.AnyAsync(x => x.Alias == alias, ct)) throw new WorkflowException("Key 别名已存在", 409);
         if (input.CustomKey is { Length: > 0 } custom && (!custom.StartsWith("sk-", StringComparison.Ordinal) || custom.Length < 16))
             throw new WorkflowException("自定义 Key 须以 sk- 开头，长度至少 16 字符", 400);
-        var protectedKey = await service.CreateAsync(alias, input.CustomKey, ct);
+        var protectedKey = await service.CreateAsync(alias, input.CustomKey, ct, input.Policy);
         var entity = new ManagedVirtualKey { Alias = alias, KeyProtected = protectedKey };
         db.ManagedVirtualKeys.Add(entity);
-        Audit(db, current.Id, "virtual-key.create", entity.Id.ToString(), new { alias });
+        Audit(db, current.Id, "virtual-key.create", entity.Id.ToString(), new { alias, input.Policy });
         await db.SaveChangesAsync(ct);
         return Results.Ok(new { entity.Id, entity.Alias, entity.IsEnabled });
+    }
+
+    private static async Task<IResult> UpdatePolicyAsync(Guid id, VirtualKeyPolicy input, ICurrentUser current,
+        AigcHubDbContext db, LiteLlmVirtualKeyService service, CancellationToken ct)
+    {
+        var key = await db.ManagedVirtualKeys.SingleOrDefaultAsync(x => x.Id == id, ct);
+        if (key is null) return Results.NotFound();
+        await service.UpdatePolicyAsync(key.KeyProtected, input, ct);
+        Audit(db, current.Id, "virtual-key.policy", id.ToString(), new { key.Alias, policy = input });
+        await db.SaveChangesAsync(ct);
+        return Results.Ok(await service.GetPolicyAsync(key.KeyProtected, ct));
     }
 
     private static async Task<IResult> SetEnabledAsync(Guid id, bool enabled, ICurrentUser current,
         AigcHubDbContext db, LiteLlmVirtualKeyService service, CancellationToken ct)
     {
+        await using var mutation = await VirtualKeyGrantRules.BeginMutationAsync(db, ct);
         var key = await db.ManagedVirtualKeys.SingleOrDefaultAsync(x => x.Id == id, ct);
         if (key is null) return Results.NotFound();
+        if (enabled) await VirtualKeyGrantRules.AssertExclusiveAsync(db, id, ct);
         if (key.IsEnabled == enabled) return Results.NoContent();
         await service.SetBlockedAsync(key.KeyProtected, !enabled, ct);
         key.IsEnabled = enabled;
         Audit(db, current.Id, "virtual-key.enabled", id.ToString(), new { key.Alias, enabled });
         await db.SaveChangesAsync(ct);
+        await mutation.CommitAsync(ct);
         return Results.NoContent();
     }
 
@@ -110,6 +127,7 @@ public static class VirtualKeyEndpoints
     private static async Task<IResult> SetGrantsAsync(Guid id, KeyGrantsInput input, ICurrentUser current,
         AigcHubDbContext db, CancellationToken ct)
     {
+        await using var mutation = await VirtualKeyGrantRules.BeginMutationAsync(db, ct);
         var key = await db.ManagedVirtualKeys.AsNoTracking().SingleOrDefaultAsync(x => x.Id == id, ct);
         if (key is null) return Results.NotFound();
         var users = input.UserIds.Distinct().ToArray();
@@ -121,6 +139,7 @@ public static class VirtualKeyEndpoints
             || await db.VirtualKeyOrganizations.CountAsync(x => organizations.Contains(x.Id), ct) != organizations.Length
             || await db.Roles.CountAsync(x => roles.Contains(x.Id), ct) != roles.Length)
             throw new WorkflowException("授权范围包含不存在或已停用的对象", 400);
+        await VirtualKeyGrantRules.AssertExclusiveAsync(db, id, ct, new(users, departments, organizations, roles));
         var desired = users.Select(x => (Type: "User", Id: x))
             .Concat(departments.Select(x => (Type: "Department", Id: x)))
             .Concat(roles.Select(x => (Type: "Role", Id: x)))
@@ -136,12 +155,14 @@ public static class VirtualKeyEndpoints
             key.Alias, users, departments, roles, organizations, userNames, departmentNames, organizationNames
         });
         await db.SaveChangesAsync(ct);
+        await mutation.CommitAsync(ct);
         return Results.NoContent();
     }
 
     private static async Task<IResult> CreateOrganizationAsync(OrganizationInput input, ICurrentUser current,
         AigcHubDbContext db, CancellationToken ct)
     {
+        await using var mutation = await VirtualKeyGrantRules.BeginMutationAsync(db, ct);
         var name = input.Name.Trim();
         var users = input.UserIds.Distinct().ToArray();
         if (name.Length is < 2 or > 100) throw new WorkflowException("组织名称长度须为 2–100 字符", 400);
@@ -149,18 +170,21 @@ public static class VirtualKeyEndpoints
             throw new WorkflowException("组织名称已存在", 409);
         if (await db.Users.CountAsync(x => users.Contains(x.Id) && x.IsEnabled, ct) != users.Length)
             throw new WorkflowException("组织包含不存在或已停用的用户", 400);
+        await AssertOrganizationUsersAsync(db, null, users, ct);
         var org = new VirtualKeyOrganization { Name = name };
         db.VirtualKeyOrganizations.Add(org);
         db.VirtualKeyOrganizationMembers.AddRange(users.Select(x => new VirtualKeyOrganizationMember { OrganizationId = org.Id, UserId = x }));
         var userNames = await db.Users.AsNoTracking().Where(x => users.Contains(x.Id)).OrderBy(x => x.Name).Select(x => x.Name).ToArrayAsync(ct);
         Audit(db, current.Id, "virtual-key.organization.create", org.Id.ToString(), new { name, users, userNames });
         await db.SaveChangesAsync(ct);
+        await mutation.CommitAsync(ct);
         return Results.Ok(new { org.Id, org.Name, userIds = users });
     }
 
     private static async Task<IResult> UpdateOrganizationAsync(Guid id, OrganizationInput input, ICurrentUser current,
         AigcHubDbContext db, CancellationToken ct)
     {
+        await using var mutation = await VirtualKeyGrantRules.BeginMutationAsync(db, ct);
         var org = await db.VirtualKeyOrganizations.SingleOrDefaultAsync(x => x.Id == id, ct);
         if (org is null) return Results.NotFound();
         var name = input.Name.Trim();
@@ -170,6 +194,12 @@ public static class VirtualKeyEndpoints
             throw new WorkflowException("组织名称已存在", 409);
         if (await db.Users.CountAsync(x => users.Contains(x.Id) && x.IsEnabled, ct) != users.Length)
             throw new WorkflowException("组织包含不存在或已停用的用户", 400);
+        await AssertOrganizationUsersAsync(db, id, users, ct);
+        var affected = await db.AccessGrants.AsNoTracking().Where(x => x.SubjectType == "Organization" && x.SubjectId == id
+            && x.ResourceKey.StartsWith("virtual-key:")).Select(x => x.ResourceKey).ToArrayAsync(ct);
+        foreach (var resource in affected)
+            if (Guid.TryParse(resource["virtual-key:".Length..], out var keyId))
+                await VirtualKeyGrantRules.AssertExclusiveAsync(db, keyId, ct, organizationId: id, organizationUsers: users);
         var previousName = org.Name;
         org.Name = name;
         var existing = await db.VirtualKeyOrganizationMembers.Where(x => x.OrganizationId == id).ToArrayAsync(ct);
@@ -179,7 +209,17 @@ public static class VirtualKeyEndpoints
         var userNames = await db.Users.AsNoTracking().Where(x => users.Contains(x.Id)).OrderBy(x => x.Name).Select(x => x.Name).ToArrayAsync(ct);
         Audit(db, current.Id, "virtual-key.organization.update", id.ToString(), new { name, previousName, users, userNames });
         await db.SaveChangesAsync(ct);
+        await mutation.CommitAsync(ct);
         return Results.NoContent();
+    }
+
+    private static async Task AssertOrganizationUsersAsync(AigcHubDbContext db, Guid? id, Guid[] users, CancellationToken ct)
+    {
+        var conflict = await (from member in db.VirtualKeyOrganizationMembers.AsNoTracking()
+            join organization in db.VirtualKeyOrganizations.AsNoTracking() on member.OrganizationId equals organization.Id
+            where member.OrganizationId != id && users.Contains(member.UserId)
+            select organization.Name).FirstOrDefaultAsync(ct);
+        if (conflict is not null) throw new WorkflowException($"所选用户已在“{conflict}”分组中，请先移除原分组成员", 409);
     }
 
     private static string KeyResource(Guid id) => $"virtual-key:{id:D}";
@@ -208,6 +248,9 @@ public static class VirtualKeyEndpoints
 
     private static string AuditActionLabel(string action) => action switch
     {
+        "user.password" => "修改本人密码",
+        "user.password-reset" => "管理员修改用户密码",
+        "virtual-key.policy" => "修改虚拟 Key 套餐规则",
         "virtual-key.create" => "创建虚拟 Key",
         "virtual-key.enabled" => "切换虚拟 Key 状态",
         "virtual-key.grants" => "修改虚拟 Key 授权",

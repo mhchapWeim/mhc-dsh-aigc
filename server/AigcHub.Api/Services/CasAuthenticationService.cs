@@ -53,12 +53,9 @@ public sealed class CasAuthenticationService(IHttpClientFactory clients, IOption
         if (user is not null) return user;
         if (await db.Users.AnyAsync(x => x.Email.ToLower() == identity.Email.ToLower(), ct))
             throw new InvalidOperationException("SSO 邮箱已由其他工号使用，请联系管理员核对账号。");
-        var department = identity.OrgId is null ? null
-            : await db.Departments.SingleOrDefaultAsync(x => x.Code.ToLower() == identity.OrgId.ToLower() && x.IsEnabled, ct);
-        department ??= await db.Departments.SingleAsync(x => x.Code == configured.Value.DefaultDepartmentCode && x.IsEnabled, ct);
         var role = await db.Roles.Include(x => x.Permissions).ThenInclude(x => x.Permission)
             .SingleAsync(x => x.Code == "normal-user", ct);
-        user = new AppUser { EmployeeNo = identity.EmployeeNo, Name = identity.Name, Email = identity.Email, Department = department, PasswordHash = "" };
+        user = new AppUser { EmployeeNo = identity.EmployeeNo, Name = identity.Name, Email = identity.Email, DepartmentId = null, PasswordHash = "" };
         // CAS-created accounts have no shared, guessable local password. Administrators may reset it explicitly.
         user.PasswordHash = hasher.HashPassword(user, Convert.ToHexString(RandomNumberGenerator.GetBytes(32)));
         user.Roles.Add(new UserRole { User = user, Role = role });

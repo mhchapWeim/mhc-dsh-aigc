@@ -72,7 +72,7 @@ public sealed class ModelGrantTests
 
         var second = new ManagedVirtualKey { Alias = "department", KeyProtected = protector.Protect("sk-dept") };
         db.ManagedVirtualKeys.Add(second);
-        db.AccessGrants.Add(new AccessGrant { ResourceKey = $"virtual-key:{second.Id:D}", SubjectType = "Department", SubjectId = user.DepartmentId });
+        db.AccessGrants.Add(new AccessGrant { ResourceKey = $"virtual-key:{second.Id:D}", SubjectType = "Department", SubjectId = user.DepartmentId!.Value });
         await db.SaveChangesAsync();
         var error = await Assert.ThrowsAsync<WorkflowException>(() => service.GetAsync(user.Id, default));
         Assert.Equal(409, error.StatusCode);
@@ -102,12 +102,12 @@ public sealed class ModelGrantTests
         Assert.Equal(model.Id, Assert.Single(await service.AvailableAsync(user.Id, default)).Id);
         Assert.Equal(model.Id, (await service.ResolveGrantedAsync(user.Id, model.Id, default))!.Id);
 
-        await grants.SetAsync(AccessGrantService.ModelKey(model.Id), new([], [], [user.DepartmentId]), default);
+        await grants.SetAsync(AccessGrantService.ModelKey(model.Id), new([], [], [user.DepartmentId!.Value]), default);
         Assert.Equal(model.Id, Assert.Single(await service.AvailableAsync(user.Id, default)).Id);
 
-        await grants.SetAsync(AccessGrantService.WebSearchKey, new([], [], [user.DepartmentId]), default);
+        await grants.SetAsync(AccessGrantService.WebSearchKey, new([], [], [user.DepartmentId!.Value]), default);
         Assert.True(await grants.AllowsAsync(AccessGrantService.WebSearchKey, user.Id, default));
-        var department = await db.Departments.SingleAsync(x => x.Id == user.DepartmentId);
+        var department = await db.Departments.SingleAsync(x => x.Id == user.DepartmentId!.Value);
         department.IsEnabled = false;
         await db.SaveChangesAsync();
         Assert.False(await grants.AllowsAsync(AccessGrantService.WebSearchKey, user.Id, default));

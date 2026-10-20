@@ -19,7 +19,7 @@ it.each(['users', 'roles', 'departments'] as const)('selects all %s across pages
   const key = { users: 'userIds', roles: 'roleIds', departments: 'departmentIds' }[group];
   await user.click(screen.getByRole('tab', { name: new RegExp(label) }));
   await user.click(screen.getByRole('button', { name: '选择本页' }));
-  expect(JSON.parse(screen.getByTestId('selection').textContent!)[key]).toHaveLength(12);
+  expect(JSON.parse(screen.getByTestId('selection').textContent!)[key]).toHaveLength(5);
   await user.click(screen.getByRole('button', { name: '全选' }));
   const selection = JSON.parse(screen.getByTestId('selection').textContent!);
   expect(selection[key]).toHaveLength(25);
@@ -50,12 +50,12 @@ it('preserves selections across pages and resets pagination after searching or c
   const options = { users: Array.from({ length: 25 }, (_, index) => ({ id: `user-${index}`, name: `员工${index}`, employeeNo: `w${index}` })), roles: [], departments: [] };
   function Form() { const [value, setValue] = useState(emptyAudience); return <form className="entity-form"><RecipientPicker options={options} value={value} onChange={setValue} mode="authorization" /></form>; }
   const user = userEvent.setup(); render(<Form />);
-  expect(screen.getAllByRole('checkbox')).toHaveLength(12);
+  expect(screen.getAllByRole('checkbox')).toHaveLength(5);
   await user.click(screen.getByRole('checkbox', { name: /员工0.*w0/ }));
   await user.click(within(screen.getByRole('navigation', { name: '授权范围用户分页' })).getByRole('button', { name: '下一页' }));
-  await user.click(screen.getByRole('checkbox', { name: /员工12.*w12/ }));
+  await user.click(screen.getByRole('checkbox', { name: /员工5.*w5/ }));
   expect(screen.getByRole('button', { name: '移除员工0' })).toBeVisible();
-  expect(screen.getByRole('button', { name: '移除员工12' })).toBeVisible();
+  expect(screen.getByRole('button', { name: '移除员工5' })).toBeVisible();
   await user.click(screen.getByRole('tab', { name: /部门/ }));
   await user.click(screen.getByRole('tab', { name: /用户/ }));
   expect(screen.getByRole('checkbox', { name: /员工0.*w0/ })).toBeChecked();

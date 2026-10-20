@@ -67,9 +67,9 @@ it('paginates plugins independently from client status', async () => {
   api.getPlugins.mockResolvedValue(Array.from({ length: 11 }, (_, index) => ({ ...template, id: `p-${index}`, name: `插件 ${index + 1}` })));
   const user = userEvent.setup(); render(<PluginsPage />);
   await screen.findByRole('heading', { name: '插件 1' });
-  expect(screen.getAllByRole('button', { name: '配置与发布' })).toHaveLength(10);
+  expect(screen.getAllByRole('button', { name: '配置与发布' })).toHaveLength(5);
   expect(screen.queryByRole('heading', { name: '插件 11' })).not.toBeInTheDocument();
-  await user.click(within(screen.getByRole('navigation', { name: '插件管理分页' })).getByRole('button', { name: '下一页' }));
+  await user.click(within(screen.getByRole('navigation', { name: '插件管理分页' })).getByRole('button', { name: '第 3 页' }));
   expect(screen.getByRole('heading', { name: '插件 11' })).toBeInTheDocument();
   expect(screen.getAllByRole('button', { name: '配置与发布' })).toHaveLength(1);
 });

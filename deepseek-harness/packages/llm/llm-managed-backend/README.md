@@ -9,6 +9,8 @@ English | [中文](README.zh.md)
 
 ## Summary
 
+The backend may include `imageInput: { state, source, reason }` alongside the legacy `input` field. The adapter preserves `state` as `imageInputState`; `unknown` blocks image dispatch with a configuration error while allowing text requests. Administrators can explicitly override upstream metadata in AIGC. Older catalogs without the field keep their previous behavior.
+
 An organization can serve only the models granted to a backend-issued token and keep its upstream provider API keys on the backend. The adapter reads the granted model list and a short-lived connection from the backend, then generates directly against that connection. The backend verifies the token on every catalog read, and the connection key it issues is scoped to the granted models and expires on its own; the local catalog is not an authorization decision. This package does not authenticate a person or issue tokens.
 
 ## Table of Contents
@@ -113,3 +115,5 @@ Organization mode provides feedback delivery to `/v1/feedback` using the current
 ## Persistent organization login
 
 Password and CAS login persist a Host-only refresh grant. Access tokens renew silently before expiry and after restart; network errors retain the grant, while revocation and manual sign-out remove it. `sessionTiming` configures positive millisecond values for `renewBeforeMs`, `pollMs`, and `requestTimeoutMs` (defaults: 300000, 60000, 10000).
+
+Managed catalogs accept the optional string `multiplier` (maximum 32 characters) and preserve it through list, resolution, and prepared-call metadata.

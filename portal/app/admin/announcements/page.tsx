@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { Bell, Plus, RefreshCw, Eye, Pencil, Send, Undo2 } from 'lucide-react';
+import { usePageSize } from '../../components/use-page-size';
 import { AntPagination } from '../../components/ant-pagination';
 import { AnnouncementReceipts } from './announcement-receipts';
 import { Modal } from '../../components/modal';
@@ -24,7 +25,7 @@ export default function AnnouncementPage() {
   const [busy, setBusy] = useState(false);
   const [query, setQuery] = useState('');
   const [page, setPage] = useState(1);
-  const pageSize = 10;
+  const [pageSize, setPageSize] = usePageSize();
   const filtered = items.filter(item => item.title.includes(query));
   const currentPage = Math.min(page, Math.max(1, Math.ceil(filtered.length / pageSize)));
   const refresh = async () => { const [data, people] = await Promise.all([getDesktopAnnouncements(), getDesktopAudienceOptions('announcements')]); setItems(data); setOptions(people); };
@@ -45,7 +46,7 @@ export default function AnnouncementPage() {
         <td>{item.recipients.length} / {item.recipients.filter(person => person.readAt).length} / {item.recipients.filter(person => person.confirmedAt).length}</td>
         <td><div className="row-actions"><button type="button" aria-label="详情与回执" title="详情与回执" onClick={() => setDetail(item)}><Eye size={16} /></button>{item.status === 'Draft' && <><button type="button" aria-label="编辑公告" title="编辑公告" disabled={busy} onClick={() => setForm({ ...item, startsAt: localDate(item.startsAt), endsAt: item.endsAt ? localDate(item.endsAt) : '', ...(item.audience ?? { ...emptyAudience(), userIds: item.recipients.map(person => person.userId) }) })}><Pencil size={16} /></button><button type="button" aria-label="发布公告" title="发布公告" disabled={busy} onClick={() => void run(() => setDesktopAnnouncementStatus(item.id, 'Published'))}><Send size={16} /></button></>}{item.status === 'Published' && <button type="button" className="danger-icon" aria-label="撤回公告" title="撤回公告" disabled={busy} onClick={() => void run(() => setDesktopAnnouncementStatus(item.id, 'Withdrawn'))}><Undo2 size={16} /></button>}</div></td>
       </tr>)}</tbody></table></div>{items.length === 0 && <div className="empty-state">暂无公告。新增草稿并选择接收人员后发布。</div>}
-      <AntPagination ariaLabel="公告列表分页" current={currentPage} total={filtered.length} pageSize={pageSize} onChange={setPage} />
+      <AntPagination onPageSizeChange={setPageSize} ariaLabel="公告列表分页" current={currentPage} total={filtered.length} pageSize={pageSize} onChange={setPage} />
     </section>
     {form && <Modal title={form.id ? '编辑公告草稿' : '新增公告'} onClose={() => { if (!busy) setForm(null); }}><form className="entity-form distribution-form" onSubmit={save}>
       <label>标题<input required maxLength={200} value={form.title} onChange={event => setForm({ ...form, title: event.target.value })} /></label>

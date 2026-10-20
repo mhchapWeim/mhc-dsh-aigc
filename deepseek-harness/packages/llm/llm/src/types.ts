@@ -339,6 +339,10 @@ export interface LlmModelInfo {
   description?: string
   /** Accepted request modalities; absent means unknown, while an explicit omission is negative capability. */
   inputModalities?: readonly ModelModality[]
+  /** Managed image capability; unknown requires explicit configuration before image admission. */
+  imageInputState?: 'supported' | 'unsupported' | 'unknown'
+  /** Administrator-provided display multiplier; does not alter billing. */
+  multiplier?: string
 }
 
 /** Provider-owned context capacity for one exact provider/model route. */

@@ -1,10 +1,12 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { usePageSize } from '../../components/use-page-size';
 import { AntPagination } from '../../components/ant-pagination';
 import { getOperationAudits, type OperationAuditRow } from '../../lib/api-client';
 
 export default function AuditsPage() {
+  const [pageSize, setPageSize] = usePageSize();
   const [rows, setRows] = useState<OperationAuditRow[]>([]);
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
@@ -13,7 +15,7 @@ export default function AuditsPage() {
 
   useEffect(() => {
     let active = true;
-    getOperationAudits(page).then((result) => {
+    getOperationAudits(page, pageSize).then((result) => {
       if (!active) return;
       if (!Array.isArray(result.items)) throw new Error('审计接口格式不匹配，请更新 AIGC API 服务。');
       setRows(result.items);
@@ -28,7 +30,7 @@ export default function AuditsPage() {
       setLoading(false);
     });
     return () => { active = false; };
-  }, [page]);
+  }, [page, pageSize]);
 
   return <div className="admin-page page-enter">
     <div className="page-title"><div><span className="section-kicker">AUDIT TRAIL</span><h1>操作审计</h1><p>记录 AIGC 管理操作与工具执行结果。密钥和完整工具输出不会写入审计详情。</p></div></div>
@@ -45,7 +47,7 @@ export default function AuditsPage() {
         {loading && <div className="empty-state" role="status">正在加载审计记录…</div>}
         {!loading && rows.length === 0 && !error && <div className="empty-state"><strong>暂无审计记录</strong></div>}
       </div>
-      <AntPagination ariaLabel="审计记录分页" current={page} total={total} pageSize={10} onChange={(next) => { setLoading(true); setPage(next); }} />
+      <AntPagination onPageSizeChange={setPageSize} ariaLabel="审计记录分页" current={page} total={total} pageSize={pageSize} onChange={(next) => { setLoading(true); setPage(next); }} />
     </section>
   </div>;
 }

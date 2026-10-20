@@ -138,6 +138,9 @@ public static class DatabaseSchemaInitializer
             "UpdatedAt" timestamp with time zone NOT NULL,
             CONSTRAINT "PK_ModelConfigurations" PRIMARY KEY ("Id")
         );
+        ALTER TABLE aigc_hub."Users" ALTER COLUMN "DepartmentId" DROP NOT NULL;
+        ALTER TABLE aigc_hub."ModelConfigurations" ADD COLUMN IF NOT EXISTS "Multiplier" text NOT NULL DEFAULT '';
+        ALTER TABLE aigc_hub."ModelConfigurations" ADD COLUMN IF NOT EXISTS "ImageInputMode" text NOT NULL DEFAULT 'Auto';
         CREATE UNIQUE INDEX IF NOT EXISTS "IX_ModelConfigurations_Name" ON aigc_hub."ModelConfigurations" ("Name");
 
         CREATE TABLE IF NOT EXISTS aigc_hub."UserModelGrants" (

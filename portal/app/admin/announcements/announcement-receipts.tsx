@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { usePageSize } from '../../components/use-page-size';
 import { AntPagination } from '../../components/ant-pagination';
 import type { DesktopAnnouncement } from '../../lib/api-client';
 
@@ -8,7 +9,7 @@ const formatDate = (value: string | null) => value ? new Date(value).toLocaleStr
 
 export function AnnouncementReceipts({ announcement, onClose }: { announcement: DesktopAnnouncement; onClose: () => void }) {
   const [page, setPage] = useState(1);
-  const pageSize = 10;
+  const [pageSize, setPageSize] = usePageSize();
   const people = announcement.recipients;
   const current = Math.min(page, Math.max(1, Math.ceil(people.length / pageSize)));
   const counts = [
@@ -24,7 +25,7 @@ export function AnnouncementReceipts({ announcement, onClose }: { announcement: 
       <div className="receipt-table-wrap"><table className="data-grid receipt-table" aria-label="公告接收回执"><thead><tr><th>人员</th><th>送达时间</th><th>已读时间</th><th>确认时间</th></tr></thead><tbody>{people.slice((current - 1) * pageSize, current * pageSize).map(person => <tr key={person.userId}>
         <td><strong>{person.name}</strong><small>{person.employeeNo}</small></td><td>{formatDate(person.deliveredAt)}</td><td>{formatDate(person.readAt)}</td><td>{formatDate(person.confirmedAt)}</td>
       </tr>)}</tbody></table></div>{people.length === 0 && <div className="empty-state">暂无接收人员</div>}
-      <AntPagination ariaLabel="公告回执分页" current={current} total={people.length} pageSize={pageSize} onChange={setPage} />
+      <AntPagination onPageSizeChange={setPageSize} ariaLabel="公告回执分页" current={current} total={people.length} pageSize={pageSize} onChange={setPage} />
     </section>
     <div className="modal-actions"><button type="button" className="secondary-action" onClick={onClose}>关闭</button></div>
   </div>;

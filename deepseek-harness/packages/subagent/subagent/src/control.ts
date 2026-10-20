@@ -62,6 +62,7 @@ export function rejectPrompt(error: unknown, childSessionId: SessionId, signal: 
   }
   if (error instanceof SubagentError) {
     switch (error.code) {
+      case 'MODEL_IMAGE_CAPABILITY_UNKNOWN':
       case 'MODEL_DOES_NOT_SUPPORT_IMAGES':
         throw new RemoteError(
           'subagent/attachment-invalid',

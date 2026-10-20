@@ -2,11 +2,11 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Download, FileClock, RefreshCw, Search } from 'lucide-react';
+import { usePageSize } from '../../components/use-page-size';
 import { AntPagination } from '../../components/ant-pagination';
 import { Modal } from '../../components/modal';
 import { BackendDshUpload, BackendDshUploadBatch, downloadDshUpload, getDshUploadBatches } from '../../lib/api-client';
 
-const pageSize = 10;
 const labels: Record<BackendDshUpload['status'], string> = {
   Pending: '等待上传', Uploading: '上传中', Finalizing: '等待校验', Completed: '已完成',
 };
@@ -18,6 +18,7 @@ const progressPercent = (item: BackendDshUpload) => item.bytes > 0
   : item.completed ? 100 : 0;
 
 export default function DshUploadsPage() {
+  const [pageSize, setPageSize] = usePageSize();
   const [items, setItems] = useState<BackendDshUploadBatch[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
@@ -51,7 +52,7 @@ export default function DshUploadsPage() {
     } finally {
       if (currentRequest === requestId.current) setLoading(false);
     }
-  }, [page, searchTerm, status]);
+  }, [page, searchTerm, status, pageSize]);
 
   useEffect(() => {
     setLoading(true);
@@ -102,7 +103,7 @@ export default function DshUploadsPage() {
         {!loading && !items.length && <div className="empty-state"><FileClock size={28} /><strong>暂无上传批次</strong><span>DSH 产生文件同步任务后会显示在这里。</span></div>}
         {loading && <div className="empty-state" role="status">正在加载上传任务…</div>}
       </div>
-      <AntPagination ariaLabel="DSH 上传任务分页" current={page} pageSize={pageSize} total={total} onChange={setPage} />
+      <AntPagination onPageSizeChange={setPageSize} ariaLabel="DSH 上传任务分页" current={page} pageSize={pageSize} total={total} onChange={setPage} />
     </section>
     {detail && <Modal title={detail.title} onClose={() => setDetail(null)}><div className="dsh-upload-detail">{detail.value}</div></Modal>}
   </div>;

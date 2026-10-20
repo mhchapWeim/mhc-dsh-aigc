@@ -65,6 +65,7 @@ public sealed class PortalSsoHttpTests
         using var scope = fixture.Factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<AigcHubDbContext>();
         var user = await db.Users.SingleAsync(user => user.EmployeeNo == "newemployee");
+        Assert.Null(user.DepartmentId);
         var hasher = scope.ServiceProvider.GetRequiredService<IPasswordHasher<AigcHub.Api.Domain.AppUser>>();
         Assert.Equal(PasswordVerificationResult.Failed, hasher.VerifyHashedPassword(user, user.PasswordHash, "Bhss@123"));
     }

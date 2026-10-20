@@ -36,7 +36,7 @@ public sealed class AppUser
     public required string Name { get; set; }
     public required string Email { get; set; }
     public required string PasswordHash { get; set; }
-    public Guid DepartmentId { get; set; }
+    public Guid? DepartmentId { get; set; }
     public Department? Department { get; set; }
     public bool IsEnabled { get; set; } = true;
     public DateTimeOffset? LastLoginAt { get; set; }
@@ -233,6 +233,8 @@ public sealed class AiModelConfiguration
     public string ApiKeyProtected { get; set; } = "";
     public string AuthType { get; set; } = "Bearer";
     public string ApiKeyHeader { get; set; } = "X-API-Key";
+    public string Multiplier { get; set; } = "";
+    public string ImageInputMode { get; set; } = "Auto";
     public bool SupportsTools { get; set; } = true;
     public bool IsEnabled { get; set; } = true;
     public bool IsDefault { get; set; }

@@ -362,6 +362,10 @@ export class SessionCommandController {
         if (hasImage) {
           const current = this.agents.selectionFor(agent).current
           const model = await this.ctx.llm.resolveModelInfo(current.provider, current.model)
+          if (model.imageInputState === 'unknown') {
+            throw new RemoteError('session/attachment-invalid',
+              'Image input capability has not been configured.', { reason: 'MODEL_IMAGE_CAPABILITY_UNKNOWN' })
+          }
           if (model.inputModalities !== undefined && !model.inputModalities.includes('image')) {
             throw new RemoteError(
               'session/attachment-invalid',

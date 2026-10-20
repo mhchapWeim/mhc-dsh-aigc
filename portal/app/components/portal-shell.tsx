@@ -6,6 +6,9 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Bell, BookOpenCheck, ChevronDown, CircleCheckBig, Clock3, Download, FilePlus2, Heart, Inbox, Languages, LogOut, Moon, Search, Settings2, ShieldCheck, SlidersHorizontal, Sparkles, Sun, UserRound, Wrench } from 'lucide-react';
 import { AppCard } from './app-card';
+import { AntPagination } from './ant-pagination';
+import { usePageSize } from './use-page-size';
+import { PasswordChangeForm } from './password-change-form';
 import { Modal } from './modal';
 import { usePlatform } from './platform-provider';
 import { categoryLabels, localizeApp, portalCopy, type PortalLocale } from '../lib/portal-i18n';
@@ -17,6 +20,8 @@ type StatusFilter = 'all' | '运行中';
 
 export function PortalShell() {
   const router = useRouter();
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = usePageSize();
   const { currentUserId, users, dispatch } = usePlatform();
   const currentUser = users.find((user) => user.id === currentUserId);
   const searchRef = useRef<HTMLInputElement>(null);
@@ -108,6 +113,8 @@ export function PortalShell() {
     });
   }, [category, favorites, favoritesOnly, localizedApps, query, statusFilter]);
 
+  const currentPage = Math.min(page, Math.max(1, Math.ceil(filteredApps.length / pageSize)));
+  useEffect(() => { setPage(1); }, [query, category, favoritesOnly, statusFilter]);
   const toggleFavorite = (id: string) => setFavorites((current) => current.includes(id) ? current.filter((item) => item !== id) : [...current, id]);
   const openApp = (app: PortalApp) => {
     let target: URL;
@@ -193,10 +200,11 @@ export function PortalShell() {
             {categories.map((item) => <button key={item} role="tab" aria-selected={category === item} className={category === item ? 'is-active' : ''} onClick={() => setCategory(item)}><span>{categoryLabels[item]?.[locale] ?? item}</span></button>)}
           </div>
           <div className="result-meta"><span>{copy.foundPrefix} <strong>{filteredApps.length}</strong> {copy.foundSuffix}</span><span>{copy.sort}</span></div>
-          {appsLoading ? <div className="catalog-skeleton" aria-label="正在加载应用"><i /><i /><i /></div> : appsError ? <div className="empty-state is-error"><Search size={30} /><h3>应用目录加载失败</h3><p>{appsError}</p><Link href="/login">重新登录</Link></div> : filteredApps.length ? <div className="app-grid app-grid--transition" key={`${locale}-${category}-${favoritesOnly}-${statusFilter}`}>{filteredApps.map((app, index) => <AppCard key={app.id} app={app} index={index} favorite={favorites.includes(app.id)} locale={locale} onFavorite={() => toggleFavorite(app.id)} onOpen={() => openApp(app)} />)}</div> : <div className="empty-state"><Search size={30} /><h3>{copy.emptyTitle}</h3><p>{copy.emptyBody}</p><button type="button" onClick={() => { setQuery(''); setCategory('全部应用'); setFavoritesOnly(false); setStatusFilter('all'); }}>{copy.clear}</button></div>}
+          {appsLoading ? <div className="catalog-skeleton" aria-label="正在加载应用"><i /><i /><i /></div> : appsError ? <div className="empty-state is-error"><Search size={30} /><h3>应用目录加载失败</h3><p>{appsError}</p><Link href="/login">重新登录</Link></div> : filteredApps.length ? <div className="app-grid app-grid--transition" key={`${locale}-${category}-${favoritesOnly}-${statusFilter}`}>{filteredApps.slice((currentPage - 1) * pageSize, currentPage * pageSize).map((app, index) => <AppCard key={app.id} app={app} index={index} favorite={favorites.includes(app.id)} locale={locale} onFavorite={() => toggleFavorite(app.id)} onOpen={() => openApp(app)} />)}</div> : <div className="empty-state"><Search size={30} /><h3>{copy.emptyTitle}</h3><p>{copy.emptyBody}</p><button type="button" onClick={() => { setQuery(''); setCategory('全部应用'); setFavoritesOnly(false); setStatusFilter('all'); }}>{copy.clear}</button></div>}
+          {!appsLoading && !appsError && <AntPagination ariaLabel="应用目录分页" current={currentPage} total={filteredApps.length} pageSize={pageSize} onChange={setPage} onPageSizeChange={setPageSize} />}
         </section>
       </main>
-      {profileCenterOpen && <Modal title={copy.profile} onClose={() => setProfileCenterOpen(false)}><section className="profile-center"><header><span className="profile-center__avatar">{currentUser?.name.slice(0, 1) ?? '访'}</span><div><h3>{currentUser?.name ?? (locale === 'zh' ? '访客' : 'Guest')}</h3><p>{currentUser?.email ?? (locale === 'zh' ? '当前未登录' : 'Not signed in')}</p></div><span className={`state-badge ${currentUser ? 'is-enabled' : 'is-disabled'}`}>{currentUser ? (locale === 'zh' ? '账号正常' : 'Active') : (locale === 'zh' ? '未登录' : 'Signed out')}</span></header><dl><div><dt>{locale === 'zh' ? '企业工号' : 'Employee ID'}</dt><dd>{currentUser?.employeeNo ?? '—'}</dd></div><div><dt>{locale === 'zh' ? '所属部门' : 'Department'}</dt><dd>{currentUser?.department ?? '—'}</dd></div><div><dt>{locale === 'zh' ? '平台角色' : 'Role'}</dt><dd>{currentUser?.role ?? '—'}</dd></div><div><dt>{locale === 'zh' ? '最近登录' : 'Last login'}</dt><dd>{currentUser?.lastLogin ?? '—'}</dd></div></dl><footer className="modal-actions"><button className="primary-action" type="button" onClick={() => setProfileCenterOpen(false)}>{locale === 'zh' ? '关闭' : 'Close'}</button></footer></section></Modal>}
+      {profileCenterOpen && <Modal className="profile-password-modal" title={copy.profile} onClose={() => setProfileCenterOpen(false)}><section className="profile-center"><header><span className="profile-center__avatar">{currentUser?.name.slice(0, 1) ?? '访'}</span><div><h3>{currentUser?.name ?? (locale === 'zh' ? '访客' : 'Guest')}</h3><p>{currentUser?.email ?? (locale === 'zh' ? '当前未登录' : 'Not signed in')}</p></div><span className={`state-badge ${currentUser ? 'is-enabled' : 'is-disabled'}`}>{currentUser ? (locale === 'zh' ? '账号正常' : 'Active') : (locale === 'zh' ? '未登录' : 'Signed out')}</span></header><dl><div><dt>{locale === 'zh' ? '企业工号' : 'Employee ID'}</dt><dd>{currentUser?.employeeNo ?? '—'}</dd></div><div><dt>{locale === 'zh' ? '所属部门' : 'Department'}</dt><dd>{currentUser?.department ?? '—'}</dd></div><div><dt>{locale === 'zh' ? '平台角色' : 'Role'}</dt><dd>{currentUser?.role ?? '—'}</dd></div><div><dt>{locale === 'zh' ? '最近登录' : 'Last login'}</dt><dd>{currentUser?.lastLogin ?? '—'}</dd></div></dl>{currentUser && <section className="profile-password-section"><h3>修改密码</h3><PasswordChangeForm /></section>}<footer className="modal-actions"><button className="primary-action" type="button" onClick={() => setProfileCenterOpen(false)}>{locale === 'zh' ? '关闭' : 'Close'}</button></footer></section></Modal>}
       <div className={`toast${notice ? ' is-visible' : ''}`} role="status" aria-live="polite">{notice}</div>
     </div>
   );

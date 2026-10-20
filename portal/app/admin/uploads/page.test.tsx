@@ -53,5 +53,5 @@ it('loads the selected page from the backend', async () => {
   await screen.findByText('page-1.txt');
   await userEvent.click(screen.getByRole('button', { name: '第 2 页' }));
   await screen.findByText('page-2.txt');
-  expect(getMock).toHaveBeenCalledWith(2, 10, '', '');
+  expect(getMock).toHaveBeenCalledWith(2, 5, '', '');
 });

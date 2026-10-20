@@ -23,10 +23,10 @@ it('renders client reports separately and fetches each page from the server', as
   await user.click(within(screen.getByRole('navigation', { name: '插件状态分页' })).getByRole('button', { name: '下一页' }));
   expect(await screen.findByText('device-2')).toBeInTheDocument();
   expect(screen.queryByText('device-1')).not.toBeInTheDocument();
-  expect(api.getPluginReports).toHaveBeenLastCalledWith(2, 20);
+  expect(api.getPluginReports).toHaveBeenLastCalledWith(2, 5);
   await user.click(screen.getByRole('button', { name: '刷新' }));
   await waitFor(() => expect(api.getPluginReports).toHaveBeenCalledTimes(3));
-  expect(api.getPluginReports).toHaveBeenLastCalledWith(2, 20);
+  expect(api.getPluginReports).toHaveBeenLastCalledWith(2, 5);
 });
 
 it('shows empty reports and recovers from failed loading', async () => {

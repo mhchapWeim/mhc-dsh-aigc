@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { Boxes, RefreshCw, Upload } from 'lucide-react';
+import { usePageSize } from '../../components/use-page-size';
 import { AntPagination } from '../../components/ant-pagination';
 import { Modal } from '../../components/modal';
 import { GrantSelector } from '../models/grant-selector';
@@ -9,9 +10,9 @@ import type { GrantOptions } from '../../lib/api-client';
 import { getPlugins, getPluginGrantOptions, publishPlugin, uploadPlugin, type ManagedPlugin } from '../../lib/plugin-api';
 import './plugins.css';
 
-const pageSize = 10;
 
 export default function PluginsPage() {
+  const [pageSize, setPageSize] = usePageSize();
   const [plugins, setPlugins] = useState<ManagedPlugin[]>([]);
   const [page, setPage] = useState(1);
   const [options, setOptions] = useState<GrantOptions | null>(null);
@@ -63,7 +64,7 @@ export default function PluginsPage() {
           <div className="plugin-meta"><span>{plugin.isEnabled ? '已启用' : '已停用'}</span><span>{version ? `发布版本 ${version.version}` : '尚未发布'}</span><span>{plugin.versions.length} 个版本</span></div></div>
           <button className="secondary-action" onClick={() => open(plugin)}>配置与发布</button></article>;
       })}</div>}
-    {!loading && plugins.length > 0 && <AntPagination ariaLabel="插件管理分页" current={currentPage} total={plugins.length} pageSize={pageSize} onChange={setPage} />}
+    {!loading && plugins.length > 0 && <AntPagination onPageSizeChange={setPageSize} ariaLabel="插件管理分页" current={currentPage} total={plugins.length} pageSize={pageSize} onChange={setPage} />}
     {editing && options && <Modal title="配置与发布插件" onClose={() => { if (!busy) { setEditing(null); setSecret(''); } }}><div className="entity-form plugin-form">
       <div className="plugin-form-scroll">
       {error && <p role="alert" className="model-form-error">{error}</p>}

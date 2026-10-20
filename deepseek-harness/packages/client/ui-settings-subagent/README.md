@@ -80,3 +80,5 @@ None; this package neither assembles nor sends a provider request.
 None.
 
 </details>
+
+Model candidates retain the optional display-only multiplier from the shared Host catalog and render it at the trailing edge of each row.

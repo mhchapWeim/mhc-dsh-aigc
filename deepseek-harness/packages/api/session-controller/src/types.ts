@@ -134,6 +134,8 @@ export interface ModelReasoning {
 
 /** One model displayed inside its provider group. */
 export interface ModelCatalogModel {
+  /** Display-only rate label supplied by the model administrator. */
+  readonly multiplier?: string
   readonly id: string
   readonly name: string
   readonly description?: string

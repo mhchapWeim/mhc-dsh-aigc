@@ -910,18 +910,21 @@ describe('continuable image Queue prompts', () => {
     },
   }
 
-  it('refuses an image follow-up when the child model declines image input, leaving no partial message', async () => {
+  it.each([
+    [undefined, 'MODEL_DOES_NOT_SUPPORT_IMAGES'],
+    ['unknown', 'MODEL_IMAGE_CAPABILITY_UNKNOWN'],
+  ])('refuses an image follow-up for capability %s, leaving no partial message', async (state, code) => {
     const { ctx, parent } = await setup([textResponse('child work')])
     const started = await ctx.subagents.startContinuable(startSpec(parent))
     await waitNoActivation(ctx, started.childId)
     const resolve = vi.spyOn(ctx.llm, 'resolveModelInfo')
-      .mockResolvedValue({ inputModalities: ['text'] } as never)
+      .mockResolvedValue({ inputModalities: ['text'], imageInputState: state } as never)
 
     await expect(queuePrompt(ctx, parent, started.childId, [
       { type: 'text' as const, text: 'see this' },
       imageBlock,
     ]))
-      .rejects.toMatchObject({ code: 'MODEL_DOES_NOT_SUPPORT_IMAGES' })
+      .rejects.toMatchObject({ code })
 
     expect(resolve).toHaveBeenCalledWith('mock', 'mock', testSignal)
     const loaded = await loadStoredSession(ctx.sessionPersistence, started.childId)

@@ -492,8 +492,11 @@ public sealed class DshManagedHttpTests
         finally { Directory.Delete(root, recursive: true); }
     }
 
-    [Fact]
-    public async Task InternalModelsRequirePluginAndModelGrantsAndNeverRequireVirtualKeys()
+    [Theory]
+    [InlineData("Auto", "unknown", false)]
+    [InlineData("Supported", "supported", true)]
+    [InlineData("Unsupported", "unsupported", false)]
+    public async Task InternalModelsRequirePluginAndModelGrantsAndNeverRequireVirtualKeys(string imageMode, string state, bool supportsImages)
     {
         var root = Path.Combine(Path.GetTempPath(), $"aigc-internal-{Guid.NewGuid():N}");
         Directory.CreateDirectory(root);
@@ -510,7 +513,7 @@ public sealed class DshManagedHttpTests
             using var scope = factory.Services.CreateScope();
             var db = scope.ServiceProvider.GetRequiredService<AigcHubDbContext>();
             var protection = scope.ServiceProvider.GetRequiredService<IDataProtectionProvider>();
-            var local = new AiModelConfiguration { Name = "Internal MiniMax", ProviderKind = "Local", BaseUrl = "https://internal.example/v1",
+            var local = new AiModelConfiguration { Name = "Internal MiniMax", ProviderKind = "Local", ImageInputMode = imageMode, Multiplier = "0.5×", BaseUrl = "https://internal.example/v1",
                 EndpointPath = "/chat/completions", ModelIdentifier = "MiniMax", AuthType = "Bearer",
                 ApiKeyProtected = protection.CreateProtector("AigcHub.ModelApiKeys.v1").Protect("test-internal-key") };
             var denied = new AiModelConfiguration { Name = "Denied", ProviderKind = "Local", BaseUrl = "https://internal.example/v1", ModelIdentifier = "denied" };
@@ -532,6 +535,9 @@ public sealed class DshManagedHttpTests
             var json = await list.Content.ReadFromJsonAsync<JsonElement>();
             Assert.Single(json.GetProperty("models").EnumerateArray());
             Assert.Equal(local.Id.ToString("D"), json.GetProperty("models")[0].GetProperty("id").GetString());
+            Assert.Equal("0.5×", json.GetProperty("models")[0].GetProperty("multiplier").GetString());
+            Assert.Equal(state, json.GetProperty("models")[0].GetProperty("imageInput").GetProperty("state").GetString());
+            Assert.Equal(supportsImages, json.GetProperty("models")[0].GetProperty("input").EnumerateArray().Any(x => x.GetString() == "image"));
             Assert.DoesNotContain("test-internal-key", json.ToString());
             var gateway = await client.GetFromJsonAsync<JsonElement>("/v1/models");
             Assert.Empty(gateway.GetProperty("models").EnumerateArray());
@@ -540,7 +546,9 @@ public sealed class DshManagedHttpTests
             var connection = await client.GetAsync($"{path}/{local.Id}/connection");
             Assert.Equal(HttpStatusCode.OK, connection.StatusCode);
             Assert.True(connection.Headers.CacheControl?.NoStore);
-            Assert.Equal("test-internal-key", (await connection.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("apiKey").GetString());
+            var route = await connection.Content.ReadFromJsonAsync<JsonElement>();
+            Assert.Equal("test-internal-key", route.GetProperty("apiKey").GetString());
+            Assert.Equal(state, route.GetProperty("imageInput").GetProperty("state").GetString());
             Assert.Equal(HttpStatusCode.Forbidden, (await client.GetAsync($"{path}/{denied.Id}/connection")).StatusCode);
             Assert.Equal(HttpStatusCode.NotFound, (await client.GetAsync($"{path}/{online.Id}/connection")).StatusCode);
             db.UserModelGrants.Remove(await db.UserModelGrants.SingleAsync(x => x.ModelId == local.Id));

@@ -55,6 +55,18 @@ function state(overrides: Partial<ModelDirectoryState> = {}): ModelDirectoryStat
 afterEach(cleanup)
 
 describe('ModelSelect reasoning effort', () => {
+  it('renders the configured multiplier beside the model name without changing the route', async () => {
+    const snapshot = state({ current: { provider: 'deepseek-official', model: 'previous' } })
+    snapshot.groups = [{ id: 'deepseek-official', name: 'DeepSeek', models: [{ id: 'deepseek-v4-flash', name: 'DeepSeek-V4-Flash', multiplier: '0.5×' }] }]
+    const select = vi.fn(async () => ({ ok: true as const, value: undefined }))
+    render(<ModelSelect locked={false} available directory={createSnapshotStore<ModelDirectoryState>(snapshot)} load={vi.fn()} select={select} t={t} />)
+    fireEvent.click(screen.getByRole('button', { name: /选择模型，当前/ }))
+    fireEvent.click(screen.getByRole('menuitem', { name: /^模型/ }))
+    const option = screen.getByRole('menuitemradio', { name: /DeepSeek-V4-Flash.*0.5×/ })
+    expect(option.textContent).toContain('DeepSeek-V4-Flash0.5×')
+    fireEvent.click(option)
+    expect(select).toHaveBeenCalledWith({ provider: 'deepseek-official', model: 'deepseek-v4-flash' })
+  })
   it('renders effort names without descriptions and submits the effort as part of the session selection', async () => {
     const directory = createSnapshotStore<ModelDirectoryState>(state())
     const select = vi.fn(async (selection: ModelSelection) => {

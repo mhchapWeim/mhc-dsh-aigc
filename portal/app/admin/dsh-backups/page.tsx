@@ -2,12 +2,14 @@
 
 import { useEffect, useState } from 'react';
 import { getDshBackups, deleteDshBackup, downloadDshBackup, type DshBackupRow } from '../../lib/api-client';
+import { usePageSize } from '../../components/use-page-size';
 import { AntPagination } from '../../components/ant-pagination';
 import { Modal } from '../../components/modal';
 import './style.css';
 
 const time = (value: string | null) => value ? new Date(value).toLocaleString('zh-CN') : '暂无记录';
 export default function DshBackupsPage() {
+  const [pageSize, setPageSize] = usePageSize();
   const [rows, setRows] = useState<DshBackupRow[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
@@ -22,11 +24,11 @@ export default function DshBackupsPage() {
   };
   useEffect(() => {
     let active = true;
-    getDshBackups(page, search).then(value => { if (active) { setRows(value.items); setTotal(value.total); } })
+    getDshBackups(page, search, pageSize).then(value => { if (active) { setRows(value.items); setTotal(value.total); } })
       .catch(cause => { if (active) { setRows([]); setTotal(0); setError(cause instanceof Error ? cause.message : '加载失败'); } })
       .finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
-  }, [page, search, refresh]);
+  }, [page, search, refresh, pageSize]);
   async function run(operation: () => Promise<void>) {
     setBusy(true); setError('');
     try { await operation(); } catch (cause) { setError(cause instanceof Error ? cause.message : '操作失败'); }
@@ -52,7 +54,7 @@ export default function DshBackupsPage() {
       </tbody></table></div>
       {loading && <p className="empty-state" role="status">正在加载备份…</p>}
       {!loading && rows.length === 0 && !error && <p className="empty-state">暂无备份</p>}
-      <AntPagination ariaLabel="客户端备份分页" current={page} total={total} pageSize={20} onChange={value => { reload(() => setPage(value)); }} />
+      <AntPagination onPageSizeChange={setPageSize} ariaLabel="客户端备份分页" current={page} total={total} pageSize={pageSize} onChange={value => { reload(() => setPage(value)); }} />
     </section>
     {detail && <Modal title="备份详情" className="backup-dialog" onClose={() => setDetail(null)}>
       <div className="backup-dialog-body" tabIndex={0} aria-label="备份详情内容"><dl>

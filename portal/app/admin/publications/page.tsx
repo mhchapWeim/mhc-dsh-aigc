@@ -9,6 +9,7 @@ import {
   GitBranch,
   RotateCcw,
 } from "lucide-react";
+import { usePageSize } from '../../components/use-page-size';
 import { AntPagination } from "../../components/ant-pagination";
 import { Modal } from "../../components/modal";
 import { ModernSelect } from "../../components/modern-select";
@@ -51,13 +52,13 @@ const emptyForm = (): FormState => ({
   accessMode: "All",
   accessibleUserIds: [],
 });
-const pageSize = 3;
 const statusLabel = (status: string): PublicationStatus => ({
   Draft: "草稿", Reviewing: "审核中", Publishing: "发布中", Approved: "已通过",
   Rejected: "已退回", Failed: "发布失败",
 }[status] as PublicationStatus ?? "草稿");
 
 export default function PublicationRequestsPage() {
+  const [pageSize, setPageSize] = usePageSize();
   const {
     currentUserId,
     users,
@@ -262,7 +263,7 @@ export default function PublicationRequestsPage() {
           </div>
         )}
         <AntPagination
-          ariaLabel="发布申请分页"
+          onPageSizeChange={setPageSize} ariaLabel="发布申请分页"
           current={currentPage}
           pageSize={pageSize}
           total={mine.length}

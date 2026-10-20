@@ -29,16 +29,17 @@ public static class DshFeedbackEndpoints
         }).WithMetadata(new RequestSizeLimitAttribute(8 * 1024 * 1024));
 
         var admin = app.MapGroup("/api/dsh-feedback").RequireAuthorization("diagnostic.manage").WithTags("用户反馈");
-        admin.MapGet("/", async (AigcHubDbContext db, CancellationToken ct, string? search = null, string? category = null, int page = 1) =>
+        admin.MapGet("/", async (AigcHubDbContext db, CancellationToken ct, string? search = null, string? category = null, int page = 1, int pageSize = 5) =>
         {
             page = Math.Max(1, page);
-            var query = db.DshFeedbacks.AsNoTracking();
+            pageSize = Math.Clamp(pageSize, 1, 100);
+        var query = db.DshFeedbacks.AsNoTracking();
             if (!string.IsNullOrWhiteSpace(search)) query = query.Where(x => x.Text.Contains(search) || x.User.Name.Contains(search) || x.User.EmployeeNo.Contains(search));
             if (!string.IsNullOrWhiteSpace(category)) query = query.Where(x => x.Category == category);
             var total = await query.CountAsync(ct);
-            var items = await query.OrderByDescending(x => x.CreatedAt).ThenBy(x => x.Id).Skip((page - 1) * 20).Take(20)
+            var items = await query.OrderByDescending(x => x.CreatedAt).ThenBy(x => x.Id).Skip((page - 1) * pageSize).Take(pageSize)
                 .Select(x => new { x.Id, x.SessionId, x.Category, x.Text, x.CreatedAt, userName = x.User.Name, employeeNo = x.User.EmployeeNo }).ToListAsync(ct);
-            return Results.Ok(new { items, total, page, pageSize = 20 });
+            return Results.Ok(new { items, total, page, pageSize });
         });
         admin.MapGet("/{id:guid}", async (Guid id, AigcHubDbContext db, CancellationToken ct) =>
         {

@@ -19,7 +19,7 @@ it('filters by user and version, opens associated error details, and downloads t
   fireEvent.change(screen.getByLabelText('用户'), { target: { value: 'wh00028' } });
   fireEvent.change(screen.getByLabelText('版本'), { target: { value: '20261008.2' } });
   fireEvent.click(screen.getByRole('button', { name: '查询' }));
-  await waitFor(() => expect(api.getDshFailures).toHaveBeenLastCalledWith(expect.objectContaining({ user: 'wh00028', version: '20261008.2' }), 1));
+  await waitFor(() => expect(api.getDshFailures).toHaveBeenLastCalledWith(expect.objectContaining({ user: 'wh00028', version: '20261008.2' }), 1, 5));
   fireEvent.click(screen.getByRole('button', { name: '查看' }));
   await screen.findByText('ENOENT: File not found'); expect(screen.getByText('call-1')).toBeInTheDocument();
   fireEvent.click(screen.getByRole('button', { name: '下载诊断日志' }));
@@ -40,5 +40,5 @@ it('shows unauthenticated installer failures and filters by the installer catego
   expect(screen.getByText('安装前检查')).toBeInTheDocument();
   fireEvent.change(screen.getByLabelText('错误类型'), { target: { value: 'installer' } });
   fireEvent.click(screen.getByRole('button', { name: '查询' }));
-  await waitFor(() => expect(api.getDshFailures).toHaveBeenLastCalledWith(expect.objectContaining({ category: 'installer' }), 1));
+  await waitFor(() => expect(api.getDshFailures).toHaveBeenLastCalledWith(expect.objectContaining({ category: 'installer' }), 1, 5));
 });

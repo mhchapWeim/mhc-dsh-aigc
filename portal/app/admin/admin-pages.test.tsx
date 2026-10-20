@@ -11,6 +11,7 @@ import PublicationReviewsPage from './reviews/page';
 import { AdminShell } from './components/admin-shell';
 import DepartmentManagementPage from './departments/page';
 import LoginPage from '../login/page';
+import LocalLoginPage from '../login/local/page';
 import RoleManagementPage from './roles/page';
 
 const { replaceMock } = vi.hoisted(() => ({ replaceMock: vi.fn() }));
@@ -125,7 +126,7 @@ describe('admin pages', () => {
 
   it('redirects a successful login to the portal home', async () => {
     const user = userEvent.setup();
-    renderWithPlatform(<LoginPage />);
+    renderWithPlatform(<LocalLoginPage />);
     expect(screen.getByRole('textbox', { name: '企业工号' })).toHaveValue('');
     expect(screen.getByLabelText('密码')).toHaveValue('');
     await user.type(screen.getByRole('textbox', { name: '企业工号' }), 'wh00028');
@@ -137,7 +138,7 @@ describe('admin pages', () => {
   it('keeps a disabled or unknown account on the login page', async () => {
     replaceMock.mockClear();
     const user = userEvent.setup();
-    renderWithPlatform(<LoginPage />);
+    renderWithPlatform(<LocalLoginPage />);
     const employeeNo = screen.getByRole('textbox', { name: '企业工号' });
     await user.clear(employeeNo);
     await user.type(employeeNo, 'unknown');
@@ -168,13 +169,15 @@ describe('admin pages', () => {
     const user = userEvent.setup();
     renderWithPlatform(<RoleManagementPage />);
 
-    await user.click(screen.getByRole('button', { name: '新增角色' }));
-    await user.type(screen.getByRole('textbox', { name: '角色名称' }), '审计员');
-    await user.click(screen.getByRole('button', { name: '保存角色' }));
+    for (const name of ['审计员1', '审计员2', '审计员3']) {
+      await user.click(screen.getByRole('button', { name: '新增角色' }));
+      await user.type(screen.getByRole('textbox', { name: '角色名称' }), name);
+      await user.click(screen.getByRole('button', { name: '保存角色' }));
+    }
 
     expect(screen.getByRole('button', { name: '下一页' })).toBeEnabled();
     await user.click(screen.getByRole('button', { name: '下一页' }));
-    expect(screen.getByRole('cell', { name: /审计员/ })).toBeInTheDocument();
+    expect(screen.getByRole('cell', { name: /审计员3/ })).toBeInTheDocument();
     expect(screen.queryByRole('cell', { name: /平台管理员/ })).not.toBeInTheDocument();
   });
 

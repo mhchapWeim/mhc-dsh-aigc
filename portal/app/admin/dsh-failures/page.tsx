@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { usePageSize } from '../../components/use-page-size';
 import { AntPagination } from "../../components/ant-pagination";
 import {
   downloadDshFailure,
@@ -60,6 +61,7 @@ function operationLabel(category: string, operation: string) {
 }
 
 export default function DshFailuresPage() {
+  const [pageSize, setPageSize] = usePageSize();
   const [draft, setDraft] = useState(initial);
   const [filters, setFilters] = useState<Record<string, string>>({});
   const [rows, setRows] = useState<DshFailureRow[]>([]);
@@ -76,7 +78,7 @@ export default function DshFailuresPage() {
 
   useEffect(() => {
     let active = true;
-    getDshFailures(filters, page)
+    getDshFailures(filters, page, pageSize)
       .then((result) => {
         if (active) {
           setRows(result.items);
@@ -97,7 +99,7 @@ export default function DshFailuresPage() {
     return () => {
       active = false;
     };
-  }, [filters, page, refresh]);
+  }, [filters, page, refresh, pageSize]);
 
   useEffect(() => {
     if (selected === null) return;
@@ -325,10 +327,10 @@ export default function DshFailuresPage() {
           </div>
         )}
         <AntPagination
-          ariaLabel="失败日志分页"
+          onPageSizeChange={setPageSize} ariaLabel="失败日志分页"
           current={page}
           total={total}
-          pageSize={10}
+          pageSize={pageSize}
           onChange={(value) => {
             setLoading(true);
             setPage(value);

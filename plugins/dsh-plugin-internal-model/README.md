@@ -83,6 +83,12 @@ resolveModel 现在向宿主返回 context.contextWindow 和 defaultMaxTokens，
 
 验证：通过真实 LlmRuntime 读取插件容量和服务端/插件两种输出上限，并检查 prepared call 一致性；内网模型与 compaction-basic 共 180 项测试通过。未连接生产模型验证自动摘要。
 
+## 1.0.7 图片理解
+
+读取 AIGC 下发的 `input` 和 `imageInput.state`，不再固定为纯文本。图片通过宿主附件服务和 pi-ai 转换后直连模型，认证沿用该模型的连接，不发送 AIGC 用户令牌。附件服务通过可选服务读取，不影响纯文本使用。旧服务端未提供能力时保留原纯文本行为；未知能力明确拒绝图片，需要在新版 AIGC 模型管理中配置。
+
+上传发布 1.0.7，保留原超时、容量和授权配置；客户端同步后按提示重启 Host。完整的未知能力提示、主会话/子代理预检和运行时保护需要包含此次变更的 DSH 客户端。服务端需要部署模型能力字段与目录接口；仅升级插件不足以启用图片。兼容基础版本为 0.1.7-alpha.2。
+
 ## 1.0.6 自动发现上下文容量
 
 删除插件配置中的 contextWindow 即启用自动发现（不删除其他自定义项）：
@@ -102,3 +108,5 @@ resolveModel 现在向宿主返回 context.contextWindow 和 defaultMaxTokens，
 internal-model-request-diagnostic 增加 contextWindow 与 contextWindowSource（plugin-config / models-api），用于确认容量来源。自动发现并不自动扩大模型输出预算：AIGC Max Tokens 或插件 maxOutputTokens 应小于容量，并留出输入与压缩余量。
 
 上传并发布 1.0.6，让客户端同步并按提示重启 Host，无需重打包客户端或部署 AIGC。已通过精确匹配、认证隔离、显式配置优先、缺失/非法/重复容量、HTTP 错误、响应限额、查询超时与取消测试；内网模型和压缩模块共 192 项测试通过，完整 Host/Client 类型检查通过。生产 GPUStack 是否保留 max_model_len 尚未现场验证。
+
+1.0.8 preserves the optional display multiplier from the AIGC internal model catalog through LLM metadata. Deploy the updated Host/client build for the right-aligned model-selector label; the multiplier does not change billing. Package: bhss-dsh-plugin-internal-model-1.0.8.tgz.

@@ -516,6 +516,9 @@ export class SubagentContinuationManager {
     /* v8 ignore next -- without an LLM registry, delivery defers to projection. */
     if (llm === undefined) return
     const info = await llm.resolveModelInfo(provider, model, signal)
+    if (info.imageInputState === 'unknown') {
+      throw new SubagentError('Image input capability has not been configured.', 'MODEL_IMAGE_CAPABILITY_UNKNOWN')
+    }
     if (info.inputModalities !== undefined && !info.inputModalities.includes('image')) {
       throw new SubagentError(
         `Model "${model}" does not support image input.`,

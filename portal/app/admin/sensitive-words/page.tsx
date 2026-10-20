@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { CheckCircle2, Edit3, Plus, Search, ShieldAlert, Trash2 } from 'lucide-react';
+import { usePageSize } from '../../components/use-page-size';
 import { AntPagination } from '../../components/ant-pagination';
 import { Modal } from '../../components/modal';
 import {
@@ -13,11 +14,11 @@ import {
 } from '../../lib/api-client';
 
 type WordForm = { id: string; term: string; isEnabled: boolean };
-const pageSize = 8;
 const emptyForm = (): WordForm => ({ id: '', term: '', isEnabled: true });
 const dateFormat = new Intl.DateTimeFormat('zh-CN', { dateStyle: 'medium', timeStyle: 'short' });
 
 export default function SensitiveWordManagementPage() {
+  const [pageSize, setPageSize] = usePageSize();
   const [items, setItems] = useState<BackendSensitiveWord[]>([]);
   const [query, setQuery] = useState('');
   const [page, setPage] = useState(1);
@@ -107,7 +108,7 @@ export default function SensitiveWordManagementPage() {
         {!loading && visible.length === 0 && <div className="empty-state"><ShieldAlert size={28} /><strong>{query ? '没有匹配的敏感词' : '尚未配置敏感词'}</strong><span>{query ? '请调整搜索条件。' : '新增规则后，DSH 会在发送模型请求前拦截命中内容。'}</span></div>}
         {loading && <div className="empty-state" role="status"><ShieldAlert size={28} /><strong>正在加载规则</strong></div>}
       </div>
-      <AntPagination ariaLabel="敏感词分页" current={currentPage} total={filtered.length} pageSize={pageSize} onChange={setPage} />
+      <AntPagination onPageSizeChange={setPageSize} ariaLabel="敏感词分页" current={currentPage} total={filtered.length} pageSize={pageSize} onChange={setPage} />
     </section>
     {editing && <Modal title={editing.id ? '编辑敏感词' : '新增敏感词'} onClose={() => setEditing(null)}>
       <form className="entity-form sensitive-word-form" onSubmit={save}>

@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { expect, it, vi } from 'vitest';
 import { AnnouncementReceipts } from './announcement-receipts';
 
-it('shows the complete body and all receipt columns with ten recipients per page', async () => {
+it('shows the complete body and all receipt columns with five recipients per page', async () => {
   const close = vi.fn();
   render(<AnnouncementReceipts onClose={close} announcement={{
     id: 'announcement-1', title: '版本更新', body: '版本更新\n第一项\n第二项\n最后一项', important: true, status: 'Published',
@@ -17,8 +17,8 @@ it('shows the complete body and all receipt columns with ten recipients per page
   const table = screen.getByRole('table', { name: '公告接收回执' });
   expect(within(table).getAllByRole('columnheader')).toHaveLength(4);
   expect(within(table).getByRole('columnheader', { name: '确认时间' })).toBeVisible();
-  expect(within(table).getAllByRole('row')).toHaveLength(11);
-  await user.click(within(screen.getByRole('navigation', { name: '公告回执分页' })).getByRole('button', { name: '下一页' }));
+  expect(within(table).getAllByRole('row')).toHaveLength(6);
+  await user.click(within(screen.getByRole('navigation', { name: '公告回执分页' })).getByRole('button', { name: '第 3 页' }));
   expect(within(table).getAllByRole('row')).toHaveLength(2);
   expect(within(table).getByText('员工10')).toBeVisible();
   expect(within(table).queryByText('员工0')).not.toBeInTheDocument();

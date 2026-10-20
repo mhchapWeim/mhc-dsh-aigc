@@ -12,13 +12,13 @@ import {
   Search,
   Trash2,
 } from "lucide-react";
+import { usePageSize } from '../../components/use-page-size';
 import { AntPagination } from "../../components/ant-pagination";
 import { Modal } from "../../components/modal";
 import { ModernSelect } from "../../components/modern-select";
 import { usePlatform } from "../../components/platform-provider";
 import type { PlatformCategory } from "../../lib/platform-state";
 
-const pageSize = 4;
 const emptyCategory = (order: number): PlatformCategory => ({
   id: `category-${Date.now()}`,
   name: "",
@@ -30,6 +30,7 @@ const emptyCategory = (order: number): PlatformCategory => ({
 });
 
 export default function CategoryManagementPage() {
+  const [pageSize, setPageSize] = usePageSize();
   const { categories, dispatch, notice } = usePlatform();
   const [editing, setEditing] = useState<PlatformCategory | null>(null);
   const [query, setQuery] = useState("");
@@ -256,7 +257,7 @@ export default function CategoryManagementPage() {
           </div>
         )}
         <AntPagination
-          ariaLabel="分类分页"
+          onPageSizeChange={setPageSize} ariaLabel="分类分页"
           current={currentPage}
           pageSize={pageSize}
           total={filtered.length}

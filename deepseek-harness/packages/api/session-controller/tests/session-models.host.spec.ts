@@ -389,7 +389,7 @@ describe('Web session model selection', () => {
   it('preserves optional catalog metadata and string provider failures', async () => {
     const { ctx } = await harness()
     ctx.llm.registerAdapter(['plain'], new CatalogAdapter('Plain', [
-      { provider: 'plain', id: 'plain-model', name: 'Plain Model' },
+      { provider: 'plain', id: 'plain-model', name: 'Plain Model', multiplier: '2×' },
     ]))
     ctx.llm.registerAdapter(['described-reasoning'], new CatalogAdapter('Described Reasoning', [
       { provider: 'described-reasoning', id: 'reasoning-model', name: 'Reasoning Model' },
@@ -409,7 +409,7 @@ describe('Web session model selection', () => {
 
     const catalog = await buildModelCatalog(ctx)
     expect(catalog.groups).toEqual(expect.arrayContaining([
-      { id: 'plain', name: 'Plain', models: [{ id: 'plain-model', name: 'Plain Model' }] },
+      { id: 'plain', name: 'Plain', models: [{ id: 'plain-model', name: 'Plain Model', multiplier: '2×' }] },
       {
         id: 'described-reasoning',
         name: 'Described Reasoning',
@@ -648,6 +648,11 @@ describe('Web session model selection', () => {
   it('maps image admission failures and accepts image-capable selections', async () => {
     const { ctx, agent, sessionId } = await harness()
     registerTextOnly(ctx)
+    ctx.llm.registerAdapter(['image-unknown'], new class extends CatalogAdapter {
+      override resolveModel(provider: string, model: string): Promise<LlmResolvedModelInfo> {
+        return Promise.resolve({ provider, id: model, name: model, inputModalities: ['text'], imageInputState: 'unknown' })
+      }
+    }('Image Unknown', []))
     ctx.llm.registerAdapter(['image-capable'], new class extends CatalogAdapter {
       override resolveModel(provider: string, model: string): Promise<LlmResolvedModelInfo> {
         return Promise.resolve({
@@ -681,6 +686,11 @@ describe('Web session model selection', () => {
       cwd: '/tmp',
     })
     const image = { type: 'image' as const, mediaType: 'image/png' as const, data: 'AQ==' }
+
+    expectValue(await remote.selectModel(request({ sessionId, provider: 'image-unknown', model: 'unknown' })))
+    expect(await remote.prompt(promptRequest({ sessionId, mode: 'queue', content: [image] }))).toMatchObject({
+      ok: false, error: { code: 'session/attachment-invalid', details: { reason: 'MODEL_IMAGE_CAPABILITY_UNKNOWN' } },
+    })
 
     expectValue(await remote.selectModel(request({
       sessionId, provider: 'text-only', model: 'plain',

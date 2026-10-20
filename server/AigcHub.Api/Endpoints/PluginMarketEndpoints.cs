@@ -55,7 +55,7 @@ public static class PluginMarketEndpoints
 
     private static async Task<IResult> ReportsAsync(AigcHubDbContext db, int? page, int? pageSize, CancellationToken ct)
     {
-        var size = Math.Clamp(pageSize ?? 20, 1, 100);
+        var size = Math.Clamp(pageSize ?? 5, 1, 100);
         var query = db.ManagedPluginReports.AsNoTracking();
         var total = await query.CountAsync(ct);
         var number = Math.Clamp(page ?? 1, 1, Math.Max(1, (int)Math.Ceiling((double)total / size)));

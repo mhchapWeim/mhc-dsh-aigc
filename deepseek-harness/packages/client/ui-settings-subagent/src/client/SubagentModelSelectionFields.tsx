@@ -53,6 +53,7 @@ export function SubagentModelSelectionFields(props: SubagentModelSelectionFields
         <span className={css.modelName}>{candidate.modelName}</span>
         <span className={css.route}>{`${candidate.providerName} · ${candidate.provider}/${candidate.model}`}</span>
       </span>
+      {candidate.multiplier && <span className={css.multiplier}>{candidate.multiplier}</span>}
       {!candidate.available
         ? <span className={css.unavailable}>{t('subagentModelSelectionUnavailable')}</span>
         : null}

@@ -15,6 +15,18 @@ function adapter(request: typeof fetch): ManagedBackendAdapter {
 }
 
 describe('managed backend adapter', () => {
+  it('preserves unknown image capability and rejects image dispatch with a configuration error', async () => {
+    const request = vi.fn<typeof fetch>(async () => Response.json({ ...CATALOG,
+      models: [{ id: 'team-small', name: 'Unknown', input: ['text'], imageInput: { state: 'unknown' } }],
+    }))
+    const managed = adapter(request)
+    expect(await managed.resolveModel('managed', 'team-small')).toMatchObject({ imageInputState: 'unknown' })
+    const prepared = await managed.prepareCall('managed', 'team-small')
+    expect(prepared.model).toMatchObject({ imageInputState: 'unknown' })
+    expect(() => prepared.stream({ provider: 'managed', model: 'team-small',
+      messages: [{ role: 'user', content: [{ type: 'image' }] }] as never }))
+      .toThrow(expect.objectContaining({ code: 'MODEL_IMAGE_CAPABILITY_UNKNOWN' }))
+  })
   it('advertises only models returned for the token', async () => {
     const request = vi.fn<typeof fetch>(async (_url, init) => {
       expect(new Headers(init?.headers).get('authorization')).toBe('Bearer user-token')
@@ -115,13 +127,14 @@ describe('managed backend adapter', () => {
     const request = vi.fn<typeof fetch>(async () => Response.json({
       connection: { api: 'openai-completions', baseURL: 'https://litellm.example.test/v1', apiKey: 'sk-user' },
       models: [
-        { id: 'team-large', name: 'Team Large', contextWindow: 1_000_000, maxOutputTokens: 393_216 },
+        { id: 'team-large', name: 'Team Large', multiplier: '0.5×', contextWindow: 1_000_000, maxOutputTokens: 393_216 },
         { id: 'team-small', name: 'Team Small' },
       ],
     }))
     const models = adapter(request)
+    expect((await models.listModels('managed'))[0]).toMatchObject({ name: 'Team Large', multiplier: '0.5×' })
     expect(await models.resolveModel('managed', 'team-large')).toMatchObject({
-      context: { contextWindow: 1_000_000 }, defaultMaxTokens: 393_216,
+      context: { contextWindow: 1_000_000 }, defaultMaxTokens: 393_216, multiplier: '0.5×',
     })
     const undisclosed = await models.resolveModel('managed', 'team-small')
     expect(undisclosed).not.toHaveProperty('context')

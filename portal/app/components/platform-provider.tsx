@@ -25,12 +25,12 @@ export function PlatformProvider({ children }: { children: React.ReactNode }) {
       permissions.includes('role.manage') ? getPermissions() : Promise.resolve([]),
     ]);
     const users = userPage.items.map((user) => ({
-      id: user.id, name: user.name, employeeNo: user.employeeNo, email: user.email, department: user.department,
+      id: user.id, name: user.name, employeeNo: user.employeeNo, email: user.email, department: user.department, departmentId: user.departmentId, roleIds: user.roles.map(role => role.roleId),
       role: user.roles[0]?.name ?? '未分配角色', status: user.isEnabled ? '启用' as const : '停用' as const,
       lastLogin: user.lastLoginAt ? new Date(user.lastLoginAt).toLocaleString('zh-CN') : '从未登录',
     }));
     if (!users.some((user) => user.id === stored.id) && stored.id)
-      users.push({ id: stored.id, name: stored.name ?? '', employeeNo: stored.employeeNo ?? '', email: '', department: '', role: stored.roles?.[0] ?? '', status: '启用', lastLogin: '当前登录' });
+      users.push({ id: stored.id, name: stored.name ?? '', employeeNo: stored.employeeNo ?? '', email: '', department: '', departmentId: null, roleIds: [], role: stored.roles?.[0] ?? '', status: '启用', lastLogin: '当前登录' });
     reducerDispatch({ type: 'hydrate-backend', state: {
       currentUserId: stored.id ?? '', users,
       departments: departmentPage.items.map((item) => ({ id: item.id, code: item.code, name: item.name, manager: '', description: item.description, enabled: item.isEnabled })),
@@ -59,8 +59,9 @@ export function PlatformProvider({ children }: { children: React.ReactNode }) {
         if (!user) return;
         const existing = state.users.some((item) => item.id === user.id);
         await saveUser(existing ? user.id : null, { employeeNo: user.employeeNo, name: user.name, email: user.email,
-          departmentId: state.departments.find((item) => item.name === user.department)?.id ?? '',
-          roleIds: [state.roles.find((item) => item.name === user.role)?.id ?? ''].filter(Boolean),
+          departmentId: state.departments.find((item) => item.name === user.department)?.id ?? (user.department ? user.departmentId ?? null : null),
+          roleIds: user.roleIds ?? [state.roles.find((item) => item.name === user.role)?.id ?? ''].filter(Boolean),
+          ...(action.type === 'save-user' ? { modelIds: user.modelIds, virtualKeyIds: user.virtualKeyIds } : {}),
           isEnabled: action.type === 'toggle-user-status' ? user.status !== '启用' : user.status === '启用' });
       } else if (action.type === 'save-department' || action.type === 'toggle-department-status') {
         const item = action.type === 'save-department' ? action.department : state.departments.find((value) => value.id === action.id);

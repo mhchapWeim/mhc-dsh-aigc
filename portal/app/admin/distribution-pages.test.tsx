@@ -30,16 +30,16 @@ describe('desktop distribution administration', () => {
       version: '1.0.0', platform: 'win32', arch: 'x64', updateStatus: 'Current', targetVersion: '', error: '', lastSeenAt: '2026-10-08T00:00:00Z',
     })));
     const user = userEvent.setup(); render(<ClientReleasesPage />);
-    await screen.findByText('1.0.9');
+    await screen.findByText('1.0.4');
     const releases = screen.getByRole('table', { name: '客户端版本列表' });
     const reports = screen.getByRole('table', { name: '客户端上报' });
-    expect(within(releases).getAllByRole('row')).toHaveLength(11);
+    expect(within(releases).getAllByRole('row')).toHaveLength(6);
     await user.click(within(screen.getByRole('navigation', { name: '客户端版本列表分页' })).getByRole('button', { name: '下一页' }));
-    expect(within(releases).getAllByRole('row')).toHaveLength(2);
-    expect(within(reports).getAllByRole('row')).toHaveLength(11);
+    expect(within(releases).getAllByRole('row')).toHaveLength(6);
+    expect(within(reports).getAllByRole('row')).toHaveLength(6);
     await user.click(within(screen.getByRole('navigation', { name: '客户端上报分页' })).getByRole('button', { name: '下一页' }));
-    expect(within(reports).getAllByRole('row')).toHaveLength(2);
-    expect(within(releases).getAllByRole('row')).toHaveLength(2);
+    expect(within(reports).getAllByRole('row')).toHaveLength(6);
+    expect(within(releases).getAllByRole('row')).toHaveLength(6);
   });
 
   it('saves an announcement draft with selected recipients and a UTC publication date', async () => {

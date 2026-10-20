@@ -8,6 +8,8 @@ English | [中文](README.zh.md)
 
 ## Summary
 
+Image admission distinguishes a managed model's unconfirmed capability (`MODEL_IMAGE_CAPABILITY_UNKNOWN`) from explicit lack of image support. Neither failure stages a partial image prompt.
+
 `@deepseek-ai/dsh-api-session-controller` owns the Host `ctx.sessionController` service and the generated Client `session`, `skills`, and `fileReferences` Remote namespaces. It serves Session lifecycle and history, the Host-generation model catalog, human background-job kill, workspace-path opening, user-invocable skill discovery, and Agent-scoped file references. Use it through API Gateway when a Client needs operations addressed by a Session.
 
 ## Table of Contents
@@ -125,3 +127,5 @@ None.
 </details>
 
 **Runtime invariant:** No companion is published. Every page and frame is checked against the addressed durable Session.
+
+Model catalog projections retain optional display-only `multiplier` text from the owning LLM adapter; model selection still uses the same provider/model ids.

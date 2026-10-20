@@ -706,6 +706,7 @@ export class LlmRuntime extends TypertRemoteService {
         || typeof model.name !== 'string'
         || model.name.length === 0
         || (model.description !== undefined && typeof model.description !== 'string')
+        || (model.multiplier !== undefined && (typeof model.multiplier !== 'string' || model.multiplier.length > 32))
         || seen.has(model.id)
       ) {
         throw new LlmError(`adapter returned invalid or duplicate model metadata for provider "${provider}"`, 'INVALID_CATALOG')
@@ -716,8 +717,10 @@ export class LlmRuntime extends TypertRemoteService {
         provider: model.provider,
         id: model.id,
         name: model.name,
+        ...model.multiplier === undefined ? {} : { multiplier: model.multiplier },
         ...model.description === undefined ? {} : { description: model.description },
         ...inputModalities === undefined ? {} : { inputModalities },
+        ...model.imageInputState === undefined ? {} : { imageInputState: model.imageInputState },
       }
     })
   }
@@ -763,6 +766,7 @@ export class LlmRuntime extends TypertRemoteService {
       || typeof resolved.name !== 'string'
       || resolved.name.length === 0
       || (resolved.description !== undefined && typeof resolved.description !== 'string')
+      || (resolved.multiplier !== undefined && (typeof resolved.multiplier !== 'string' || resolved.multiplier.length > 32))
     ) {
       throw new LlmError(
         `adapter returned invalid exact model metadata for provider "${provider}" model "${model}"`,
@@ -799,8 +803,10 @@ export class LlmRuntime extends TypertRemoteService {
       provider,
       id: model,
       name: resolved.name,
+      ...resolved.multiplier === undefined ? {} : { multiplier: resolved.multiplier },
       ...resolved.description === undefined ? {} : { description: resolved.description },
       ...inputModalities === undefined ? {} : { inputModalities },
+      ...resolved.imageInputState === undefined ? {} : { imageInputState: resolved.imageInputState },
       ...context === undefined ? {} : { context: { contextWindow: context.contextWindow } },
       ...defaultMaxTokens === undefined ? {} : { defaultMaxTokens },
       ...resolved.systemPromptUpdate === undefined ? {} : { systemPromptUpdate: resolved.systemPromptUpdate },
@@ -1050,6 +1056,11 @@ export class LlmRuntime extends TypertRemoteService {
       let projectedMessages: readonly RequestMessage[] = resolvedOptions.messages
       if (projectedMessages.some(message => contentHasFile(message.content))) {
         projectedMessages = projectFilesToText(projectedMessages, ref => this.fileReadPath(ref))
+      }
+      if (modelInfo.imageInputState === 'unknown'
+        && projectedMessages.some(message => contentHasImage(message.content))) {
+        throw new LlmError('Image capability is unconfirmed; ask your administrator to configure image input.',
+          'MODEL_IMAGE_CAPABILITY_UNKNOWN')
       }
       if (modelInfo.inputModalities !== undefined
         && !modelInfo.inputModalities.includes('image')

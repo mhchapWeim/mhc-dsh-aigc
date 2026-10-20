@@ -9,6 +9,8 @@ English | [中文](README.zh.md)
 
 ## Summary
 
+Managed model entries may carry `imageInputState`. An `unknown` state is preserved in discovery and resolution, and image requests fail with `MODEL_IMAGE_CAPABILITY_UNKNOWN` before text-only image projection. Text requests are unaffected. This is transient capability metadata, not a session format change.
+
 Use `@deepseek-ai/dsh-llm` to stream model calls through configured provider adapters, discover models, and resolve model capabilities and call defaults. Callers must keep all model-visible input reconstructable from the session log. Loop-built requests arrive deep-frozen, so extensions and adapters cannot rewrite them. Each stream is one provider attempt: provider-specific translation stays with its adapter, while the optional `@deepseek-ai/dsh-llm-retry` package re-runs failed requests. Streams always end with a terminal result, so callers can handle success, failure, and cancellation consistently.
 
 ## Table of Contents
@@ -174,3 +176,5 @@ This Dev Note is non-authoritative working context: open questions and undecided
 - The `llm/adapters-updated` event is payload-free by design; consumers re-read the registries instead of receiving the new topology in the event.
 
 </details>
+
+`LlmModelInfo.multiplier` is an optional administrator-provided selector label (up to 32 characters). Listing and exact resolution preserve it without affecting request generation or costs.

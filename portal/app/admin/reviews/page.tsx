@@ -2,13 +2,13 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { Check, CheckCircle2, ClipboardCheck, Clock3, GitBranch, ShieldCheck, Undo2 } from 'lucide-react';
+import { usePageSize } from '../../components/use-page-size';
 import { AntPagination } from '../../components/ant-pagination';
 import { ModernSelect } from '../../components/modern-select';
 import { usePlatform } from '../../components/platform-provider';
 import { canReviewPublication, type PublicationRequest, type PublicationStatus } from '../../lib/platform-state';
 import { completeWorkflowTask, getReviewablePublications, hasBackend, type BackendPublication } from '../../lib/api-client';
 
-const pageSize = 3;
 type ReviewItem = PublicationRequest & { taskId?: string; backendAllowed?: boolean };
 const statusLabel = (status: string): PublicationStatus => ({
   Draft: '草稿', Reviewing: '审核中', Publishing: '发布中', Approved: '已通过',
@@ -16,6 +16,7 @@ const statusLabel = (status: string): PublicationStatus => ({
 }[status] as PublicationStatus ?? '草稿');
 
 export default function PublicationReviewsPage() {
+  const [pageSize, setPageSize] = usePageSize();
   const { currentUserId, users, publicationRequests, dispatch, notice } = usePlatform();
   const [status, setStatus] = useState('全部状态');
   const [page, setPage] = useState(1);
@@ -79,7 +80,7 @@ export default function PublicationReviewsPage() {
         <div className="review-node"><span><GitBranch size={16}/>{request.currentNodeName}</span><small>{request.currentAssigneeIds.length ? '指定处理人' : request.currentCandidateGroups.length ? '候选用户组' : '流程已结束'}</small></div>
         <div className="review-actions">{allowed ? <><label><span>审核意见</span><textarea aria-label={`${request.appName}审核意见`} rows={2} value={comments[request.id] || ''} onChange={(event) => setComments({ ...comments, [request.id]: event.target.value })}/></label><div><button className="secondary-danger" type="button" aria-label={`退回${request.appName}`} onClick={() => void review(request, '退回')}><Undo2 size={16}/>退回</button><button className="primary-action" type="button" aria-label={`通过${request.appName}`} onClick={() => void review(request, '通过')}><Check size={16}/>通过</button></div></> : request.status === '审核中' ? <span className="readonly-hint"><ShieldCheck size={16}/>不在当前处理范围</span> : <span className="readonly-hint"><CheckCircle2 size={16}/>流程已处理</span>}</div>
       </article>})}
-      <AntPagination ariaLabel="发布审核分页" current={currentPage} pageSize={pageSize} total={requests.length} onChange={setPage} />
+      <AntPagination onPageSizeChange={setPageSize} ariaLabel="发布审核分页" current={currentPage} pageSize={pageSize} total={requests.length} onChange={setPage} />
     </section>
     {(backendNotice || notice) && <div className="inline-toast" role="status">{backendNotice || notice}</div>}
   </div>;

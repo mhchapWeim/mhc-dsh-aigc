@@ -21,7 +21,7 @@ public static class DshManagedEndpoints
     /// <summary>One catalog entry; capacities are omitted when LiteLLM does not disclose them.</summary>
     private sealed record DshModelView(string Id, string Name, string[] Input,
         [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] int? ContextWindow,
-        [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] int? MaxOutputTokens);
+        [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] int? MaxOutputTokens, ModelImageCapability ImageInput, string Multiplier);
     private const string CasDeviceCookie = "aigc-cas-device";
 
     public static void MapDshManagedEndpoints(this IEndpointRouteBuilder app)
@@ -258,9 +258,9 @@ public static class DshManagedEndpoints
             models = available.Select(x =>
             {
                 capabilities.TryGetValue(x.ModelIdentifier, out var capability);
+                var imageInput = ModelImageCapability.Resolve(x.ImageInputMode, capability);
                 return new DshModelView(x.ModelIdentifier, x.Name,
-                    capability?.SupportsVision == true ? new[] { "text", "image" } : new[] { "text" },
-                    capability?.ContextWindow, capability?.MaxOutputTokens);
+                    imageInput.Input, capability?.ContextWindow, capability?.MaxOutputTokens, imageInput, x.Multiplier);
             }).ToArray()
         });
     }
@@ -285,7 +285,9 @@ public static class DshManagedEndpoints
         if (!await InternalPluginAllowedAsync(user.Id, db, grants, ct)) return Results.StatusCode(403);
         var available = await models.AvailableAsync(user.Id, ct);
         return Results.Ok(new { models = available.Where(x => x.ProviderKind == "Local")
-            .Select(x => new { id = x.Id.ToString("D"), x.Name, input = new[] { "text" }, x.SupportsTools }).ToArray() });
+            .Select(x => new { id = x.Id.ToString("D"), x.Name, x.Multiplier,
+                input = ModelImageCapability.Resolve(x.ImageInputMode).Input,
+                imageInput = ModelImageCapability.Resolve(x.ImageInputMode), x.SupportsTools }).ToArray() });
     }
 
     private static async Task<IResult> InternalConnectionAsync(Guid id, HttpRequest request, AigcHubDbContext db,
@@ -306,7 +308,9 @@ public static class DshManagedEndpoints
             return Results.Problem("内网插件需要兼容 OpenAI 的 /chat/completions 接口", statusCode: 422);
         return Results.Ok(new { modelIdentifier = model.ModelIdentifier, baseURL = endpoint[..^suffix.Length],
             apiKey = model.ApiKey, model.AuthType, model.ApiKeyHeader, model.SupportsTools,
-            model.Temperature, model.MaxTokens, model.TimeoutSeconds });
+            model.Temperature, model.MaxTokens, model.TimeoutSeconds,
+            input = ModelImageCapability.Resolve(model.ImageInputMode).Input,
+            imageInput = ModelImageCapability.Resolve(model.ImageInputMode) });
     }
 
     private static async Task<IResult> GenerateAsync(HttpRequest request, AigcHubDbContext db,
