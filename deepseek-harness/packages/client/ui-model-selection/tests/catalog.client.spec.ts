@@ -16,6 +16,15 @@ function directory(models: () => Promise<unknown>): ModelCatalogDirectory {
 }
 
 describe('ModelCatalogDirectory', () => {
+  it('retries a provider failure returned inside a successful RPC after the network recovers', async () => {
+    const offline = { ...catalog('old'), groups: [], failures: [{ id: 'managed', name: 'Managed', message: 'transport offline' }] }
+    const models = vi.fn().mockResolvedValueOnce({ ok: true, value: offline }).mockResolvedValueOnce({ ok: true, value: catalog('restored') })
+    const subject = directory(models)
+    await expect(subject.load()).resolves.toEqual(offline)
+    await expect(subject.load()).resolves.toEqual(catalog('restored'))
+    await expect(subject.load()).resolves.toEqual(catalog('restored'))
+    expect(models).toHaveBeenCalledTimes(2)
+  })
   it('shares one failing request, exposes the RPC error, and permits a retry', async () => {
     const models = vi.fn()
       .mockResolvedValueOnce({

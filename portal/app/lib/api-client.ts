@@ -6,9 +6,19 @@ export type DshBackupRow = { id: string; userId: string; userName: string; emplo
 export const getDshBackups = (page: number, search: string, pageSize = 5) => apiRequest<BackendPage<DshBackupRow>>(`/api/dsh-backups?${new URLSearchParams({ page: String(page), search, pageSize: String(pageSize) })}`);
 export const deleteDshBackup = (id: string) => apiRequest<void>(`/api/dsh-backups/${encodeURIComponent(id)}`, { method: 'DELETE' });
 export async function downloadDshBackup(id: string): Promise<void> {
-  const value = await apiRequest<{ payload: string; sha256: string }>(`/api/dsh-backups/${encodeURIComponent(id)}/download`);
-  const url = URL.createObjectURL(new Blob([value.payload], { type: 'application/json' }));
-  const link = document.createElement('a'); link.href = url; link.download = `conversation-backup-${id}.json`;
+  if (!API_BASE_URL) throw new Error('未配置后端地址');
+  const token = storedToken();
+  const response = await fetch(`${API_BASE_URL}/api/dsh-backups/${encodeURIComponent(id)}/download`, { headers: token ? { Authorization: `Bearer ${token}` } : {} });
+  if (response.status === 401) {
+    clearSession();
+    if (typeof window !== 'undefined') window.dispatchEvent(new Event('aigc-session-expired'));
+    throw new Error('登录状态已失效，请重新登录');
+  }
+  if (!response.ok) throw new Error(`备份下载失败（HTTP ${response.status}）`);
+  const binary = response.headers.get('content-type')?.includes('application/gzip');
+  const blob = binary ? await response.blob() : new Blob([(await response.json() as { payload: string }).payload], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a'); link.href = url; link.download = `conversation-backup-${id}.${binary ? 'tar.gz' : 'json'}`;
   document.body.appendChild(link); link.click(); link.remove(); setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
@@ -67,7 +77,7 @@ export type BackendDshUpload = {
   id: string; clientUploadId: string; sessionId: string; eventSeq: number; prompt: string;
   userName: string; employeeNo: string; computerName: string; storedPath: string;
   fileName: string; bytes: number; offset: number; completed: boolean;
-  status: 'Pending' | 'Uploading' | 'Finalizing' | 'Completed';
+  status: 'Pending' | 'Uploading' | 'Finalizing' | 'Completed' | 'Recorded';
   createdAt: string; completedAt?: string | null;
 };
 export type BackendDshUploadBatch = {

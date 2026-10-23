@@ -25,6 +25,8 @@ The Web GUI lets users switch the model and reasoning effort for an existing ses
 <a id="use-this-package"></a>
 ## Use this package
 
+A provider failure inside a successful catalog RPC is retryable: reopening the selector or choosing Retry fetches a fresh catalog rather than reusing failed groups. Browser online recovery refreshes even if the local Desktop Host never disconnected; focusing the window retries a failed catalog. Host reconnection still fences stale responses and refreshes the shared catalog. Long model names truncate inside the card, the scrollbar has reserved space, and opaque sticky provider headings remain readable while scrolling.
+
 Mount this plugin alongside `ui-conversation` and the commands package; the composer then shows the model seat next to the pending indicator, and `/model` opens the same directory as a popup. While the seat's menu is open, `↑`/`↓` move focus across the rows of the shown pane, Tab settles the focused row, and Escape and `Shift+Tab` leave a drilled pane first and otherwise close back to the trigger. Drilling lands on the row of the value in use, and going back lands on the cell that opened the pane left. Both surfaces show the host-reported current selection when the exact provider/model pair remains in the advertised groups; a missing catalog row leaves the routable selection intact while the trigger prompts `Select model`.
 
 ### Model and effort
@@ -51,7 +53,7 @@ When another writer owns the Session, model-selection failures tell the user to 
 <details>
 <summary>Implementation internals — click to expand</summary>
 
-Two entries over ONE per-session directory owned by `ModelDirectoryResolver` (`ctx.modelDirectories`): the `/model` popupSelect contribution (registered through `ctx.commandUi`) and the composer's named `conversation.input.model` seat both load the session's advisory directory through `session.models` and submit through `session.selectModel` via the same `ModelDirectory` instance, so a switch made in either entry is what the other shows next. Directory loads and selections share a generation counter so an older response never overwrites a newer one; a connection reset drops every resident projection and repulls the Host-restored selection before display. Directories are per-session, resolved lazily, and disposed with the session scope; addressed subagent sessions expose neither entry. Every resident directory refetches directly on forwarded `llm/adapters-updated` and `settings/document-updated` owner events.
+Both entries resolve one per-session `ModelDirectory` through `ModelDirectoryResolver` (`ctx.modelDirectories`). They combine the shared `session.modelCatalog` with the durable model-selection projection and submit through `session.selectModel`. A connection reset invalidates in-flight selections and reloads the catalog while retaining the last resolved selection until fresh inputs arrive. Directories are lazy and disposed with their session scopes; addressed subagent sessions expose neither entry. Adapter, settings and credential events refresh the shared catalog, whose generations fence stale responses.
 
 </details>
 

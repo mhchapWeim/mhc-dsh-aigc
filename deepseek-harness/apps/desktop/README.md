@@ -4,6 +4,8 @@ English | [中文](README.zh.md)
 
 ## Local failure diagnostics
 
+The main-process build explicitly bundles the `dsh-home-paths` and `dsh-deepseek-account` workspace helpers because they are development dependencies excluded from the installed shell. The main-bundle regression test builds the real entry point and checks that neither helper remains an external import. Rebuild the installer to deliver this rule to installed clients.
+
 The application menu and Windows tray offer **Open diagnostic logs** and **Export diagnostics (last 7 days)**. Desktop writes redacted JSONL under Electron's logs directory in `diagnostics/`, keeps seven UTC calendar days, rotates at 16 MiB, and caps journal files at 1 GiB. Export produces a streaming `.jsonl.gz` file with a manifest and the retained records. Crash reports also expire after seven days. Logging failures do not interrupt user operations.
 
 Records include the installed app version, persistent local device ID, current managed username when available, and available session/tool identifiers. Collectors cover model-request failures, failed tool results, Host error/warning logs and stderr, failed HTTP calls, main-process errors, primary-renderer console errors, and fatal recovery. Request bodies, tool arguments and session history are not copied into the diagnostic package. Credential-like values are redacted before writing; free-form error text may still include business data. Unreported failures, hard process termination and failures before collectors start cannot be guaranteed to produce a record.

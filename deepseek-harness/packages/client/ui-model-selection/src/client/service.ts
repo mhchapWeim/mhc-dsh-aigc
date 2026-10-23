@@ -59,6 +59,21 @@ export class ModelDirectoryResolver extends Service {
     ctx.remote.$on('settings/document-updated', () => { this.catalog.refresh() })
     ctx.remote.$on('credentials/reference-updated', () => { this.catalog.refresh() })
     ctx.remote.$on('credentials/record-updated', () => { this.catalog.refresh() })
+    ctx.effect(() => {
+      if (typeof window === 'undefined') return () => { /* Node-only composition tests have no browser events. */ }
+      const recover = (): void => {
+        const state = this.catalog.store.getSnapshot()
+        if (state.status === 'error' || (state.value?.failures.length ?? 0) > 0) this.catalog.refresh()
+      }
+      const online = (): void => { this.catalog.refresh() }
+      // Desktop can lose AIGC connectivity while its local Host carrier stays up.
+      window.addEventListener('online', online)
+      window.addEventListener('focus', recover)
+      return () => {
+        window.removeEventListener('online', online)
+        window.removeEventListener('focus', recover)
+      }
+    }, 'ui-model-selection: network recovery')
   }
 
   /**

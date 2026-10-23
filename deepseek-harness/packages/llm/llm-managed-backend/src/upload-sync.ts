@@ -1,4 +1,4 @@
-/** Crash-recoverable synchronization of submitted chat files to the organization backend. */
+/** Crash-recoverable reporting of submitted file metadata, without transferring file contents. */
 import { createHash, randomUUID } from 'node:crypto'
 import { mkdir, readFile, rename, writeFile } from 'node:fs/promises'
 import { hostname } from 'node:os'
@@ -12,7 +12,7 @@ import type { SessionEvent } from '@deepseek-ai/dsh-session'
 import type {} from '@deepseek-ai/dsh-session-persistence'
 import { z } from 'zod'
 
-/** Deployment-owned transfer budget; the server refuses chunks above four MiB. */
+/** Metadata reporting schedule; chunkBytes remains accepted for existing deployment configurations. */
 export interface UploadSyncConfig {
   readonly pollMs: number
   readonly chunkBytes: number
@@ -38,7 +38,7 @@ function submittedFiles(event: SessionEvent): { prompt: string; files: FileAttac
   return { prompt: event.data.content.filter(part => part.type === 'text').map(part => part.text).join('\n'), files }
 }
 
-/** Reconstruct eligible file tasks from stored user messages and persist transfer progress. */
+/** Reconstruct file metadata tasks from stored user messages and persist acknowledgements. */
 export class UploadSync {
   private state: State | undefined
   private inFlight: Promise<void> | undefined
@@ -153,41 +153,13 @@ export class UploadSync {
 
   private async transfer(task: Task, token: string): Promise<void> {
     const ref = task.file as FileAttachmentRef
-    const digest = String(ref.attachmentId).replace(/^sha256:/u, '')
-    const base = `${this.endpoint}/v1/uploads/${encodeURIComponent(task.id)}`
     const response = await this.request(`${this.endpoint}/v1/uploads`, token, { method: 'POST',
       headers: { 'content-type': 'application/json' }, body: JSON.stringify({ userId: task.userId,
         clientUploadId: task.id, sessionId: task.sessionId, eventSeq: task.eventSeq, prompt: task.prompt,
         deviceId: task.deviceId, computerName: task.computerName, storedPath: task.storedPath,
-        fileName: ref.name, bytes: ref.bytes, sha256: digest }) })
-    let status = responseSchema.parse(await response.json())
-    if (status.completed) return
-    if (status.bytes !== ref.bytes || status.offset > ref.bytes) throw new Error('backend upload offset is invalid')
-    const resumeOffset = status.offset
-    let skipped = 0
-    let buffer = Buffer.alloc(0)
-    for await (const chunk of this.ctx.attachments.readFileStream(ref)) {
-      let bytes = Buffer.from(chunk)
-      if (skipped < resumeOffset) { const count = Math.min(bytes.length, resumeOffset - skipped); skipped += count; bytes = bytes.subarray(count) }
-      buffer = Buffer.concat([buffer, bytes])
-      while (buffer.length >= this.config.chunkBytes) {
-        const part = buffer.subarray(0, this.config.chunkBytes)
-        status = await this.sendChunk(base, token, status.offset, part)
-        buffer = buffer.subarray(part.length)
-      }
-    }
-    if (buffer.length > 0) status = await this.sendChunk(base, token, status.offset, buffer)
-    if (status.offset !== ref.bytes) throw new Error('backend did not acknowledge the complete file')
-    await this.request(`${base}/complete`, token, { method: 'POST' })
-  }
-
-  private async sendChunk(base: string, token: string, offset: number, bytes: Buffer) {
-    const response = await this.request(`${base}/chunk?offset=${offset}`, token, { method: 'PUT',
-      headers: { 'content-type': 'application/octet-stream', 'x-chunk-sha256': createHash('sha256').update(bytes).digest('hex') },
-      body: Uint8Array.from(bytes).buffer })
+        fileName: ref.name, bytes: ref.bytes }) })
     const status = responseSchema.parse(await response.json())
-    if (status.offset !== offset + bytes.length) throw new Error('backend chunk offset mismatch')
-    return status
+    if (!status.completed) throw new Error('backend did not acknowledge the file metadata; update the organization backend')
   }
 
   private async request(url: string, token: string, init: RequestInit): Promise<Response> {

@@ -13,6 +13,7 @@ public sealed class DshUpload
     public required string ComputerName { get; set; }
     public required string StoredPath { get; set; }
     public required string FileName { get; set; }
+    // Empty when only metadata was recorded; historical file uploads retain their checksum.
     public required string Sha256 { get; set; }
     public long Bytes { get; set; }
     public long Offset { get; set; }

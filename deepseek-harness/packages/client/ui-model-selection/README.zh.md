@@ -25,6 +25,8 @@ Web GUI 允许用户通过 `/model` 弹窗或 composer 模型控件切换既有�
 <a id="use-this-package"></a>
 ## 使用本包
 
+目录 RPC 即使成功，只要包含 provider 加载失败就不会作为完整缓存复用：重新打开选择器或点击重试会重新读取目录。浏览器恢复网络时，即使本地 Desktop Host 连接一直正常，也会刷新目录；窗口重新获得焦点时会重试失败目录。Host 重连仍会隔离旧响应并刷新共享目录。长模型名在菜单内省略，滚动条预留空间，provider 标题使用不透明吸顶背景，避免滚动内容遮挡标题。
+
 与 `ui-conversation` 及命令包一起挂载本插件；composer 随即在待处理指示器旁显示模型位，`/model` 则以弹窗打开同一份目录。模型位菜单打开期间，`↑`／`↓` 在所显示面板的行间移动焦点，`Tab` 选定聚焦行，Escape 与 `Shift+Tab` 先退出已下钻的面板，否则关闭并回到触发器。下钻落在正在使用的那一行，返回则落在打开该面板的格子上。当确切提供方／模型对仍在已公布分组中时，两个界面都显示 Host 报告的当前选择；目录行缺席时，可路由的选择保持不变，触发器提示 `Select model`。
 
 ### 模型与推理强度
@@ -51,7 +53,7 @@ Web GUI 允许用户通过 `/model` 弹窗或 composer 模型控件切换既有�
 <details>
 <summary>实现细节——点击展开</summary>
 
-两个入口共用一份由 `ModelDirectoryResolver`（`ctx.modelDirectories`）持有的会话级目录：`/model` popupSelect 贡献项（经 `ctx.commandUi` 注册）与 composer 的具名 `conversation.input.model` 位都经 `session.models` 加载会话的建议目录、经 `session.selectModel` 通过同一个 `ModelDirectory` 实例提交，因此任一入口所做的切换正是另一个入口接下来显示的。目录加载与选择共享一个代次计数器，旧响应不会覆盖新结果；连接重置丢弃所有常驻投影，并在显示前重新拉取 Host 恢复的选择。目录按会话惰性解析，随会话作用域一并 dispose（资源释放）；已寻址 subagent 会话不公开任一入口。每份常驻目录都会直接在转发的 `llm/adapters-updated` 与 `settings/document-updated` owner 事件上重拉。
+两个入口均通过 `ModelDirectoryResolver`（`ctx.modelDirectories`）解析同一个会话级 `ModelDirectory`，组合共享的 `session.modelCatalog` 与持久化模型选择投影，经 `session.selectModel` 提交。连接重置使进行中的选择响应失效并重载目录；新输入到达前保留上次已解析的选择。目录按会话惰性创建，随作用域释放；已寻址 subagent 会话不公开入口。适配器、设置与凭据事件刷新共享目录，目录代次隔离旧响应。
 
 </details>
 

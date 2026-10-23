@@ -2,6 +2,9 @@
 
 /** Simplified Chinese dictionary and key source of truth. */
 export const zh = {
+  managedRestartTitle: '插件已更新，重启后生效',
+  managedRestartDescription: '插件更新已下载。请在当前任务完成后退出并重新打开客户端，新版本将在启动后生效。',
+  managedRestartLater: '知道了，稍后重启',
   panel: '插件',
   title: '插件',
   intro: '添加和管理插件',
@@ -186,6 +189,9 @@ export type PluginManagerLocaleKey = keyof typeof zh
 
 /** English dictionary checked against the Chinese key set. */
 export const en = {
+  managedRestartTitle: 'Plugin updates ready — restart to apply',
+  managedRestartDescription: 'Plugin updates have been downloaded. Finish your current work, then quit and reopen the client to apply the new versions.',
+  managedRestartLater: 'Restart later',
   panel: 'Plugins',
   title: 'Plugins',
   intro: 'Add and manage plugins',

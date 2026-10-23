@@ -25,7 +25,7 @@ kind: "package-reference"
 <a id="data-repair-and-copy-migration"></a>
 ### 数据修复与复制迁移
 
-云端备份方法要求登录受管后端。`uploadCloudBackup()` 上传全部已保存会话（包含归档历史），或明确指定的 `sessionIds`；无法读取或仍在运行的会话会使上传失败。备份包含会话引用的文件与图片，不包含项目文件、凭据和本机设置，最大 24 MiB。`cloudBackups(page)` 和 `deleteCloudBackup(id)` 仅操作当前账号的备份。`restoreCloudBackup({ id, targetPath })` 校验备份及附件后，在本地目标目录创建新会话，不归档或覆盖已有会话。部分恢复失败会返回可重试的本地迁移回执。消息中的旧绝对路径保持不变；云端备份是手动快照，不是自动同步。
+云端备份方法要求登录受管后端。`uploadCloudBackup()` 导出全部已保存会话（含归档）或明确指定的 `sessionIds`，拒绝运行中或不可读的会话。每个会话和二进制附件分别写文件后压缩，容量与分片由 AIGC 返回（默认 1 GiB / 8 MiB）。AIGC 逐请求鉴权并将归档正文存入 MinIO，Host 只连接 AIGC。本地固定快照与服务器分片记录支持重启续传。`cloudBackupProgress()` 与 `pauseCloudBackup()` 提供进度和暂停，再次上传同一范围可续传。`cloudBackupSessions(id)` 列出会话名称；`restoreCloudBackup({ id, targetPath, sessionIds? })` 按 Range 下载，校验归档和文件，恢复全部或勾选会话的副本。持久化恢复回执避免重试重复复制。已有会话和消息中的路径保持不变。旧 JSON 快照仍可读取，维持其 24 MiB 限制。备份是手动快照，不是自动同步。
 
 `dataStatus()` 检查目录和会话引用，并列出已保存的迁移回执。未登录时也能执行本地数据操作。`repairDirectory()` 只重建缺失目录，不会恢复已删除文件。`forgetMissingSessions()` 仅在持久化服务确认文件不存在时移除引用；无法读取的文件和活动会话都会保留。
 

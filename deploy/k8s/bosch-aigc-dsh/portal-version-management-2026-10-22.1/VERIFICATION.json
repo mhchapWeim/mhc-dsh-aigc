@@ -1,0 +1,43 @@
+{
+  "frontendTests": {
+    "passed": 41,
+    "files": [
+      "distribution-pages",
+      "admin-pages",
+      "model-grants",
+      "backup-download"
+    ]
+  },
+  "prepareTests": {
+    "passed": 6
+  },
+  "typescript": "passed",
+  "dockerBuild": "passed",
+  "image": "aigc-portal:2026-10-22-version-management.1",
+  "imageId": "sha256:f328905f4310ad25e7b61d46d845db9d575fadf76e432694e86223abc930e180",
+  "platform": "linux/amd64",
+  "bashSyntax": "update/verify/rollback passed",
+  "httpSmoke": [
+    {
+      "path": "/login/local",
+      "status": 200
+    },
+    {
+      "path": "/desktop",
+      "status": 200
+    },
+    {
+      "path": "/admin/client-releases",
+      "status": 200
+    },
+    {
+      "path": "/admin/client-releases/status",
+      "status": 200
+    }
+  ],
+  "artifactContents": "version menu, status, filters, shared filter CSS, marker removal CSS, production API domain confirmed",
+  "productionDeployed": false,
+  "limitations": [
+    "No production preflight or authenticated production UI acceptance performed."
+  ]
+}

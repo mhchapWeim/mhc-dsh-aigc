@@ -16,6 +16,7 @@ import type {} from '@deepseek-ai/dsh-session-title'
 import { WorkspaceId } from '@deepseek-ai/dsh-workspace'
 import { z } from 'zod'
 import { exportObjects, importObjects, measureObjects } from './portable-attachments.ts'
+import { exportBinaryObjects, type CloudManifest } from './cloud-archive.ts'
 import type { WorkspaceDataStatus, WorkspaceMigrationRequest, WorkspaceMigrationValue } from './types.ts'
 
 const requestSchema = z.object({
@@ -294,7 +295,7 @@ export class WorkspaceDataMigration {
   }
 
   /** Measure persisted history and encoded attachment sizes without building an upload. */
-  measureSessions(ids?: readonly SessionId[]): Promise<number> {
+  measureSessions(ids?: readonly SessionId[], binary = false): Promise<number> {
     return this.enqueue(async () => {
       const persistence = this.requirePersistence()
       await persistence.flush()
@@ -302,16 +303,16 @@ export class WorkspaceDataMigration {
       const sessions: SessionBackup[] = []
       for (const id of new Set(selected)) sessions.push(await readSession(persistence, id))
       const envelope = JSON.stringify({ version: 1, targetPath: '', sessions, objects: [] })
-      return Buffer.byteLength(envelope) - 2 + measureObjects(sessions)
+      return Buffer.byteLength(envelope) - 2 + measureObjects(sessions, binary)
     })
   }
 
   /** Validate downloaded history before creating a local migration receipt. */
-  async importSessions(payload: string, targetPath: string): Promise<WorkspaceMigrationValue> {
+  async importSessions(payload: string, targetPath: string, storedObjects = false): Promise<WorkspaceMigrationValue> {
     if (!isAbsolute(targetPath)) throw new Error('Target directory must be absolute')
     await this.ctx.workspaceRegistry.checkDirectoryTarget(resolve(targetPath))
     backupSchema.parse(JSON.parse(payload))
-    payload = await importObjects(this.ctx, payload)
+    if (!storedObjects) payload = await importObjects(this.ctx, payload)
     const staging = join(this.home(), 'cloud-downloads', randomUUID())
     await mkdir(staging, { recursive: true, mode: 0o700 })
     await writeFile(join(staging, 'sessions.json'), payload, { mode: 0o600 })
@@ -321,6 +322,34 @@ export class WorkspaceDataMigration {
   private async assertInactive(sessionId: SessionId): Promise<void> {
     const activity = await this.ctx.waterfall('workspace/session-activity', { sessionId }, () => Promise.resolve([]))
     if (activity.length > 0) throw new Error('Session is running; stop its work before migration')
+  }
+
+  /** Freeze selected histories into separate files and content-addressed binary objects. */
+  exportCloudSnapshot(folder: string, maximumBytes: number, ids?: readonly SessionId[]): Promise<CloudManifest> {
+    return this.enqueue(async () => {
+      const persistence = this.requirePersistence()
+      await persistence.flush()
+      const selected = [...new Set(ids ?? (await persistence.list()).map(item => item.header.id))]
+      if (selected.length === 0) throw new Error('No Sessions selected')
+      const manifest: CloudManifest = { version: 2, sessions: [], objects: [] }
+      await mkdir(join(folder, 'sessions'), { recursive: true, mode: 0o700 })
+      await mkdir(join(folder, 'objects'), { recursive: true, mode: 0o700 })
+      let bytes = 0
+      for (const id of selected) {
+        await this.assertInactive(id)
+        const session = await readSession(persistence, id)
+        const payload = JSON.stringify(session)
+        const length = Buffer.byteLength(payload)
+        bytes += length
+        if (bytes + manifest.objects.reduce((sum, item) => sum + item.bytes, 0) > maximumBytes) throw new Error('Backup exceeds capacity limit')
+        const file = `sessions/${createHash('sha256').update(id).digest('hex')}.json`
+        await writeFile(join(folder, file), payload, { mode: 0o600 })
+        const title = session.events.filter(event => event.type === 'session/title').at(-1)
+        manifest.sessions.push({ id, file, bytes: length, sha256: createHash('sha256').update(payload).digest('hex'), title: title?.type === 'session/title' ? title.data.title.slice(0, 512) : String(id) })
+        await exportBinaryObjects(this.ctx, session, folder, manifest, maximumBytes - bytes)
+      }
+      return manifest
+    })
   }
   private async readBackup(path: string): Promise<SessionBackup[]> {
     const checksum = join(dirname(path), 'sessions.sha256')

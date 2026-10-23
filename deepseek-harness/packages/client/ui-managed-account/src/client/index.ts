@@ -65,8 +65,11 @@ export function apply(ctx: ClientContext): void {
             sessionIds: status!.sessions.filter(item => ids.includes(item.sessionId)).map(item => item.sessionId),
           }))
         },
-        async restore(id, targetPath) {
-          const result = accepted(await ctx.remote.workspace.restoreCloudBackup({ id, targetPath }))
+        async sessions(id) { return accepted(await ctx.remote.workspace.cloudBackupSessions(id)) },
+        async progress() { return accepted(await ctx.remote.workspace.cloudBackupProgress()) },
+        async pause() { accepted(await ctx.remote.workspace.pauseCloudBackup()) },
+        async restore(id, targetPath, ids) {
+          const result = accepted(await ctx.remote.workspace.restoreCloudBackup({ id, targetPath, ...(ids === undefined ? {} : { sessionIds: [...ids] }) }))
           await ctx.get('sessions')?.refresh()
           return result
         },

@@ -69,6 +69,9 @@ function deferred<T>(): Deferred<T> {
 }
 
 class FakeWorkspaceRemote implements WorkspaceRemote {
+  readonly cloudBackupProgress = vi.fn<WorkspaceRemote['cloudBackupProgress']>(async () => { throw new Error('progress is not scripted') })
+  readonly cloudBackupSessions = vi.fn<WorkspaceRemote['cloudBackupSessions']>(async () => { throw new Error('sessions are not scripted') })
+  readonly pauseCloudBackup = vi.fn<WorkspaceRemote['pauseCloudBackup']>(async () => { throw new Error('pause is not scripted') })
   readonly measureCloudBackup = vi.fn<WorkspaceRemote['measureCloudBackup']>(async () => {
     throw new Error('backup measurement is not scripted')
   })

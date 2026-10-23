@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import AnnouncementPage from './announcements/page';
 import ClientReleasesPage from './client-releases/page';
+import ClientVersionStatusPage from './client-releases/status/page';
 import * as api from '../lib/api-client';
 
 vi.mock('../lib/api-client', () => ({
@@ -20,6 +21,46 @@ vi.mock('../lib/api-client', () => ({
 }));
 
 describe('desktop distribution administration', () => {
+  it('combines client search, version and update status filters and resets pagination', async () => {
+    vi.mocked(api.getDesktopClients).mockResolvedValueOnce(Array.from({ length: 11 }, (_, index) => ({
+      userId: `user-${index}`, name: `员工${index}`, employeeNo: `w${index}`, deviceId: `device-${index}`, computerName: `PC-${index}`,
+      version: index === 10 ? '2.0.0' : '1.0.0', platform: 'win32', arch: 'x64', updateStatus: index === 10 ? 'Failed' : 'Current', targetVersion: '', error: '', lastSeenAt: '2026-10-08T00:00:00Z',
+    })));
+    const user = userEvent.setup(); render(<ClientVersionStatusPage />);
+    await screen.findByText('设备 ID：device-0');
+    await user.click(within(screen.getByRole('navigation', { name: '客户端上报分页' })).getByRole('button', { name: '下一页' }));
+    await user.type(screen.getByRole('searchbox', { name: '搜索客户端' }), ' pc-10 ');
+    expect(screen.getByText('设备 ID：device-10')).toBeVisible();
+    expect(screen.queryByText('设备 ID：device-5')).not.toBeInTheDocument();
+    await user.selectOptions(screen.getByRole('combobox', { name: '当前版本' }), '2.0.0');
+    await user.selectOptions(screen.getByRole('combobox', { name: '更新状态' }), 'Failed');
+    expect(screen.getByText('设备 ID：device-10')).toBeVisible();
+    await user.selectOptions(screen.getByRole('combobox', { name: '更新状态' }), 'Current');
+    expect(screen.getByText('没有符合筛选条件的客户端。')).toBeVisible();
+    await user.click(screen.getByRole('button', { name: '重置' }));
+    expect(screen.getByText('设备 ID：device-0')).toBeVisible();
+    expect(screen.getByRole('searchbox', { name: '搜索客户端' })).toHaveValue('');
+    expect(screen.getByRole('combobox', { name: '当前版本' })).toHaveValue('');
+    expect(screen.getByRole('combobox', { name: '更新状态' })).toHaveValue('');
+  });
+
+  it('keeps same-name client instances identifiable and clears stale results on refresh failure', async () => {
+    vi.mocked(api.getDesktopClients).mockResolvedValueOnce(['old-device', 'new-device'].map((deviceId, index) => ({
+      userId: 'same-user', name: '员工', employeeNo: 'w1', deviceId, computerName: 'same-pc',
+      version: `1.0.${index}`, platform: 'win32', arch: 'x64', updateStatus: 'Current', targetVersion: '', error: '', lastSeenAt: '2026-10-08T00:00:00Z',
+    })));
+    const user = userEvent.setup(); render(<ClientVersionStatusPage />);
+    expect(await screen.findByText('设备 ID：old-device')).toBeVisible();
+    expect(screen.getByText('设备 ID：new-device')).toBeVisible();
+    expect(screen.getByRole('cell', { name: '1.0.0' })).toBeVisible();
+    expect(screen.getByRole('cell', { name: '1.0.1' })).toBeVisible();
+    expect(screen.queryByRole('table', { name: '客户端版本列表' })).not.toBeInTheDocument();
+    vi.mocked(api.getDesktopClients).mockRejectedValueOnce(new Error('上报读取失败'));
+    await user.click(screen.getByRole('button', { name: '刷新' }));
+    expect(await screen.findByRole('alert')).toHaveTextContent('上报读取失败');
+    expect(screen.queryByText('设备 ID：old-device')).not.toBeInTheDocument();
+  });
+
   it('paginates releases and client reports independently', async () => {
     vi.mocked(api.getDesktopReleases).mockResolvedValueOnce(Array.from({ length: 11 }, (_, index) => ({
       id: `release-${index}`, version: `1.0.${index}`, notes: '', platform: 'win32', arch: 'x64', status: 'Draft', fileName: '', bytes: 0, hasBlockmap: false,
@@ -29,10 +70,10 @@ describe('desktop distribution administration', () => {
       userId: `user-${index}`, name: `员工${index}`, employeeNo: `w${index}`, deviceId: `device-${index}`, computerName: `pc-${index}`,
       version: '1.0.0', platform: 'win32', arch: 'x64', updateStatus: 'Current', targetVersion: '', error: '', lastSeenAt: '2026-10-08T00:00:00Z',
     })));
-    const user = userEvent.setup(); render(<ClientReleasesPage />);
+    const user = userEvent.setup(); render(<><ClientReleasesPage /><ClientVersionStatusPage /></>);
     await screen.findByText('1.0.4');
     const releases = screen.getByRole('table', { name: '客户端版本列表' });
-    const reports = screen.getByRole('table', { name: '客户端上报' });
+    const reports = await screen.findByRole('table', { name: '客户端上报' });
     expect(within(releases).getAllByRole('row')).toHaveLength(6);
     await user.click(within(screen.getByRole('navigation', { name: '客户端版本列表分页' })).getByRole('button', { name: '下一页' }));
     expect(within(releases).getAllByRole('row')).toHaveLength(6);

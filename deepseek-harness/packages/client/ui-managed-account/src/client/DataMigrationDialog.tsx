@@ -81,8 +81,7 @@ export function DataMigrationDialog({ data, t, close }: {
         <Button disabled={busy} onClick={close}>{t('close')}</Button>
       </div>
       {data.cloud !== undefined && <CloudBackupPanel cloud={data.cloud} t={t} sessions={status?.sessions ?? []} workspaces={status?.workspaces ?? []} setSelected={setSelected} onBusyChange={setBusy} selected={selected} target={target} setTarget={setTarget} restored={async (result) => { setPlan(result); setResume(result.migrationId); await refresh() }} />}
-      <details open={data.cloud === undefined}><summary>{t('dataLocalTools')}</summary>
-        {data.cloud !== undefined && <p>{t('dataDescription')}</p>}
+      {data.cloud === undefined && <details open><summary>{t('dataLocalTools')}</summary>
         <div className={css.rows}>
           {status?.workspaces.map(workspace => <div className={css.row} key={workspace.workspaceId}>
             <div><strong>{workspace.title}</strong><code>{workspace.path}</code>
@@ -135,7 +134,7 @@ export function DataMigrationDialog({ data, t, close }: {
           <code>{item.targetPath} · {item.migrationId}</code>
           <Button disabled={busy} onClick={() => { setPlan(item); setResume(item.migrationId) }}>{t('dataPreviewReady')}</Button>
         </div>)}
-      </details>
+      </details>}
     </div>
   </Modal>
 }

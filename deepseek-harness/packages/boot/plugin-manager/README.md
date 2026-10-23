@@ -28,6 +28,8 @@ Manage the current profile's plugins without editing configuration by hand. Enab
 <a id="use-this-package"></a>
 ## Use this package
 
+Managed policy synchronization exposes verified staged releases through `managedUpdates()` and `plugin-manager/managed-updated`. Only `RestartRequired` releases appear; logout, revocation and disposal clear the corresponding notice. Replacing an installed package remains restart-required because in-process module caches cannot guarantee that the new code executes. Configuration changes can apply through HMR and produce no restart notice. The default policy poll interval remains 60 seconds; uploaded packages must also be published and authorized in AIGC before clients receive them.
+
 Base-backed profiles provide the manager. In Web, the sidebar's **Plugins** page ([ui-plugin-manager](../../client/ui-plugin-manager/README.md)) manages the profile's bundles and their uniquely addressable rows; the Settings Plugin list stays read-only. Agent-preset rows remain read-only. The `plugin_manager` tool exposes the same operations and is enabled in Creator mode. Other presets keep it disabled by default. Every tool action requires `danger-full-access` or approval for that call. Under lower sandbox modes, `ask` requests approval; `never`, rejection, cancellation, or an unavailable approval channel prevents execution. An approval leaves the session permission mode unchanged. Profile changes persist across sessions, and installed Host code executes in-process outside the workspace sandbox. Dependency build-script approval remains separate.
 
 For a deployment without agent presets, enable the tool in the profile patch. Preset-backed sessions use their preset’s `tool-plugin-manager` entry.

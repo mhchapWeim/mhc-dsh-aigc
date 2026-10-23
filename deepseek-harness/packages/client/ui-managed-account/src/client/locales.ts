@@ -1,5 +1,7 @@
 /** Organization sign-in copy, owned by the managed-account feature. */
 export const en = {
+  cloudRestoreHeading: 'Restore from cloud', cloudSnapshot: 'Cloud backup', cloudRestoreAll: 'Restore all conversations', cloudRestoreSelected: 'Choose conversations to restore',
+  cloudPause: 'Pause', cloudPaused: 'Paused. Click upload or restore again to resume.', cloudTransferring: 'Transferring and verifying',
   cloudUploadedAdvice: 'Saved to your account. Sign in on another computer and open cloud backups to restore.',
   cloudRemaining: 'Remaining', cloudOverBy: 'Over limit by',
   cloudUploadHeading: 'Back up to cloud', cloudPayloadSize: 'Backup size', cloudCalculating: 'Calculating…',
@@ -14,9 +16,9 @@ export const en = {
   cloudNoSessions: 'There is no conversation history to back up yet.', cloudFailed: 'The operation could not be completed. Retry or check the error details.',
 
   cloudIntro: 'Back up conversation history and restore it on another computer with the same AIGC account. Existing local history is retained.',
-  cloudPartial: 'Some Sessions could not be restored. Open local data tools below to retry the saved migration receipt.',
+  cloudPartial: 'Some conversations could not be restored. Retry restore to continue from saved progress.',
   cloudSizeUnit: 'MiB',
-  cloudTitle: 'Cloud backups', cloudDescription: 'Sign in to AIGC to back up and restore your conversation history. Includes archived Sessions and attached files/images. Project files, credentials and local settings are excluded. Stop running Sessions before uploading. Maximum 24 MiB per backup.',
+  cloudTitle: 'Cloud backups', cloudDescription: 'Sign in to AIGC to back up and restore your conversation history. Includes archived Sessions and attached files/images. Project files, credentials and local settings are excluded. Stop running Sessions before uploading. Capacity is configured by the server; transfers resume after interruption.',
   cloudUploadAll: 'Upload all history', cloudUploadSelected: 'Upload selection', cloudUploaded: 'Backup uploaded successfully.',
   cloudSelectHint: 'Open local data tools below to select individual Sessions or a workspace.',
   cloudTarget: 'Local destination for restored history', cloudRestore: 'Download and restore',
@@ -71,6 +73,8 @@ export const en = {
 export type ManagedAccountKey = keyof typeof en
 /** Chinese organization sign-in copy. */
 export const zh: Record<ManagedAccountKey, string> = {
+  cloudRestoreHeading: '从云端恢复', cloudSnapshot: '云端备份', cloudRestoreAll: '恢复全部会话', cloudRestoreSelected: '勾选会话恢复',
+  cloudPause: '暂停', cloudPaused: '已暂停，再次点击上传或恢复即可继续。', cloudTransferring: '正在传输或校验',
   cloudUploadedAdvice: '已保存到你的账号。换电脑后登录同一账号，在“历史备份与恢复”中下载即可。',
   cloudRemaining: '剩余容量', cloudOverBy: '超出容量',
   cloudUploadHeading: '上传到云端', cloudPayloadSize: '备份大小', cloudCalculating: '正在计算…',
@@ -80,14 +84,14 @@ export const zh: Record<ManagedAccountKey, string> = {
   cloudHistory: '历史备份与恢复', cloudLatest: '最近成功备份', cloudScope: '备份范围说明',
   cloudErrorDetails: '查看错误详情', cloudUnavailable: '暂时无法使用云端备份，请检查后端地址并确认服务器版本已更新。',
   cloudLoginRequired: '请重新登录 AIGC 后再备份。', cloudForbidden: '当前账号无权访问这份备份。',
-  cloudTooLarge: '本次备份内容过大，请选择较少的会话分批上传。',
+  cloudTooLarge: '本次备份超过服务器容量上限，请减少所选会话后重试。',
   cloudActive: '有会话仍在运行，请先停止任务，或只选择已完成的会话上传。',
   cloudNoSessions: '暂无可备份的会话历史。', cloudFailed: '本次操作未完成，请重试或展开错误详情查看原因。',
 
   cloudIntro: '上传会话历史后，可在另一台电脑登录同一个 AIGC 账号下载恢复。本机已有历史会保留。',
-  cloudPartial: '部分会话恢复失败，请展开下方本地数据工具，使用已保存的迁移回执重试。',
+  cloudPartial: '部分会话未恢复完成，再次点击恢复将继续处理已保存的进度。',
   cloudSizeUnit: 'MiB',
-  cloudTitle: '云端备份', cloudDescription: '登录 AIGC 后，可上传和恢复自己的会话历史，包含归档会话及会话附件和图片。不包含项目文件、登录凭证和本机设置。上传前请停止运行中的会话；单份备份最大 24 MiB。',
+  cloudTitle: '云端备份', cloudDescription: '登录 AIGC 后，可上传和恢复自己的会话历史，包含归档会话及会话附件和图片。不包含项目文件、登录凭证和本机设置。上传前请停止运行中的会话；容量由服务器配置，支持中断后继续传输。',
   cloudUploadAll: '一键上传全部历史', cloudUploadSelected: '上传选中的会话', cloudUploaded: '备份上传成功。',
   cloudSelectHint: '展开下方本地数据工具，可按工作区选择具体会话。',
   cloudTarget: '恢复历史的本地目标目录', cloudRestore: '一键下载并恢复',

@@ -1,7 +1,7 @@
 /** Build one release target with matching Electron and dsh architecture. */
 
 import { spawn } from 'node:child_process'
-import { mkdirSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs'
+import { mkdirSync, readFileSync, readdirSync, renameSync, rmSync, writeFileSync } from 'node:fs'
 import { parseArgs } from 'node:util'
 import { join, resolve } from 'node:path'
 import {
@@ -26,6 +26,7 @@ import { suggestDesktopBuildVersion } from './desktop-build-version-discovery.ts
 import { desktopBuildCommitEnvironment, readDesktopBuildCommit, resolveDesktopBuildCommit } from './desktop-build-commit.mjs'
 import { requireDesktopToolchain } from './desktop-toolchain-preflight.ts'
 import { withMacOSNotarizationProxy } from './macos-notarization-proxy.ts'
+import { auditOutbound } from './outbound-audit.mjs'
 
 const APP_ROOT = resolve(import.meta.dirname, '..')
 const REPOSITORY_ROOT = resolve(APP_ROOT, '..', '..')
@@ -367,6 +368,10 @@ async function main(): Promise<void> {
   process.env.DSH_DESKTOP_PACKAGING_RUN_DIR = run.directory
   let success = false
   try {
+    const auditOutput = join(desktopTargetBuildPaths(target.name).root, 'outbound-audits', buildVersion)
+    if (target.platform === 'win32') {
+      auditOutbound({ output: auditOutput, enforce: !invocation.unsigned && !invocation.prepareOnly })
+    }
     await packagingStep(run.directory, 'configuration', async () => { validateDesktopPackageEnvironment(environment, target, invocation) }, secrets)
     await packagingStep(run.directory, 'toolchain', () => requireDesktopToolchain(target.platform, environment), secrets)
     if (target.platform === 'darwin') {
@@ -378,6 +383,16 @@ async function main(): Promise<void> {
         signingEnvironment => packageTarget(invocation, signingEnvironment, run)), secrets)
     } else {
       await packagingStep(run.directory, 'windows-package', () => packageTarget(invocation, environment, run), secrets)
+    }
+    if (target.platform === 'win32' && !invocation.prepareOnly) {
+      const paths = desktopTargetBuildPaths(target.name)
+      const directory = invocation.unsigned ? paths.unsignedArtifacts : paths.artifacts
+      const artifacts = invocation.directory ? [] : readdirSync(directory)
+        .filter(name => name.includes(`-${buildVersion}-`) && /\.exe(?:\.blockmap)?$/u.test(name))
+        .map(name => join(directory, name))
+      if (!invocation.directory && !artifacts.some(path => path.endsWith('.exe'))) throw new Error('Outbound report: current installer was not found')
+      auditOutbound({ output: auditOutput, artifacts, enforce: !invocation.unsigned })
+      console.log(`OUTBOUND_AUDIT_REPORT ${auditOutput}`)
     }
     success = true
   } catch (error) {

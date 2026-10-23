@@ -15,6 +15,14 @@ function adapter(request: typeof fetch): ManagedBackendAdapter {
 }
 
 describe('managed backend adapter', () => {
+  it('bounds a stalled model catalog request and allows a later successful read', async () => {
+    const request = vi.fn<typeof fetch>().mockImplementationOnce(async (_url, options) => new Promise<Response>((_resolve, reject) => {
+      options?.signal?.addEventListener('abort', () => { reject(new Error('catalog timed out')) }, { once: true })
+    })).mockResolvedValue(Response.json(CATALOG))
+    const managed = new ManagedBackendAdapter(new Context(), 'https://models.example.test', async () => 'token', request, 10)
+    await expect(managed.listModels('managed')).rejects.toMatchObject({ code: 'TRANSPORT' })
+    await expect(managed.listModels('managed')).resolves.toHaveLength(1)
+  })
   it('preserves unknown image capability and rejects image dispatch with a configuration error', async () => {
     const request = vi.fn<typeof fetch>(async () => Response.json({ ...CATALOG,
       models: [{ id: 'team-small', name: 'Unknown', input: ['text'], imageInput: { state: 'unknown' } }],

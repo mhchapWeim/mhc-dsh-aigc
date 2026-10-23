@@ -9,6 +9,18 @@ import type { CloudBackupActions } from '../src/client/CloudBackupPanel.tsx'
 import type { WorkspaceMigrationValue } from '@deepseek-ai/dsh-api-workspace-controller/types'
 
 afterEach(() => { cleanup(); vi.restoreAllMocks() })
+
+it('restores only checked cloud conversations', async () => {
+  const cloud: CloudBackupActions = { list: vi.fn(async () => ({ items: [backup], total: 1, page: 1, pageSize: 20 })),
+    sessions: vi.fn(async () => [{ id: 'one', title: '设备检查' }, { id: 'two', title: '工艺方案' }]),
+    upload: vi.fn(async () => backup), restore: vi.fn(async () => restored), remove: vi.fn(async () => {}) }
+  render(<CloudBackupPanel cloud={cloud} t={key => zh[key]} selected={[]} target={'D:\\wanzaiwork'} setTarget={vi.fn()} restored={vi.fn(async () => {})} />)
+  await waitFor(() => expect(screen.getByRole('button', { name: zh.cloudRestore })).toHaveProperty('disabled', false))
+  fireEvent.click(screen.getByText(zh.cloudRestoreSelected))
+  fireEvent.click(await screen.findByRole('checkbox', { name: '工艺方案' }))
+  fireEvent.click(screen.getByRole('button', { name: zh.cloudRestore }))
+  await waitFor(() => expect(cloud.restore).toHaveBeenCalledWith(backup.id, 'D:\\wanzaiwork', ['two']))
+})
 const backup = { id: 'f95234b0-6b06-4564-8b9a-63767fe7d7e5', createdAt: '2026-10-15T00:00:00Z', bytes: 1024, sessionCount: 2, scope: 'selected', sha256: 'a'.repeat(64) }
 const restored: WorkspaceMigrationValue = { migrationId: backup.id, targetPath: 'D:\\wanzaiwork', backupPath: 'C:\\backup', sessionCount: 2, fileCount: 0, completed: true, warnings: [], results: [] }
 function fixture() {
@@ -18,7 +30,7 @@ function fixture() {
   return { cloud, afterRestore }
 }
 
-it('uploads all history or the explicit selection and restores after confirmation', async () => {
+it('uploads all history or the explicit selection and restores in one click', async () => {
   const { cloud, afterRestore } = fixture()
   await waitFor(() => expect(screen.getByRole('button', { name: zh.cloudUploadAll })).toHaveProperty('disabled', false))
   fireEvent.click(screen.getByRole('button', { name: zh.cloudUploadAll }))
@@ -29,15 +41,10 @@ it('uploads all history or the explicit selection and restores after confirmatio
   await waitFor(() => expect(screen.getByRole('button', { name: /上传选中的会话/ })).toHaveProperty('disabled', false))
   fireEvent.click(screen.getByRole('button', { name: /上传选中的会话/ }))
   await waitFor(() => expect(cloud.upload).toHaveBeenLastCalledWith(['session-one']))
-  fireEvent.click(screen.getByText(new RegExp('^' + zh.cloudHistory)))
-  vi.spyOn(window, 'confirm').mockReturnValue(false)
   await waitFor(() => expect(screen.getByRole('button', { name: zh.cloudRestore })).toHaveProperty('disabled', false))
   fireEvent.click(screen.getByRole('button', { name: zh.cloudRestore }))
-  expect(cloud.restore).not.toHaveBeenCalled()
-  vi.mocked(window.confirm).mockReturnValue(true)
-  fireEvent.click(screen.getByRole('button', { name: zh.cloudRestore }))
   await screen.findByText(zh.cloudRestored)
-  expect(cloud.restore).toHaveBeenCalledWith(backup.id, 'D:\\wanzaiwork')
+  expect(cloud.restore).toHaveBeenCalledWith(backup.id, 'D:\\wanzaiwork', undefined)
   expect(afterRestore).toHaveBeenCalledWith(restored)
 })
 
@@ -50,7 +57,7 @@ it('shows upload errors without reporting success', async () => {
   expect(screen.queryByText(zh.cloudUploaded)).toBeNull()
 })
 
-it('records the localized cloud backup controls and scope disclosure', async () => {
+it('records upload and restore without scope disclosure', async () => {
   const cloud: CloudBackupActions = { list: vi.fn(async () => ({ items: [], total: 0, page: 1, pageSize: 20 })), upload: vi.fn(async () => backup), restore: vi.fn(async () => restored), remove: vi.fn(async () => {}) }
   const { container } = render(<CloudBackupPanel cloud={cloud} t={key => zh[key]} selected={[]} target="D:\wanzaiwork" setTarget={vi.fn()} restored={vi.fn(async () => {})} />)
   await screen.findByText(zh.cloudEmpty)
@@ -68,7 +75,7 @@ it('keeps restore controls secondary and selects conversations by name without e
   }
   const { container } = render(<Fixture />)
   await waitFor(() => expect(screen.getByRole('button', { name: zh.cloudUploadAll })).toHaveProperty('disabled', false))
-  expect(container.querySelector('details')?.hasAttribute('open')).toBe(false)
+  expect(container.querySelector('details')).toBeNull()
   expect(container.textContent).not.toContain(id)
   fireEvent.click(screen.getByText(zh.cloudChoose))
   fireEvent.click(screen.getByRole('checkbox', { name: '工业检测方案' }))

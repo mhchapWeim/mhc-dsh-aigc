@@ -5,6 +5,8 @@ import { fileURLToPath } from 'node:url'
 import { expect, it, vi } from 'vitest'
 
 const state = vi.hoisted(() => ({ root: '', directory: '' }))
+// Source approvals are tested by outbound-audit; this suite exercises packaging failure diagnostics.
+vi.mock('../scripts/outbound-audit.mjs', () => ({ auditOutbound: () => ({}) }))
 vi.mock('../scripts/desktop-package-environment.mjs', () => ({
   loadDesktopPackageEnvironment: () => ({ DSH_DESKTOP_WINDOWS_TOKEN_PIN: 'credential-sentinel' }),
   validateDesktopPackageEnvironment: () => {},

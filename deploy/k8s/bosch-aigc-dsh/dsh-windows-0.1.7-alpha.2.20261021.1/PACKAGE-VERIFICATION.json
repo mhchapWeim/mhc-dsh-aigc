@@ -1,0 +1,31 @@
+{
+  "version": "0.1.7-alpha.2.20261021.1",
+  "managedBackend": {
+    "baseURL": "https://aigcplatform.boschhuayu-steering.com",
+    "allowInsecureHTTP": false
+  },
+  "homePathsBundled": true,
+  "imports": [
+    "node:module",
+    "node:fs/promises",
+    "node:crypto",
+    "node:os",
+    "node:path",
+    "node:url",
+    "electron",
+    "node:fs",
+    "node:util",
+    "semver",
+    "@deepseek-ai/cordis",
+    "node:timers/promises",
+    "node:child_process",
+    "electron-updater",
+    "electron-updater/out/electronHttpExecutor.js",
+    "node:stream",
+    "node:stream/promises",
+    "node:zlib",
+    "ws",
+    "@deepseek-ai/dsh-api-gateway/stream-protocol",
+    "node:readline"
+  ]
+}

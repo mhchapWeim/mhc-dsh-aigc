@@ -218,7 +218,7 @@ public sealed class DshManagedHttpTests
     }
 
     [Fact]
-    public async Task InvalidCompletePartIsPreservedAndResentFromOffsetZero()
+    public async Task AttachmentReviewRecordsMetadataWithoutAcceptingFileContents()
     {
         var root = Path.Combine(Path.GetTempPath(), $"aigc-dsh-test-{Guid.NewGuid():N}");
         Directory.CreateDirectory(root);
@@ -239,33 +239,120 @@ public sealed class DshManagedHttpTests
                 storedPath = @"C:\stored\model.onnx", fileName = "model.onnx",
                 bytes = bytes.Length, sha256 = Convert.ToHexStringLower(SHA256.HashData(bytes))
             };
-            Assert.Equal(HttpStatusCode.OK, (await client.PostAsJsonAsync("/v1/uploads", metadata)).StatusCode);
-            using var chunk = new ByteArrayContent(bytes);
-            chunk.Headers.Add("X-Chunk-SHA256", Convert.ToHexStringLower(SHA256.HashData(bytes)));
-            Assert.Equal(HttpStatusCode.OK, (await client.PutAsync("/v1/uploads/damaged-upload/chunk?offset=0", chunk)).StatusCode);
+            var registered = await client.PostAsJsonAsync("/v1/uploads", metadata);
+            Assert.Equal(HttpStatusCode.OK, registered.StatusCode);
+            var acknowledgement = await registered.Content.ReadFromJsonAsync<JsonElement>();
+            // The released worker checks completed before reading content or validating offsets.
+            Assert.True(acknowledgement.GetProperty("completed").GetBoolean());
+            Assert.Equal(bytes.Length, acknowledgement.GetProperty("bytes").GetInt64());
+            Assert.Equal(0, acknowledgement.GetProperty("offset").GetInt64());
             using var scope = factory.Services.CreateScope();
             var db = scope.ServiceProvider.GetRequiredService<AigcHubDbContext>();
             var upload = await db.DshUploads.SingleAsync();
-            await File.WriteAllBytesAsync(Path.Combine(root, $"{upload.Id:N}.part"), "xxxxxx"u8.ToArray());
-
+            Assert.Equal("model.onnx", upload.FileName);
+            Assert.Equal("inspect", upload.Prompt);
+            Assert.Equal("test-host", upload.ComputerName);
+            Assert.Equal(@"C:\stored\model.onnx", upload.StoredPath);
+            Assert.Equal(bytes.Length, upload.Bytes);
+            Assert.Equal("", upload.Sha256);
+            Assert.True(upload.Completed);
+            Assert.Equal(0, upload.Offset);
+            Assert.Empty(Directory.GetFiles(root));
             var resumed = await client.PostAsJsonAsync("/v1/uploads", metadata);
             Assert.Equal(HttpStatusCode.OK, resumed.StatusCode);
-            using var status = JsonDocument.Parse(await resumed.Content.ReadAsStringAsync());
-            Assert.Equal(0, status.RootElement.GetProperty("offset").GetInt32());
-            Assert.False(status.RootElement.GetProperty("completed").GetBoolean());
-            Assert.Single(Directory.GetFiles(root, $"{upload.Id:N}.*.corrupt"));
+            Assert.Equal(1, await db.DshUploads.CountAsync());
+            using var chunk = new ByteArrayContent(bytes);
+            Assert.Equal(HttpStatusCode.Gone, (await client.PutAsync("/v1/uploads/damaged-upload/chunk?offset=0", chunk)).StatusCode);
+            Assert.Empty(Directory.GetFiles(root));
+            // New clients do not send a file digest at all.
+            Assert.Equal(HttpStatusCode.OK, (await client.PostAsJsonAsync("/v1/uploads", new {
+                userId, clientUploadId = "metadata-2", sessionId = "session-1", eventSeq = 2,
+                prompt = "inspect", deviceId = "device-1", computerName = "test-host",
+                storedPath = @"C:\stored\report.txt", fileName = "report.txt", bytes = 123
+            })).StatusCode);
 
-            using var retryChunk = new ByteArrayContent(bytes);
-            retryChunk.Headers.Add("X-Chunk-SHA256", Convert.ToHexStringLower(SHA256.HashData(bytes)));
-            Assert.Equal(HttpStatusCode.OK, (await client.PutAsync("/v1/uploads/damaged-upload/chunk?offset=0", retryChunk)).StatusCode);
-            Assert.Equal(HttpStatusCode.OK, (await client.PostAsync("/v1/uploads/damaged-upload/complete", null)).StatusCode);
-            Assert.Equal(bytes, await File.ReadAllBytesAsync(Path.Combine(root, $"{upload.Id:N}.bin")));
+            // An interrupted task from an older client becomes metadata-only on retry.
+            upload.Completed = false;
+            upload.Offset = 3;
+            upload.Sha256 = Convert.ToHexStringLower(SHA256.HashData(bytes));
+            await db.SaveChangesAsync();
+            var part = Path.Combine(root, $"{upload.Id:N}.part");
+            await File.WriteAllBytesAsync(part, bytes[..3]);
+            Assert.Equal(HttpStatusCode.OK, (await client.PostAsJsonAsync("/v1/uploads", metadata)).StatusCode);
+            await db.Entry(upload).ReloadAsync();
+            Assert.True(upload.Completed);
+            Assert.Equal("", upload.Sha256);
+            Assert.Equal(0, upload.Offset);
+            Assert.Equal(bytes[..3], await File.ReadAllBytesAsync(part));
+            Assert.False(File.Exists(Path.Combine(root, $"{upload.Id:N}.bin")));
+        }
+        finally { Directory.Delete(root, recursive: true); }
+    }
+
+    [Theory]
+    [InlineData("status")]
+    [InlineData("complete")]
+    [InlineData("chunk")]
+    public async Task InstalledClientsStopInterruptedUploadsWithoutChangingStoredFiles(string operation)
+    {
+        var root = Path.Combine(Path.GetTempPath(), $"aigc-dsh-test-{Guid.NewGuid():N}");
+        Directory.CreateDirectory(root);
+        try
+        {
+            using var factory = new Factory(root);
+            using var client = factory.CreateClient();
+            var login = await client.PostAsJsonAsync("/v1/auth/login", new { username = "wh00028", password = "Bhss@123" });
+            var session = await login.Content.ReadFromJsonAsync<JsonElement>();
+            var userId = session.GetProperty("user").GetProperty("id").GetGuid();
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", session.GetProperty("access_token").GetString());
+            using var scope = factory.Services.CreateScope();
+            var db = scope.ServiceProvider.GetRequiredService<AigcHubDbContext>();
+            var record = new DshUpload {
+                UserId = userId, ClientUploadId = "old-task", SessionId = "old-session", EventSeq = 5,
+                Prompt = "inspect", DeviceId = "old-device", ComputerName = "old-pc", StoredPath = @"D:\work\old.txt",
+                FileName = "old.txt", Bytes = 6, Offset = 3, Sha256 = new string('a', 64), Completed = false
+            };
+            db.DshUploads.Add(record);
+            await db.SaveChangesAsync();
+            var part = Path.Combine(root, $"{record.Id:N}.part");
+            await File.WriteAllBytesAsync(part, "abc"u8.ToArray());
+            var route = "/v1/uploads/old-task";
+            using var response = operation switch {
+                "status" => await client.GetAsync(route),
+                "complete" => await client.PostAsync($"{route}/complete", null),
+                _ => await client.PutAsync($"{route}/chunk?offset=3", new StringContent("def"))
+            };
+            Assert.Equal(operation == "chunk" ? HttpStatusCode.Gone : HttpStatusCode.OK, response.StatusCode);
+            // The released worker retries from registration after a refused in-flight chunk.
+            using var retry = await client.PostAsJsonAsync("/v1/uploads", new {
+                userId, clientUploadId = "old-task", sessionId = "old-session", eventSeq = 5, prompt = "inspect",
+                deviceId = "old-device", computerName = "old-pc", storedPath = @"D:\work\old.txt", fileName = "old.txt",
+                bytes = 6, sha256 = new string('a', 64)
+            });
+            Assert.Equal(HttpStatusCode.OK, retry.StatusCode);
+            Assert.True((await retry.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("completed").GetBoolean());
+            await db.Entry(record).ReloadAsync();
+            Assert.True(record.Completed);
+            Assert.Equal("", record.Sha256);
+            Assert.Equal(0, record.Offset);
+            Assert.Equal("abc"u8.ToArray(), await File.ReadAllBytesAsync(part));
+            Assert.Single(Directory.GetFiles(root));
+            Assert.Single(await db.DshUploads.ToArrayAsync());
+
+            client.DefaultRequestHeaders.Authorization = null;
+            Assert.Equal(HttpStatusCode.Unauthorized, (await client.GetAsync(route)).StatusCode);
+            var otherLogin = await client.PostAsJsonAsync("/v1/auth/login", new { username = "wh00412", password = "Bhss@123" });
+            var other = await otherLogin.Content.ReadFromJsonAsync<JsonElement>();
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", other.GetProperty("access_token").GetString());
+            Assert.Equal(HttpStatusCode.NotFound, (await client.GetAsync(route)).StatusCode);
+            Assert.Equal(HttpStatusCode.NotFound, (await client.PostAsync($"{route}/complete", null)).StatusCode);
+            Assert.Equal(HttpStatusCode.NotFound, (await client.PutAsync($"{route}/chunk?offset=0", new StringContent("secret"))).StatusCode);
         }
         finally { Directory.Delete(root, recursive: true); }
     }
 
     [Fact]
-    public async Task LoginGrantsAndUploadResumeUseTheAuthenticatedUser()
+    public async Task LoginGrantsAndAttachmentRecordsUseTheAuthenticatedUser()
     {
         var root = Path.Combine(Path.GetTempPath(), $"aigc-dsh-test-{Guid.NewGuid():N}");
         Directory.CreateDirectory(root);
@@ -367,25 +454,16 @@ public sealed class DshManagedHttpTests
                 storedPath = @"C:\stored\report.txt", fileName = @"C:\secret\report.txt", bytes = bytes.Length, sha256 = hash
             });
             Assert.Equal(HttpStatusCode.OK, upload.StatusCode);
-            using var firstChunk = new ByteArrayContent(bytes[..3]);
-            firstChunk.Headers.Add("X-Chunk-SHA256", Convert.ToHexStringLower(SHA256.HashData(bytes[..3])));
-            var first = await client.PutAsync("/v1/uploads/upload-1/chunk?offset=0", firstChunk);
-            Assert.Equal(HttpStatusCode.OK, first.StatusCode);
-            var status = await client.GetFromJsonAsync<JsonElement>("/v1/uploads/upload-1");
-            Assert.Equal(3, status.GetProperty("offset").GetInt32());
-            using var secondChunk = new ByteArrayContent(bytes[3..]);
-            secondChunk.Headers.Add("X-Chunk-SHA256", Convert.ToHexStringLower(SHA256.HashData(bytes[3..])));
-            var second = await client.PutAsync("/v1/uploads/upload-1/chunk?offset=3", secondChunk);
-            Assert.Equal(HttpStatusCode.OK, second.StatusCode);
-            var recovered = await client.GetFromJsonAsync<JsonElement>("/v1/uploads/upload-1");
-            Assert.True(recovered.GetProperty("completed").GetBoolean());
-            var complete = await client.PostAsync("/v1/uploads/upload-1/complete", null);
-            Assert.Equal(HttpStatusCode.OK, complete.StatusCode);
             var stored = await db.DshUploads.SingleAsync();
             Assert.Equal("report.txt", stored.FileName);
             Assert.True(stored.Completed);
-            Assert.Equal(bytes, await File.ReadAllBytesAsync(Path.Combine(root, $"{stored.Id:N}.bin")));
-
+            Assert.Equal("", stored.Sha256);
+            Assert.Empty(Directory.GetFiles(root));
+            // A historical completed upload remains downloadable after switching to metadata reporting.
+            stored.Sha256 = hash;
+            stored.Offset = bytes.Length;
+            await db.SaveChangesAsync();
+            await File.WriteAllBytesAsync(Path.Combine(root, $"{stored.Id:N}.bin"), bytes);
             client.DefaultRequestHeaders.Authorization = null;
             Assert.Equal(HttpStatusCode.Unauthorized,
                 (await client.GetAsync($"/api/dsh-uploads/{stored.Id}/download")).StatusCode);
@@ -422,29 +500,16 @@ public sealed class DshManagedHttpTests
                 storedPath = @"C:\stored\large.dat", fileName = "large.dat", bytes = largeBytes.Length, sha256 = largeHash
             });
             Assert.Equal(HttpStatusCode.OK, largeUpload.StatusCode);
-            using var largeFirst = new ByteArrayContent(largeBytes[..(4 * 1024 * 1024)]);
-            largeFirst.Headers.Add("X-Chunk-SHA256", Convert.ToHexStringLower(SHA256.HashData(largeBytes[..(4 * 1024 * 1024)])));
-            Assert.Equal(HttpStatusCode.OK, (await client.PutAsync("/v1/uploads/upload-large/chunk?offset=0", largeFirst)).StatusCode);
-            var unfinished = await db.DshUploads.SingleAsync(x => x.ClientUploadId == "upload-large");
             using var adminClient = factory.CreateClient();
             adminClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer",
                 adminBody.RootElement.GetProperty("accessToken").GetString());
-            Assert.Equal(HttpStatusCode.Conflict,
-                (await adminClient.GetAsync($"/api/dsh-uploads/{unfinished.Id}/download")).StatusCode);
-            using var largeLast = new ByteArrayContent(largeBytes[(4 * 1024 * 1024)..]);
-            largeLast.Headers.Add("X-Chunk-SHA256", Convert.ToHexStringLower(SHA256.HashData(largeBytes[(4 * 1024 * 1024)..])));
-            Assert.Equal(HttpStatusCode.OK, (await client.PutAsync("/v1/uploads/upload-large/chunk?offset=4194304", largeLast)).StatusCode);
-            var resumed = await client.PostAsJsonAsync("/v1/uploads", new {
-                userId, clientUploadId = "upload-large", sessionId = "session-1", eventSeq = 2,
-                prompt = "large file", deviceId = "device-1", computerName = "test-host",
-                storedPath = @"C:\stored\large.dat", fileName = "large.dat", bytes = largeBytes.Length, sha256 = largeHash
-            });
-            Assert.Equal(HttpStatusCode.OK, resumed.StatusCode);
-            using var resumedBody = JsonDocument.Parse(await resumed.Content.ReadAsStringAsync());
-            Assert.True(resumedBody.RootElement.GetProperty("completed").GetBoolean());
             var largeRecord = await db.DshUploads.SingleAsync(x => x.ClientUploadId == "upload-large");
+            Assert.True(largeRecord.Completed);
+            Assert.Equal("", largeRecord.Sha256);
+            Assert.Equal(HttpStatusCode.Conflict,
+                (await adminClient.GetAsync($"/api/dsh-uploads/{largeRecord.Id}/download")).StatusCode);
             Assert.False(File.Exists(Path.Combine(root, $"{largeRecord.Id:N}.part")));
-            Assert.Equal(largeBytes, await File.ReadAllBytesAsync(Path.Combine(root, $"{largeRecord.Id:N}.bin")));
+            Assert.False(File.Exists(Path.Combine(root, $"{largeRecord.Id:N}.bin")));
             var firstPage = await adminClient.GetFromJsonAsync<JsonElement>("/api/dsh-uploads?page=1&pageSize=1");
             var secondPage = await adminClient.GetFromJsonAsync<JsonElement>("/api/dsh-uploads?page=2&pageSize=1");
             Assert.Equal(2, firstPage.GetProperty("total").GetInt32());
@@ -452,7 +517,7 @@ public sealed class DshManagedHttpTests
             Assert.Single(secondPage.GetProperty("items").EnumerateArray());
             Assert.NotEqual(firstPage.GetProperty("items")[0].GetProperty("id").GetGuid(),
                 secondPage.GetProperty("items")[0].GetProperty("id").GetGuid());
-            var searched = await adminClient.GetFromJsonAsync<JsonElement>("/api/dsh-uploads?query=large.dat&status=Completed");
+            var searched = await adminClient.GetFromJsonAsync<JsonElement>("/api/dsh-uploads?query=large.dat&status=Recorded");
             Assert.Equal(1, searched.GetProperty("total").GetInt32());
         }
         finally { Directory.Delete(root, recursive: true); }

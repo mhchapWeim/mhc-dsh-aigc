@@ -28,7 +28,7 @@ import { writePluginEnabled } from './patch.ts'
 import { ManagementFailure } from './failure.ts'
 import { approveBuilds, readPendingBuilds } from './build-approval.ts'
 import type {
-  BundleInfo, BundleRowInfo, ChangeResult, InspectOptions, InstallBundleOptions, ManagementError, PackageResult, PluginChange,
+  BundleInfo, BundleRowInfo, ChangeResult, InspectOptions, InstallBundleOptions, ManagedPluginUpdate, ManagementError, PackageResult, PluginChange,
   PluginEntryId, PluginInfo, PluginInspectProblem, PluginInstallCancellation, PluginInstallProgress, PluginInstallRequestId,
   PluginRegistries, PluginSpecInspection, Registry,
 } from './types.ts'
@@ -187,6 +187,7 @@ export class PluginManager extends TypertRemoteService {
   /** Management bundles remain protected if their files become unreadable. */
   private readonly managementBundles = new Set<string>()
   private readonly managedOperation = new AsyncLocalStorage<boolean>()
+  private readonly managedStatus: { updates: readonly ManagedPluginUpdate[] } = { updates: [] }
   private readonly ownerEntryId: string | undefined
   private readonly packageOperations = new Set<Promise<unknown>>()
   private readonly profile: ProfileContext
@@ -212,6 +213,9 @@ export class PluginManager extends TypertRemoteService {
     }, operation => this.managedOperation.run(true, operation), (name, configuration) => {
       const ids = new Set(this.bundleRows(name).map(row => row.id))
       for (const id of Object.keys(configuration)) if (!ids.has(id)) throw new Error(`Configuration row ${id} is not owned by ${name}`)
+    }, updates => {
+      this.managedStatus.updates = updates
+      ctx.emit('plugin-manager/managed-updated', updates)
     })
     for (const name of this.profile.startedBundles) this.protectsManager(name)
     this.outputBytes = (config as Required<Config>).outputBytes
@@ -227,6 +231,12 @@ export class PluginManager extends TypertRemoteService {
       await Promise.allSettled([...this.packageOperations])
     }, 'plugin-manager: package cancellation')
   }
+
+  /** Read staged organization releases that cannot be activated in this process.
+   * @returns Verified packages requiring a Host restart; hot-applied changes are absent.
+   */
+  @Remote
+  managedUpdates(): readonly ManagedPluginUpdate[] { return this.managedStatus.updates }
 
   /** Read current plugins, including why a row cannot be changed through the profile patch.
    * @returns Current runtime entries with persistent patch targets.

@@ -1,0 +1,67 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: aigc-backup-minio
+  namespace: bosch-aigc-dsh
+spec:
+  accessModes: [ReadWriteOnce]
+  storageClassName: ""
+  volumeName: aigc-backup-minio
+  resources:
+    requests:
+      storage: 100Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: aigc-backup-minio
+  namespace: bosch-aigc-dsh
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels: {app: aigc-backup-minio}
+  template:
+    metadata:
+      labels: {app: aigc-backup-minio}
+    spec:
+      nodeSelector:
+        kubernetes.io/hostname: bosch-k8s-node-nj304
+      containers:
+        - name: minio
+          image: quay.io/minio/minio@sha256:064117214caceaa8d8a90ef7caa58f2b2aeb316b5156afe9ee8da5b4d83e12c8
+          imagePullPolicy: IfNotPresent
+          args: [server, /data, --console-address, ':9001']
+          env:
+            - name: MINIO_ROOT_USER
+              valueFrom: {secretKeyRef: {name: aigc-backup-minio, key: root-user}}
+            - name: MINIO_ROOT_PASSWORD
+              valueFrom: {secretKeyRef: {name: aigc-backup-minio, key: root-password}}
+          ports:
+            - {name: s3, containerPort: 9000}
+          readinessProbe:
+            httpGet: {path: /minio/health/ready, port: s3}
+            initialDelaySeconds: 5
+          livenessProbe:
+            httpGet: {path: /minio/health/live, port: s3}
+            initialDelaySeconds: 30
+          resources:
+            requests: {cpu: 250m, memory: 512Mi}
+            limits: {cpu: '2', memory: 2Gi}
+          volumeMounts:
+            - {name: data, mountPath: /data}
+      volumes:
+        - name: data
+          persistentVolumeClaim: {claimName: aigc-backup-minio}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: aigc-backup-minio
+  namespace: bosch-aigc-dsh
+spec:
+  type: ClusterIP
+  selector: {app: aigc-backup-minio}
+  ports:
+    - {name: s3, port: 9000, targetPort: s3}

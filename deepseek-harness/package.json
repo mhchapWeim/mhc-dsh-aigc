@@ -17,6 +17,8 @@
     "website"
   ],
   "scripts": {
+    "security:outbound": "node apps/desktop/scripts/outbound-audit.mjs",
+    "security:outbound:enforce": "node apps/desktop/scripts/outbound-audit.mjs --enforce",
     "prepare:primary-runtime": "tsx scripts/primary-runtime/prepare.ts",
     "build": "tsx scripts/build.ts",
     "build:bench": "npm run build:native-system && npm run build:lib && tsdown --config benchmarks/tsdown.config.ts",

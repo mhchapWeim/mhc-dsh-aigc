@@ -22,6 +22,8 @@ import type {} from '@deepseek-ai/dsh-api-remotes/client'
 import type {} from '@deepseek-ai/dsh-plugin-manager/types'
 import { PluginManagerPage } from './PluginManagerPage.tsx'
 import { PluginsPanelIcon } from './PluginsPanelIcon.tsx'
+import { ManagedUpdateNotice } from './ManagedUpdateNotice.tsx'
+import { ManagedUpdatesController } from './managed-updates.ts'
 import { configLedgerSource } from './config-ledger.ts'
 import { PluginManagerController } from './manager-store.ts'
 import { en, zh, type PluginManagerLocaleKey } from './locales.ts'
@@ -59,6 +61,16 @@ export const inject = ['slots', 'locale', 'remote', 'remote.pluginManager', 'rem
 export function apply(ctx: ClientContext): void {
   ctx.effect(() => ctx.locale.register(NS, { zh, en }), 'ui-plugin-manager: dictionaries')
   const t = ctx.locale.bind(NS)
+  const updates = new ManagedUpdatesController(ctx)
+  void updates.refresh()
+  ctx.effect(() => () => { updates.dispose() }, 'ui-plugin-manager: managed update notices')
+  ctx.remote.$on('plugin-manager/managed-updated', value => { updates.accept(value) })
+  ctx.on('connection/reset', () => { updates.accept([]); void updates.refresh() })
+  ctx.remote.$on('credentials/record-updated', () => { updates.accept([]); void updates.refresh() })
+  ctx.slots.inject('sidebar.footer.action', () => ctx.slots.register({
+    name: 'sidebar.footer.action', id: 'managed-plugin-updates', order: -10, locale: NS,
+    inject: () => ({ hooks: { managedUpdates: updates.store } }),
+  }, ManagedUpdateNotice))
   const controller = new PluginManagerController(ctx)
   ctx.effect(() => () => { controller.dispose() }, 'ui-plugin-manager: controller')
   // The Host says when what is installed, enabled, or composed changed — from

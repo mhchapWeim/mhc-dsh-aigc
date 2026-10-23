@@ -1,0 +1,49 @@
+{
+  "api_health": 200,
+  "portal_routes": {
+    "/": 200,
+    "/login/local": 200,
+    "/desktop": 200,
+    "/admin/client-releases/status": 200
+  },
+  "real_minio_backup": {
+    "two_parts": true,
+    "resume_status": true,
+    "sha256_download": true,
+    "range_206": true,
+    "delete": true,
+    "application_admin_access_denied": true,
+    "bytes": 5243201
+  },
+  "portal_asset_scan": {
+    "files": 257,
+    "old": 0,
+    "current": 2
+  },
+  "production_image_development_credentials_excluded": true,
+  "images": {
+    "aigc-api:2026-10-23-main.1": {
+      "id": "sha256:154e6614b2e6a6f5f1b48faec421bcdf9cade3906fdc28f1131f1222506171c1",
+      "repoDigests": [
+        "aigc-api@sha256:154e6614b2e6a6f5f1b48faec421bcdf9cade3906fdc28f1131f1222506171c1"
+      ],
+      "platform": "linux/amd64"
+    },
+    "aigc-portal:2026-10-23-main.1": {
+      "id": "sha256:9f9e73003b74f3610c742c55bd6f86eb999a55ff553180f10648159d30dc1d62",
+      "repoDigests": [
+        "aigc-portal@sha256:9f9e73003b74f3610c742c55bd6f86eb999a55ff553180f10648159d30dc1d62"
+      ],
+      "platform": "linux/amd64"
+    },
+    "aigc-backup-minio:2025-06-13-offline.1": {
+      "id": "sha256:064117214caceaa8d8a90ef7caa58f2b2aeb316b5156afe9ee8da5b4d83e12c8",
+      "repoDigests": [
+        "aigc-backup-minio@sha256:064117214caceaa8d8a90ef7caa58f2b2aeb316b5156afe9ee8da5b4d83e12c8",
+        "quay.io/minio/minio@sha256:064117214caceaa8d8a90ef7caa58f2b2aeb316b5156afe9ee8da5b4d83e12c8"
+      ],
+      "platform": "linux/amd64"
+    }
+  },
+  "production_deployed": false
+}

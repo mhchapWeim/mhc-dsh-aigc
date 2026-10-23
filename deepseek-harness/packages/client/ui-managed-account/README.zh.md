@@ -30,7 +30,7 @@ kind: "package-reference"
 
 会话选择支持对当前工作区中可读取、未归档的会话一键全选或取消全选。已完成的回执提供“同步迁移会话显示”，可补同步标题缓存并归档隐藏已复制的原会话，不重复复制历史。迁移完成后刷新会话列表。
 
-数据弹窗优先显示当前账号的云端备份：上传全部历史或选中会话，浏览按时间排列的备份，下载恢复到本地目录，或删除备份。未登录时仍可展开本地修复工具。云端操作由 [Workspace Controller](../../api/workspace-controller/README.zh.md#data-repair-and-copy-migration) 提供；恢复后刷新会话列表，并保留本地重试回执。
+登录后的数据弹窗只显示上传和恢复，两者均可选择全部或勾选会话。显示服务器容量上限、传输进度和暂停/续传，通过备份选择器及会话复选框恢复到本地目录。云端弹窗不显示备份范围说明及本地修复/迁移栏目；未登录时仍可单独使用本地恢复功能。云端命令由 [Workspace Controller](../../api/workspace-controller/README.zh.md#data-repair-and-copy-migration) 提供。恢复后刷新会话列表并保存回执，便于安全重试。
 
 该步骤通过 `settings.onboarding` 挂载，设置外壳将其作为有序的首次运行步骤展示。预置 Web 组合在配置 `DSH_MANAGED_BACKEND_URL` 时启用本插件。挂载后，该步骤向受管后端查询当前登录状态：
 

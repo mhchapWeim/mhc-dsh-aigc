@@ -1,0 +1,18 @@
+[
+  {
+    "path": "/login/local",
+    "status": 200
+  },
+  {
+    "path": "/desktop",
+    "status": 200
+  },
+  {
+    "path": "/admin/client-releases",
+    "status": 200
+  },
+  {
+    "path": "/admin/client-releases/status",
+    "status": 200
+  }
+]

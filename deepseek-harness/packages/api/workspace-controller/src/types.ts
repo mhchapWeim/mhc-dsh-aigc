@@ -115,7 +115,7 @@ export interface CloudBackupValue {
 /** Explicit all-history or selected-session export. */
 export interface CloudBackupUploadRequest { readonly sessionIds?: readonly SessionId[] }
 /** Restore creates new Sessions under a local directory. */
-export interface CloudBackupRestoreRequest { readonly id: string; readonly targetPath: string }
+export interface CloudBackupRestoreRequest { readonly id: string; readonly targetPath: string; readonly sessionIds?: readonly string[] }
 export interface CloudBackupListValue { readonly items: readonly CloudBackupValue[]; readonly total: number; readonly page: number; readonly pageSize: number }
 
 /** Recreate a missing registered directory; never recreates deleted user files. */

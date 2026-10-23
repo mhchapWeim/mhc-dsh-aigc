@@ -137,6 +137,57 @@ it.each(['0.1.7-alpha.2', '0.1.7-alpha.2.20261010.1'])('downloads an authenticat
   expect(install).toHaveBeenCalledTimes(1)
 })
 
+it('keeps hot configuration changes silent and announces verified code updates until logout', async () => {
+  const { ctx, dir, manager, bundle } = await fixture('live', false, undefined, { managedPollMs: 1000 })
+  await ctx.plugin(CredentialsLocal, { path: join(dir, 'credentials.yaml'), watch: false })
+  const key = credentialKey('llm-managed-backend', 'user-session')
+  await ctx.credentials.modifyRecord(key, async () => ({ kind: 'api-key', key: 'organization-token' }))
+  let version = '1.0.0'
+  let revision = 1
+  let service = 'originalProbe'
+  const reports: { status: string }[] = []
+  const notices: unknown[] = []
+  ctx.on('plugin-manager/managed-updated', value => { notices.push(value) })
+  const fetcher = vi.spyOn(globalThis, 'fetch').mockImplementation(async (url, options) => {
+    const archive = Buffer.from(version)
+    if (String(url).endsWith('/policy')) return Response.json({ userId: '00000000-0000-4000-8000-000000000001', plugins: [{
+      id: '00000000-0000-4000-8000-000000000002', packageName: 'market-addon', revision, enabled: true,
+      version, dshVersion: '0.1.7-alpha.2', sha256: createHash('sha256').update(archive).digest('hex'), size: archive.length,
+      downloadPath: '/v1/plugins/package.tgz', configuration: { 'market-row': { service } },
+    }] })
+    if (String(url).endsWith('.tgz')) return new Response(archive)
+    reports.push(JSON.parse(String(options?.body)) as { status: string })
+    return new Response(null, { status: 204 })
+  })
+  const install = vi.spyOn(operations, 'runProfilePnpm').mockImplementation(async () => {
+    bundle('market-addon', [{ id: 'market-row', name: './plugin.mjs' }])
+    const path = join(dir, 'node_modules', 'market-addon', 'package.json')
+    const metadata = JSON.parse(readFileSync(path, 'utf8')) as { version: string }
+    metadata.version = version; writeFileSync(path, JSON.stringify(metadata))
+    const manifest = readProfileManifest('test', dir)
+    manifest.dependencies = { ...manifest.dependencies, 'market-addon': version }
+    writeFileSync(join(dir, 'package.json'), JSON.stringify(manifest))
+    return { exitCode: 0, output: '', truncated: false, logPath: '/external-pnpm-log' }
+  })
+  onTestFinished(() => { fetcher.mockRestore(); install.mockRestore() })
+  ctx.provide('managedBackend', { endpoint: 'https://aigc.example' })
+  await vi.waitFor(() => expect(ctx.get('originalProbe')).toBe(true), { timeout: 5000 })
+  expect(manager.managedUpdates()).toEqual([])
+  service = 'configuredProbe'; revision++
+  ctx.emit('credentials/record-updated', key)
+  await vi.waitFor(() => expect(ctx.get('configuredProbe')).toBe(true), { timeout: 5000 })
+  expect(manager.managedUpdates()).toEqual([])
+  expect(notices).toEqual([])
+  version = '2.0.0'; revision++
+  ctx.emit('credentials/record-updated', key)
+  await vi.waitFor(() => expect(manager.managedUpdates()).toEqual([{ packageName: 'market-addon', version: '2.0.0' }]), { timeout: 5000 })
+  await vi.waitFor(() => expect(reports.at(-1)?.status).toBe('RestartRequired'), { timeout: 5000 })
+  expect(install).toHaveBeenCalledTimes(2)
+  await ctx.credentials.deleteRecord(key)
+  await vi.waitFor(() => expect(manager.managedUpdates()).toEqual([]), { timeout: 5000 })
+  expect(notices.at(-1)).toEqual([])
+})
+
 it.each(['missing package', 'invalid manifest', 'not a bundle', 'missing patch', 'invalid patch'])(
   'boots with %s, lists its error, and permits deselection without enabling the broken bundle', async (failure) => {
     const { manager, dir, ctx } = await fixture('live', false, undefined, {}, undefined, (dir) => {

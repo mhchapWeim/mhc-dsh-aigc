@@ -73,7 +73,7 @@ const sections = [
     items: [
       { href: "/admin/uploads", label: "附件审查", icon: Files },
       { href: "/admin/announcements", label: "公告管理", icon: Bell },
-      { href: "/admin/client-releases", label: "发布上报", icon: Download },
+      { href: "/admin/client-releases", label: "版本管理", icon: Download },
       { href: "/admin/dsh-feedback", label: "用户反馈", icon: ScrollText },
       { href: "/admin/dsh-backups", label: "客户端备份", icon: Files },
       { href: "/admin/dsh-failures", label: "失败日志", icon: ScrollText },
@@ -88,12 +88,17 @@ const sections = [
     ],
   },
 ];
-const items = sections.flatMap((section) => section.items);
+const versionPages = [
+  { href: '/admin/client-releases', label: '版本发布', icon: Download },
+  { href: '/admin/client-releases/status', label: '版本状态', icon: ScrollText },
+];
+const items = [...sections.flatMap((section) => section.items).filter(item => item.href !== '/admin/client-releases'), ...versionPages];
+const matchesPath = (href: string, path: string) => href === path || (href === '/admin/client-releases' && path.startsWith(href + '/'));
 type StoredAdminUser = { id: string; name: string; employeeNo: string; roles: string[]; permissions: string[] };
 
 export function AdminShell({ children }: { children: React.ReactNode }) {
   const path = usePathname();
-  const [expandedGroup, setExpandedGroup] = useState<string | null>(() => sections.find(section => section.items.some(item => item.href === path))?.label ?? null);
+  const [expandedGroup, setExpandedGroup] = useState<string | null>(() => sections.find(section => section.items.some(item => matchesPath(item.href, path)))?.label ?? null);
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [flyout, setFlyout] = useState<{ label: string; top: number; left: number } | null>(null);
@@ -131,7 +136,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
     '/admin/processes': 'process.design', '/admin/users': 'user.manage', '/admin/departments': 'department.manage',
     '/admin/categories': 'category.manage', '/admin/roles': 'role.manage', '/admin/models': 'model.manage', '/admin/virtual-keys': 'model.manage', '/admin/audits': 'model.manage',
     '/admin/sensitive-words': 'model.manage', '/admin/uploads': 'model.manage',
-    '/admin/announcements': 'announcement.manage', '/admin/client-releases': 'client-release.manage',
+    '/admin/announcements': 'announcement.manage', '/admin/client-releases': 'client-release.manage', '/admin/client-releases/status': 'client-release.manage',
     '/admin/dsh-failures': 'diagnostic.manage', '/admin/dsh-feedback': 'diagnostic.manage',
     '/admin/plugins': 'plugin.manage', '/admin/plugins/status': 'plugin.manage',
   };
@@ -182,7 +187,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
         </div>
         <nav className="admin-nav" aria-label="后台导航">
           {sections.filter(section => section.items.some(item => canAccess(item.href))).map((section) => (
-            <div className={`admin-nav-group${section.items.some(item => item.href === path) ? ' has-active' : ''}`} key={section.label} onMouseLeave={hideFlyout}>
+            <div className={`admin-nav-group${section.items.some(item => matchesPath(item.href, path)) ? ' has-active' : ''}`} key={section.label} onMouseLeave={hideFlyout}>
               <button type="button" className="admin-nav-toggle" title={section.label}
                 aria-label={section.label}
                 aria-expanded={collapsed ? flyout?.label === section.label : expandedGroup === section.label}
@@ -202,6 +207,10 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
                 .map((item) => {
                   const Icon = item.icon;
                   const selected = path === item.href;
+                  if (item.href === '/admin/client-releases') return <details className="admin-version-nav" key={item.href} open={matchesPath(item.href, path) || undefined}>
+                    <summary>{item.label}</summary>
+                    <div>{versionPages.map(child => <Link key={child.href} href={child.href} aria-label={child.label} aria-current={path === child.href ? 'page' : undefined} className={path === child.href ? 'is-active' : ''} onClick={() => setMobileOpen(false)}>{child.label}</Link>)}</div>
+                  </details>;
                   return (
                     <Link
                       key={item.href}
@@ -259,7 +268,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
         onBlur={event => { if (!event.currentTarget.contains(event.relatedTarget as Node | null)) hideFlyout(); }}
         onKeyDown={event => { if (event.key === 'Escape') { cancelHide(); setFlyout(null); } }}>
         <nav aria-label={`${flyout.label}子菜单`}><strong>{flyout.label}</strong>
-          {sections.find(section => section.label === flyout.label)?.items.filter(item => canAccess(item.href)).map(item => <Link
+          {sections.find(section => section.label === flyout.label)?.items.filter(item => canAccess(item.href)).map(item => item.href === '/admin/client-releases' ? <div key={item.href} className="admin-version-nav"><span>版本管理</span>{versionPages.map(child => <Link key={child.href} href={child.href} aria-current={path === child.href ? 'page' : undefined} onClick={() => { cancelHide(); setFlyout(null); setMobileOpen(false); }}>{child.label}</Link>)}</div> : <Link
             key={item.href} href={item.href} aria-current={path === item.href ? 'page' : undefined}
             onClick={() => { cancelHide(); setFlyout(null); setMobileOpen(false); }}>
             <item.icon size={17} /><span>{item.label}</span>

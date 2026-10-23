@@ -38,6 +38,11 @@ describe('admin pages', () => {
     await user.click(screen.getByRole('button', { name: '客户端运维' }));
     expect(screen.queryByRole('link', { name: '插件管理' })).not.toBeInTheDocument();
     expect(screen.queryByRole('link', { name: '插件状态' })).not.toBeInTheDocument();
+    await user.click(screen.getByText('版本管理'));
+    expect(screen.getByRole('link', { name: '版本发布' })).toHaveAttribute('href', '/admin/client-releases');
+    expect(screen.getByRole('link', { name: '版本状态' })).toHaveAttribute('href', '/admin/client-releases/status');
+    expect(screen.queryByText('发布上报')).not.toBeInTheDocument();
+
   });
   it('shows an operational overview on the dashboard', () => {
     renderWithPlatform(<AdminDashboard />);

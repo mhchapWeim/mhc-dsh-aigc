@@ -132,6 +132,18 @@ export class WorkspaceController extends TypertRemoteService {
   @Remote
   deleteCloudBackup(id: string): Promise<void> { return this.cloud.remove(id) }
 
+  /** Enumerate names in one completed snapshot for selective restoration. */
+  @Remote
+  cloudBackupSessions(id: string): Promise<readonly { readonly id: string; readonly title: string }[]> { return this.cloud.sessions(id) }
+
+  /** Observe Host-owned upload or restore progress. */
+  @Remote
+  cloudBackupProgress(): { readonly phase: string; readonly bytes: number; readonly total: number } { return this.cloud.status() }
+
+  /** Pause network work while retaining the resumable local snapshot. */
+  @Remote
+  pauseCloudBackup(): void { this.cloud.pause() }
+
   /** Remove references only after the storage provider confirms their Session files are absent. */
   @Remote
   async forgetMissingSessions(): Promise<{ readonly removed: number }> {

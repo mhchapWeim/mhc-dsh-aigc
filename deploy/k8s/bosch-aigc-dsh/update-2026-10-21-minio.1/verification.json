@@ -1,0 +1,43 @@
+{
+  "backendTests": {
+    "passed": 18,
+    "failed": 0,
+    "realMinio": true
+  },
+  "portalTests": {
+    "passed": 10,
+    "failed": 0
+  },
+  "deploymentPreflightTests": {
+    "passed": 22,
+    "failed": 0
+  },
+  "yaml": "3 manifests parsed",
+  "bashSyntax": "update, verify, rollback passed on Linux",
+  "imageArchive": "3 images and linux/amd64 configs/layers checked",
+  "imageHealth": {
+    "api": 200,
+    "portalLoginLocal": 200,
+    "portalDesktop": 200
+  },
+  "realImageBackupSmoke": {
+    "bytes": 8388987,
+    "parts": 2,
+    "resumeQuery": true,
+    "sha256Download": true,
+    "range206": true,
+    "delete": true,
+    "leastPrivilegeApplicationAccount": true
+  },
+  "portalOldApiDomainScan": {
+    "jsHtmlFiles": 253,
+    "obsoleteDomainFound": false
+  },
+  "limitations": [
+    "No production cluster CHECK_ONLY, rollout or business acceptance",
+    "No 1GiB stress or real two-device restore test",
+    "DSH installer not included; requires compatible new DSH",
+    "Single API replica and single-node MinIO",
+    "Existing full DSH GUI/Web failures are documented in docs/DSH-MODEL-RECOVERY-AND-PLUGIN-UPDATES.md"
+  ]
+}

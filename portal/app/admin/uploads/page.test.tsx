@@ -55,3 +55,26 @@ it('loads the selected page from the backend', async () => {
   await screen.findByText('page-2.txt');
   expect(getMock).toHaveBeenCalledWith(2, 5, '', '');
 });
+
+it('keeps all review columns while disabling downloads and transfer progress for metadata records', async () => {
+    getMock.mockResolvedValue({ total: 1, items: [{
+    userId: 'u1', sessionId: 'session-1', eventSeq: 1, createdAt: '2026-10-23T00:00:00Z',
+    files: ['Recorded', 'Completed'].map((status, index) => ({
+      id: `file-${index}`, clientUploadId: `client-${index}`, sessionId: 'session-1', eventSeq: 1,
+      fileName: index === 0 ? 'record.txt' : 'historical.txt', prompt: '审查记录', userName: '员工', employeeNo: 'w1',
+      computerName: 'test-pc', storedPath: 'C:\\stored\\report.txt', bytes: 123, offset: index === 0 ? 0 : 123,
+      completed: true, status, createdAt: '2026-10-23T00:00:00Z',
+    })),
+  }] });
+  render(<DshUploadsPage />);
+  const recorded = (await screen.findByText('record.txt')).closest('tr')!;
+  expect(within(recorded).getByText('已记录')).toBeVisible();
+  expect(within(recorded).getByRole('button', { name: '下载record.txt' })).toBeDisabled();
+  expect(within(recorded).queryByRole('progressbar')).not.toBeInTheDocument();
+  expect(screen.getByRole('button', { name: '下载historical.txt' })).toBeEnabled();
+  expect(screen.getAllByRole('columnheader').map(cell => cell.textContent)).toEqual([
+    '批次', '文件', '用户', '计算机', 'User Prompt', '源路径', '进度', '状态', '创建时间', '操作',
+  ]);
+  expect(within(recorded).getByText('test-pc')).toBeVisible();
+  expect(within(recorded).getByText('审查记录')).toBeVisible();
+});

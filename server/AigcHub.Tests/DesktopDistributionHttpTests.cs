@@ -352,6 +352,9 @@ public sealed class DesktopDistributionHttpTests
                 services.RemoveAll<DbContextOptions<AigcHubDbContext>>();
                 services.RemoveAll<IDbContextOptionsConfiguration<AigcHubDbContext>>();
                 services.AddDbContext<AigcHubDbContext>(options => options.UseInMemoryDatabase(root));
+                services.RemoveAll<IBackupObjectStore>();
+                services.AddSingleton<IBackupObjectStore, BackupTransferTests.MemoryStore>();
+                services.Configure<BackupStorageOptions>(options => options.Enabled = true);
             });
         }
         protected override void Dispose(bool disposing)

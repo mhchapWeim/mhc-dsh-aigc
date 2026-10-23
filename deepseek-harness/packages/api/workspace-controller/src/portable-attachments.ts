@@ -19,7 +19,7 @@ const objectSchema = z.object({ ref: z.union([image, file]), data: z.string() })
 type PortableObject = z.infer<typeof objectSchema>
 const limit = 24 * 1024 * 1024
 
-function refs(value: unknown): (FileAttachmentRef | ImageAttachmentRef)[] {
+export function refs(value: unknown): (FileAttachmentRef | ImageAttachmentRef)[] {
   if (Array.isArray(value)) return value.flatMap(refs)
   if (value === null || typeof value !== 'object') return []
   const parsed = z.union([image, file]).safeParse(value)
@@ -28,7 +28,7 @@ function refs(value: unknown): (FileAttachmentRef | ImageAttachmentRef)[] {
 }
 
 /** Count encoded object bytes without loading binaries or enforcing upload limits. */
-export function measureObjects(sessions: unknown): number {
+export function measureObjects(sessions: unknown, binary = false): number {
   const seen = new Set<string>()
   let bytes = 2 // JSON array brackets.
   for (const ref of refs(sessions)) {
@@ -36,7 +36,7 @@ export function measureObjects(sessions: unknown): number {
     if (seen.has(key)) continue
     if (seen.size > 0) bytes += 1
     seen.add(key)
-    bytes += Buffer.byteLength(JSON.stringify({ ref, data: '' })) + Math.ceil(ref.bytes / 3) * 4
+    bytes += Buffer.byteLength(JSON.stringify({ ref, data: '' })) + (binary ? ref.bytes : Math.ceil(ref.bytes / 3) * 4)
   }
   return bytes
 }

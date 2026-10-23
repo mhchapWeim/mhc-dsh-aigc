@@ -210,6 +210,14 @@ export interface PluginInstallLogChunk {
   readonly exitCode?: number | null
 }
 
+/** A verified organization release staged for the next Host start. */
+export interface ManagedPluginUpdate {
+  /** Package whose verified files are staged for the next Host start. */
+  readonly packageName: string
+  /** Downloaded release version; not a claim about currently executing code. */
+  readonly version: string
+}
+
 /** What changed in the profile, for consumers that show it. */
 export interface PluginChange {
   /** The operation that changed it. */
@@ -218,6 +226,12 @@ export interface PluginChange {
 
 declare module '@deepseek-ai/cordis' {
   interface Events {
+    /**
+     * Organization releases awaiting restart changed, including clearing on sign-out or revocation.
+     * @mode emit
+     * @param updates - verified packages awaiting the next Host start.
+     */
+    'plugin-manager/managed-updated'(updates: readonly ManagedPluginUpdate[]): void
     /**
      * The profile's plugins, bundles, or composition changed: a manager
      * operation completed. A patch generation applied outside the manager,

@@ -10,7 +10,7 @@ import { authorizeManagedBundle } from '@deepseek-ai/dsh-app-boot'
 import { writeFileAtomic } from '@deepseek-ai/dsh-atomic-write'
 import { managedVersionCompatible } from './managed-version.ts'
 import type { PluginManager } from './index.ts'
-import type { PluginInstallRequestId } from './types.ts'
+import type { ManagedPluginUpdate, PluginInstallRequestId } from './types.ts'
 
 const configuration = z.record(z.string(), z.record(z.string(), z.unknown()))
 const packageState = z.object({ sha256: z.string(), configuration })
@@ -36,13 +36,23 @@ export interface ManagedSyncOptions {
  * @param options Polling and HTTP bounds.
  * @param run Execute only controller-owned mutations through the manager's guard.
  * @param validate Validate configs against the installed bundle's own rows.
+ * @param publish Publish verified releases requiring restart, without secret configuration.
  */
 export function installManagedPluginSync(ctx: Context, manager: PluginManager, dir: string, options: ManagedSyncOptions,
-  run: <T>(operation: () => Promise<T>) => Promise<T>, validate: (name: string, config: Record<string, object>) => void): void {
+  run: <T>(operation: () => Promise<T>) => Promise<T>, validate: (name: string, config: Record<string, object>) => void,
+  publish: (updates: readonly ManagedPluginUpdate[]) => void): void {
   ctx.inject(['managedBackend', 'credentials'], scope => {
     scope.effect(() => {
       const lifetime = new AbortController()
       const pendingRestart = new Set<string>()
+      const notices = new Map<string, ManagedPluginUpdate>()
+      const updateNotice = (name: string, version?: string): void => {
+        const before = notices.get(name)?.version
+        if (before === version) return
+        if (version === undefined) notices.delete(name)
+        else notices.set(name, { packageName: name, version })
+        publish([...notices.values()].sort((a, b) => a.packageName.localeCompare(b.packageName)))
+      }
       let activeInstall: PluginInstallRequestId | undefined
       const activated = new Map<string, string>()
       let wake = new AbortController()
@@ -52,6 +62,7 @@ export function installManagedPluginSync(ctx: Context, manager: PluginManager, d
       let state: z.infer<typeof stateSchema> = { deviceId: randomUUID(), packages: {} }
       const persist = async (): Promise<void> => { await writeFileAtomic(stateFile, JSON.stringify(state), { mode: 0o600 }) }
       const disable = async (name: string): Promise<void> => {
+        updateNotice(name)
         activated.delete(name)
         authorizeManagedBundle(dir, name, false)
         const bundle = (await manager.listBundles()).find(item => item.name === name)
@@ -151,6 +162,7 @@ export function installManagedPluginSync(ctx: Context, manager: PluginManager, d
                 // A switched account must never receive a report authenticated as the previous one.
                 const current = await scope.credentials.readRecord(credentialKey('llm-managed-backend', 'user-session'))
                 if (current?.kind !== 'api-key' || current.key !== record.key) { await disableAll(); break }
+                updateNotice(plugin.packageName, status === 'RestartRequired' ? plugin.version ?? undefined : undefined)
                 await request('/v1/plugins/reports', { method: 'POST', headers: { 'content-type': 'application/json' },
                   body: JSON.stringify({ deviceId: state.deviceId, pluginId: plugin.id, version: actualVersion,
                     revision: plugin.revision, status, error: error.slice(0, 2000) }) })
@@ -172,6 +184,7 @@ export function installManagedPluginSync(ctx: Context, manager: PluginManager, d
         lifetime.abort()
         if (activeInstall !== undefined) await manager.cancelInstall(activeInstall)
         await task
+        publish([])
       }
     }, 'managed-plugins: policy synchronization')
   })

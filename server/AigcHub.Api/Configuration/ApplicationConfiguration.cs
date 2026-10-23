@@ -132,6 +132,9 @@ public static class ApplicationConfiguration
         builder.Services.AddScoped<AccessGrantService>();
         builder.Services.AddScoped<LiteLlmModelSyncService>();
         builder.Services.AddScoped<LiteLlmVirtualKeyService>();
+        builder.Services.Configure<BackupStorageOptions>(builder.Configuration.GetSection("BackupStorage"));
+        builder.Services.AddSingleton<IBackupObjectStore, BackupObjectStore>();
+        builder.Services.AddHostedService<BackupTransferCleanup>();
         builder.Services.AddScoped<ChatModelClient>();
         builder.Services.AddScoped<IPasswordHasher<AppUser>, PasswordHasher<AppUser>>();
         builder.Services.AddSignalR();

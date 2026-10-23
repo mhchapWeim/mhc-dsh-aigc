@@ -38,10 +38,11 @@ Mount this package only when an organization backend implements the API below. D
 | `tokenEnv` | — | Credential reference containing the backend-issued user token; use this or `tokenKey` |
 | `tokenKey` | — | Host credential-record id under `llm-managed-backend`; use this or `tokenEnv` |
 | `provider` | `managed` | DSH provider route owned by this adapter |
+| `catalogRequestTimeoutMs` | `30000` | Bound for a model catalog request, including reading its response body; independent of generation/stream timeouts |
 | `sessionTiming` | `renewBeforeMs: 300000`, `pollMs: 60000`, `requestTimeoutMs: 10000` | Persistent login renewal timing in milliseconds; omitted fields receive defaults and all values must be positive integers within the timer range |
-| `uploadSync` | — | Optional durable background sync of submitted chat files; configure `pollMs`, `chunkBytes`, and `requestTimeoutMs` |
+| `uploadSync` | — | Optional durable reporting of submitted file metadata; configure `pollMs` and `requestTimeoutMs` (`chunkBytes` remains accepted for existing configurations) |
 
-The [Desktop patch](../../../apps/desktop-host/config/desktop.cordis.patch.yml) activates this route when `DSH_MANAGED_BACKEND_URL` is set and reads the `user-session` Host credential record. Desktop login obtains the token from the backend; users do not enter a token. While mounted, this plugin rejects calls to other model providers and the Desktop selects the first model granted to the signed-in user. Disabling the plugin row restores ordinary provider routing; a missing managed token fails closed while the plugin remains mounted.
+The [Desktop patch](../../../apps/desktop-host/src/managed-session.ts) activates this route when `DSH_MANAGED_BACKEND_URL` is set and reads the `user-session` Host credential record. Desktop login obtains the token from the backend; users do not enter a token. While mounted, this plugin rejects calls to other model providers and the Desktop selects the first model granted to the signed-in user. Disabling the plugin row restores ordinary provider routing; a missing managed token fails closed while the plugin remains mounted.
 
 The `managedBackend.authorizeProvider(id)` effect permits an organization-owned extension provider until its disposer runs. The independent internal-model bundle uses this capability; other providers remain rejected.
 
@@ -57,7 +58,7 @@ The backend receives `Authorization: Bearer <token>` on the catalog read. `GET {
 <details>
 <summary>Implementation internals — click to expand</summary>
 
-The adapter resolves the credential for each model lookup or prepared call. Preparation binds that token to the ensuing generation request, while the backend decides whether it remains valid at dispatch. The model directory never comes from `settings.yaml`. When configured, [upload sync](src/upload-sync.ts) records submitted chat files in a local retry queue and resumes from the backend-confirmed offset after restart. It skips only that initial offset in the source stream; later chunk acknowledgements advance the destination offset without skipping more source bytes. The adapter and wire parsing are in [src/index.ts](src/index.ts); [adapter tests](tests/adapter.spec.ts) cover catalog admission, backend revocation, and stream completion.
+The adapter resolves the credential for each model lookup or prepared call. Preparation binds that token to the ensuing generation request, while the backend decides whether it remains valid at dispatch. The model directory never comes from `settings.yaml`. When configured, [upload sync](src/upload-sync.ts) records submitted file names, sizes, source paths, and submission metadata in a local retry queue. It sends JSON metadata only, never opens attachment content or uploads chunks, and retries unacknowledged records after restart. The backend must acknowledge completion; an older backend cannot trigger a content-transfer fallback. Session cloud backup is independent. The adapter and wire parsing are in [src/index.ts](src/index.ts); [adapter tests](tests/adapter.spec.ts) cover catalog admission, backend revocation, and stream completion.
 
 </details>
 

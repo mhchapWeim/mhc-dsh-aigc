@@ -1,5 +1,7 @@
 # nj304 离线反向代理部署
 
+> 本文为历史初装说明。当前新域名 30443 的 ASR 增量部署及代理维护规则见 [内网 DMZ 代理服务说明](../../docs/INTRANET-DMZ-PROXY.md)。已有集群不要直接 apply 本目录旧模板覆盖双域名配置。
+
 ## 已准备
 
 Nginx 1.30.4 linux/amd64 镜像、nginx-image.tar、image-ref.txt、SHA256SUMS、proxy.yaml、deploy.sh、已准备；入口证书直接复用现有 TLS Secret aigc-edge-tls，不在包中携带私钥。

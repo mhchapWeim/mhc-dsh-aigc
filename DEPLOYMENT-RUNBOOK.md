@@ -1,5 +1,42 @@
 # DSH、AIGC 和 Portal 部署记录
 
+## 2026-10-23 AIGC / DSH 当前工作区构建交付
+
+本次使用 `main` 当前工作区（包含未提交改动），未连接或更新生产服务器。API/Portal 来自独立构建快照，源码清单、散列、镜像标识与开发配置脱敏处理见交付目录的 `BUILD-INFO.json`。
+
+- 服务端修订离线包：`output/aigc-update-2026-10-23-main.1-app-only.zip`；配套校验文件同名 `.zip.sha256`。交付目录 `deploy/k8s/bosch-aigc-dsh/update-2026-10-23-main.1-app-only`，只含 API/Portal `2026-10-23-main.1` 两个镜像和 update/verify/rollback、预检、README、校验清单。目标 nj304/containerd、namespace `bosch-aigc-dsh`、linux/amd64。按用户修正，本次不部署或操作 MinIO，保留现有 API BackupStorage 环境配置、Secret 引用及存储资源。**此前同日包含三个镜像的 `aigc-update-2026-10-23-main.1.zip` 已被替代，本次不要使用。** 执行命令见[本次部署说明](deploy/k8s/bosch-aigc-dsh/update-2026-10-23-main.1-app-only/README.md)。
+- DSH Windows x64 未签名内部包：`output/dsh-main-0.1.7-alpha.2.20261023.2-win-x64.zip`，安装器和元数据另存于 `output/dsh-main-0.1.7-alpha.2.20261023.2`。已检查最终 ASAR 中生产后端 `https://aigcplatform.boschhuayu-steering.com`、完整版本、附件信息登记实现、主进程依赖内联和更新地址；EXE 的 SHA-512 与 nightly.yml 一致，blockmap 覆盖字节与安装器一致。Authenticode 状态为 NotSigned。
+
+本次包含附件审查只记录信息、旧客户端登记/续传兼容、模型及客户端版本管理页面、MinIO 会话备份、客户端模型恢复和插件更新等当前源码改动。**先部署 API 和匹配 Portal 并验收，再安装或发布新版 DSH。** 旧客户端保留兼容；历史完整附件仍按权限下载。详细语义见[附件兼容说明](docs/DSH-ATTACHMENT-METADATA-COMPATIBILITY.md)。无本轮新增数据库列，不执行历史附件批量转换。
+
+本地后端 31 项、Portal 44 项、DSH 功能 39 项、安装打包 8 项通过；修订 app-only 部署脚本预检 16 项通过。新镜像隔离运行的健康/四个页面 HTTP 200，真实 PostgreSQL + MinIO 的两片上传、续传状态、SHA-256 完整下载、Range 206、删除和应用账号管理权限拒绝通过。Portal 257 个 JS/HTML 文件未发现旧 API 域名。DSH 最终 ASAR 的原生工具、工作区控制器与 DOCX/XLSX/PPTX 转 PDF 冒烟通过。
+
+首次 DSH 封装被沙箱 pnpm SQLite 缓存访问阻断；宿主环境重新构建成功。未上传或发布 DSH、未实际安装到用户设备、未执行生产 CHECK_ONLY/rollout、企业 SSO、真实双设备恢复或大文件压力验收。LiteLLM v1.106.2 的 DMZ 升级交付独立于本包，需分别安排和验收；本包不改 LiteLLM、Nginx、TLS、博查或 ASR 路由。
+
+用户反馈昨天 MinIO 运行在其它服务器，而非 nj304；当前尚未核验线上 Pod/PV。仓库旧模板已设置 nj304 节点约束，实际部署资源、卷亲和性和节点标签需分别核对。本次交付不迁移、重启或重建 MinIO，README 提供只读核对命令。
+
+## 2026-10-22 内网到 DMZ 的 ASR WebSocket 代理方案
+
+DMZ 主机、容器、挂载、网络及已确认路由见 [DMZ 服务器现场记录](docs/DMZ-SERVER.md)，后续操作前先读取并复核现场。
+
+DMZ 现场已确认容器 `litellm-gateway`，host 网络，实际配置为 `/home/admnj00663/litellm/nginx.conf`（只读单文件 bind mount）。提供单文件脚本 `deploy/nj304-litellm-proxy/asr/deploy-dmz-asr.sh`：先 `sudo env CHECK_ONLY=1 bash deploy-dmz-asr.sh`，通过后 `sudo bash deploy-dmz-asr.sh`。自动继承博查来源白名单，备份、原位写入、校验、reload，失败尝试自动恢复；本地逻辑和 Bash 语法检查通过，未在生产执行。完整说明见下方文档。
+
+部署命令、验收和回退见 [内网 DMZ 代理服务说明](docs/INTRANET-DMZ-PROXY.md)。后续涉及 30443、DMZ 出口和长连接转发需求时，先读该文档并核对线上配置。
+
+新增路径 `/api-ws/v1/inference`：内网客户端 → `aigcplatform.boschhuayu-steering.com:30443` → `nj304-litellm-proxy` → DMZ `192.168.10.30:443` → 百炼工作空间 WebSocket。内网到 DMZ 按用户要求关闭上游证书校验，无需新增 DMZ CA 挂载；客户端入口证书校验、DMZ 到百炼的公共 CA 校验保留。两侧需显式配置 HTTP/1.1 Upgrade。
+
+交付目录 `deploy/nj304-litellm-proxy/asr/` 包含两侧 location 和基于线上 ConfigMap 的增量补丁生成器。保留新旧 SNI server、现有 TLS Secret、聊天及博查规则；不要重新 apply 历史初装 proxy.yaml。无需重建镜像，不修改 API、Portal 或数据库。只整理本地交付，未部署生产；单副本代理重启会中断长连接，需安排窗口。实际识别、断开与重连仍需现场验收。
+
+## 2026-10-21 MinIO 云端备份离线更新
+
+配套 DSH Windows x64 未签名内部包已构建：`output/dsh-main-0.1.7-alpha.2.20261021.2`，含 EXE、blockmap、nightly.yml、校验清单及构建验证记录。包内正式后端为 `https://aigcplatform.boschhuayu-steering.com`；已确认包含分片备份/选择恢复、模型重连、插件更新提示和深色下拉框修复。13 项定向测试和最终包运行时冒烟通过（Workspace controller、原生工具、DOCX/XLSX/PPTX 转 PDF），blockmap 覆盖字节数与安装器一致。没有上传发布、安装到生产设备或完成真实双设备恢复验收。
+
+完整交付包 `output/aigc-update-2026-10-21-minio.1.zip`，交付目录 `deploy/k8s/bosch-aigc-dsh/update-2026-10-21-minio.1`。API/Portal 镜像均为 `2026-10-21-minio.1`，新增 MinIO `aigc-backup-minio:2025-06-13-offline.1`，三个镜像统一导出 linux/amd64 TAR。包含更新、配置预检、验证、回退脚本与校验清单。构建使用 main 当前工作区快照，包含未提交改动，来源和散列见 BUILD-INFO.json。
+
+目标是 namespace `bosch-aigc-dsh`、nj304/containerd；先在 nj304 导入三个镜像，再在控制节点执行 `CHECK_ONLY=1 ... bash update.sh`，通过后执行实际更新。脚本新增 K8s MinIO 的静态 Retain PV/PVC、内部 Service、私有桶初始化 Job 和 Secret，再启用 API 的 BackupStorage 配置。已有资源和凭据检查后复用；API 单副本，默认单次 1GiB、账号 10GiB、分片 8MiB。管理凭据按用户指定在部署时创建，应用账号独立生成，密钥不进入镜像。本地开发连接配置已从构建上下文剔除。无数据库结构迁移，默认不做 dump，可设置 BACKUP_DATABASE=1；回退恢复镜像与 API env，保留 MinIO 与所有数据卷。
+
+本地后端 18 项（含真实 MinIO）、Portal 10 项、脚本 22 项通过；新镜像隔离验证健康/页面 HTTP 200，真实 MinIO 两片上传、续传状态、完整下载 SHA-256、Range、删除及最小权限应用账号通过。未执行生产集群预检或部署，未执行 1GiB 压测/真实双设备验收。本包不含 DSH 安装器，分片备份、选择恢复和本轮客户端修复需要兼容的新客户端。完整主机分工和命令见[本次部署说明](deploy/k8s/bosch-aigc-dsh/update-2026-10-21-minio.1/README.md)。
+
 ## 2026-10-15 新域名手动部署交付
 
 交付目录 `deploy/k8s/bosch-aigc-dsh/domain-switch-2026-10-15`。API/Portal 已构建为 `2026-10-15-domain.1`，linux/amd64；离线包 `artifacts/aigc-domain-images-linux-amd64.tar`，SHA-256 `690b68f6910a6b5004059ca9c9efa0a4acfa94e585a5f4db550d25d94e77531c`。Portal 编译期 API 地址为 `https://aigcplatform.boschhuayu-steering.com`，镜像内容已检查不含旧 API 地址。镜像包含当前源码的云端备份功能和下载页；并非只修改旧镜像配置。

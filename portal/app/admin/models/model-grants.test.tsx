@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import ModelManagementPage from './page';
 
@@ -33,7 +33,8 @@ it('selects users visibly and saves their model grants', async () => {
   mocks.saveGrants.mockResolvedValue(undefined);
   const user = userEvent.setup();
   render(<ModelManagementPage />);
-  await user.click(await screen.findByRole('button', { name: '授权GLM-5.3' }));
+  await user.click(await screen.findByRole('button', { name: '更多操作GLM-5.3' }));
+  await user.click(screen.getByRole('button', { name: '授权GLM-5.3' }));
   expect(screen.getByRole('button', { name: '保存授权' })).toBeVisible();
   await user.click(screen.getByRole('tab', { name: /用户/  }));
   await user.type(screen.getByRole('searchbox', { name: '搜索授权用户' }), 'wh');
@@ -55,22 +56,64 @@ it('selects users visibly and saves their model grants', async () => {
     { userIds: ['user-1', 'user-2'], roleIds: [], departmentIds: ['dept-1'] }));
 });
 
-it('shows LiteLLM-declared capability tags and explains each action', async () => {
+it('keeps parameters in the details drawer and explains each action', async () => {
   mocks.models.mockResolvedValue([{ id: 'model-1', name: 'DeepSeek', providerKind: 'LiteLLM',
     modelIdentifier: 'deepseek-v4-pro', baseUrl: 'http://localhost:4000/v1', endpointPath: '/chat/completions',
     supportsTools: true, hasApiKey: true, isEnabled: true, isDefault: false,
     liteLlmCapabilities: { mode: 'chat', supportedFeatures: ['supports_vision', 'supports_function_calling'],
       contextWindow: 128000, maxOutputTokens: 8192 } }]);
+  const user = userEvent.setup();
   render(<ModelManagementPage />);
   expect(await screen.findByText('图片能力未确认')).toBeInTheDocument();
   expect(screen.getByText('工具调用')).toBeInTheDocument();
-  expect(screen.getByText('上下文 128,000')).toBeInTheDocument();
-  expect(screen.getByText('输出 8,192')).toBeInTheDocument();
+  expect(screen.queryByText('128,000')).not.toBeInTheDocument();
+  await user.click(screen.getByRole('button', { name: 'DeepSeek' }));
+  const drawer = screen.getByRole('dialog', { name: '模型详情' });
+  expect(within(drawer).getByText('128,000')).toBeInTheDocument();
+  expect(within(drawer).getByText('8,192')).toBeInTheDocument();
+  expect(within(drawer).getByText('http://localhost:4000/v1')).toBeInTheDocument();
+  expect(within(drawer).getByText('图片能力未确认')).toBeInTheDocument();
+  await user.keyboard('{Escape}');
+  expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'DeepSeek' })).toHaveFocus();
   expect(screen.queryByText('已配置密钥')).not.toBeInTheDocument();
-  expect(screen.getByRole('button', { name: '授权DeepSeek' })).toHaveAttribute('title', expect.stringContaining('设置可使用'));
   expect(screen.getByRole('button', { name: '测试DeepSeek' })).toHaveAttribute('title', expect.stringContaining('检查模型'));
   expect(screen.getByRole('button', { name: '编辑DeepSeek' })).toHaveAttribute('title', '编辑模型配置');
+  await user.click(screen.getByRole('button', { name: '更多操作DeepSeek' }));
+  expect(screen.getByRole('button', { name: '授权DeepSeek' })).toHaveAttribute('title', expect.stringContaining('设置可使用'));
   expect(screen.getByRole('button', { name: '删除DeepSeek' })).toHaveAttribute('title', '删除模型配置');
+});
+
+it('limits the list to three capabilities while retaining advanced and unknown metadata in details', async () => {
+  mocks.models.mockResolvedValue([{ id: 'many', name: 'Many', providerKind: 'LiteLLM', modelIdentifier: 'many',
+    baseUrl: 'https://example.test', endpointPath: '/chat/completions', isEnabled: false,
+    imageInput: { state: 'unsupported', reason: '上游明确不支持图片' },
+    liteLlmCapabilities: { mode: 'chat', supportedFeatures: ['supports_function_calling', 'supports_reasoning',
+      'supports_prompt_caching', 'supports_parallel_function_calling', 'supports_custom_feature'], contextWindow: 1000000, maxOutputTokens: 393216 } }]);
+  const user = userEvent.setup();
+  render(<ModelManagementPage />);
+  await screen.findByRole('button', { name: 'Many' });
+  const row = screen.getByRole('button', { name: 'Many' }).closest('tr')!;
+  expect(row.querySelectorAll('.model-capability-tag')).toHaveLength(3);
+  expect(within(row).queryByText('提示词缓存')).not.toBeInTheDocument();
+  await user.click(within(row).getByRole('button', { name: '查看Many全部能力' }));
+  const drawer = screen.getByRole('dialog');
+  expect(within(drawer).getByText('上游明确不支持图片')).toBeInTheDocument();
+  expect(within(drawer).getByText('1,000,000')).toBeInTheDocument();
+  await user.click(within(drawer).getByText('高级协议能力 · 3 项'));
+  expect(within(drawer).getByText('提示词缓存')).toBeVisible();
+  expect(within(drawer).getByText('custom feature')).toBeVisible();
+});
+
+it('updates enabled state through the existing API without replacing the saved key', async () => {
+  mocks.models.mockResolvedValue([{ id: 'toggle', name: 'Toggle', providerKind: 'Online', modelIdentifier: 'toggle',
+    baseUrl: 'https://example.test', endpointPath: '/chat/completions', isEnabled: true }]);
+  mocks.save.mockResolvedValue({});
+  const user = userEvent.setup();
+  render(<ModelManagementPage />);
+  await user.click(await screen.findByRole('button', { name: '更多操作Toggle' }));
+  await user.click(screen.getByRole('button', { name: '停用Toggle' }));
+  await waitFor(() => expect(mocks.save).toHaveBeenCalledWith('toggle', expect.objectContaining({ isEnabled: false, apiKey: '' })));
 });
 
 it('saves DeepSeek search key and department, role, and user grants', async () => {

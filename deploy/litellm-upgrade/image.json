@@ -1,0 +1,10 @@
+{
+  "version": "v1.106.2",
+  "image": "ghcr.io/berriai/litellm:v1.106.2",
+  "platform": "linux/amd64",
+  "index_digest": "sha256:7294b90f868c5c38c99b83021c7ba46f9b439e95f8e32964c925c7d2563a03f7",
+  "manifest_digest": "sha256:d1da6edc025e6a59be6faa50b4e8e42c115e1c99644aa3fc2ac416dd353f41da",
+  "image_id": "sha256:0e5340fc3d4dee8ca7c0ecbea798714f2493b15085e171527267ef9bb480fcd9",
+  "archive": "litellm-v1.106.2-linux-amd64.tar.gz",
+  "archive_sha256": "2734e2143af32d481a0ba1622942c66ee57bf3f5eb09cc049d12994bbf3f90d3"
+}

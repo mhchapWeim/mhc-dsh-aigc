@@ -1,0 +1,9 @@
+{
+  "postgres": "pg_restore (PostgreSQL) 17.10",
+  "preflight_dump_and_stdin_list": true,
+  "final_dump_and_stdin_list": true,
+  "before_rollback_dump": true,
+  "drop_and_restore_create_from_stdin": true,
+  "restored_rows_equal_backup": true,
+  "production_database_touched": false
+}

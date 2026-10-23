@@ -9,6 +9,8 @@ import { TestRemote, usePinnedBrowserLanguages } from '@deepseek-ai/dsh-client-t
 import * as settings from '@deepseek-ai/dsh-client-ui-settings/client'
 import { apply, inject, NS, PANEL_ID } from '../src/client/index.ts'
 import { PluginManagerPage } from '../src/client/PluginManagerPage.tsx'
+import { ManagedUpdateNotice } from '../src/client/ManagedUpdateNotice.tsx'
+import type { ManagedUpdateNoticeInjected } from '../src/client/ManagedUpdateNotice.tsx'
 import { PluginsPanelIcon } from '../src/client/PluginsPanelIcon.tsx'
 import type { PluginManagerFace } from '../src/client/manager-store.ts'
 
@@ -33,6 +35,7 @@ async function bench() {
     pluginInventory: { list },
     pluginRegistryProbe: { fastest: vi.fn(async () => ({ ok: true as const, value: null })) },
     pluginManager: {
+      managedUpdates: vi.fn(async () => ({ ok: true as const, value: [] })),
       listBundles: vi.fn(() => Promise.resolve({ ok: true as const, value: [] })),
       listPlugins: vi.fn(() => Promise.resolve({ ok: true as const, value: [] })),
       registries: vi.fn(() => Promise.resolve({ ok: true as const, value: { registry: null, fallbackRegistries: [], resolved: null } })),
@@ -48,11 +51,24 @@ function declare(slots: SlotRegistry): () => void {
     children: {
       'main': { kind: 'keyed', scope: 'root' },
       'sidebar.panellist': { kind: 'list', scope: 'root' },
+      'sidebar.footer.action': { kind: 'list', scope: 'root' },
     },
   } as never, () => null)
 }
 
 describe('ui-plugin-manager browser plugin', () => {
+  it('mounts restart notices without opening the Plugins page and follows Host events', async () => {
+    const b = await bench()
+    declare(b.slots)
+    await b.ctx.plugin({ inject: [...inject], apply }).await()
+    const entry = b.slots.entries('sidebar.footer.action')[0]!
+    expect(entry.component).toBe(ManagedUpdateNotice)
+    const injected = entry.inject?.() as Partial<ManagedUpdateNoticeInjected>
+    const updates = [{ packageName: 'dsh-plugin-internal-model', version: '1.0.9' }]
+    b.remote.emit('plugin-manager/managed-updated', [updates])
+    expect(injected.hooks?.managedUpdates.getSnapshot().updates).toEqual(updates)
+    expect(b.list).not.toHaveBeenCalled()
+  })
   it('declares only the services the page and its Remote methods use', () => {
     expect(inject).toEqual(['slots', 'locale', 'remote', 'remote.pluginManager', 'remote.pluginInventory', 'remote.pluginRegistryProbe', 'configForms'])
   })

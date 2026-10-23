@@ -36,10 +36,11 @@ kind: "package-reference"
 | `tokenEnv` | — | 存放后端签发用户令牌的凭据引用；与 `tokenKey` 至少配置一个 |
 | `tokenKey` | — | `llm-managed-backend` 下的 Host 凭据记录 id；与 `tokenEnv` 至少配置一个 |
 | `provider` | `managed` | 本适配器拥有的 DSH 提供方路由 |
+| `catalogRequestTimeoutMs` | `30000` | 模型目录请求及读取响应体的超时；独立于生成和流式调用超时 |
 | `sessionTiming` | `renewBeforeMs: 300000`、`pollMs: 60000`、`requestTimeoutMs: 10000` | 持久登录续期时间，单位毫秒；省略的字段使用默认值，所有值必须是计时器范围内的正整数 |
-| `uploadSync` | — | 可选的聊天附件持久化后台同步；配置 `pollMs`、`chunkBytes` 和 `requestTimeoutMs` |
+| `uploadSync` | — | 可选的附件信息持久化后台上报；配置 `pollMs` 和 `requestTimeoutMs`（兼容保留原有 `chunkBytes` 配置） |
 
-[Desktop 补丁](../../../apps/desktop-host/config/desktop.cordis.patch.yml)在设置 `DSH_MANAGED_BACKEND_URL` 时启用该路由，并读取 `user-session` Host 凭据记录。Desktop 登录从后端取得令牌，用户不需手动输入。插件挂载期间会拒绝调用其他模型提供方，Desktop 会选择登录用户获授权的第一个模型。禁用该插件行后恢复普通提供方路由；插件仍挂载但缺少托管令牌时请求直接失败。
+[Desktop 补丁](../../../apps/desktop-host/src/managed-session.ts)在设置 `DSH_MANAGED_BACKEND_URL` 时启用该路由，并读取 `user-session` Host 凭据记录。Desktop 登录从后端取得令牌，用户不需手动输入。插件挂载期间会拒绝调用其他模型提供方，Desktop 会选择登录用户获授权的第一个模型。禁用该插件行后恢复普通提供方路由；插件仍挂载但缺少托管令牌时请求直接失败。
 
 `managedBackend.authorizeProvider(id)` 允许组织扩展插件注册模型 provider，释放返回的 disposer 后撤销。独立内网模型 bundle 使用此扩展，其他 provider 仍被拒绝。
 
@@ -55,7 +56,7 @@ kind: "package-reference"
 <details>
 <summary>实现内部细节 — 点击展开</summary>
 
-适配器在每次模型查询或请求准备时解析凭据。准备阶段把该令牌绑定到随后的生成请求，后端在发送时决定其是否仍有效。模型目录不来自 `settings.yaml`。配置后，[上传同步](src/upload-sync.ts)把已提交的聊天附件记入本地重试队列，重启后从后端确认的偏移继续上传。它只在源文件流中跳过这次启动时确认的偏移；后续分片确认只推进目标写入偏移，不再跳过源文件字节。适配器与协议解析位于 [src/index.ts](src/index.ts)；[适配器测试](tests/adapter.spec.ts)覆盖目录准入、后端撤权与流结束。
+适配器在每次模型查询或请求准备时解析凭据。准备阶段把该令牌绑定到随后的生成请求，后端在发送时决定其是否仍有效。模型目录不来自 `settings.yaml`。配置后，[上传同步](src/upload-sync.ts)把已提交附件的文件名、大小、源路径及提交信息记入本地重试队列。它只发送 JSON 信息，不读取附件内容或上传分片，重启后重试未确认的记录。后端须确认保存完成；旧版后端不会触发文件内容上传回退。会话云备份为独立流程。适配器与协议解析位于 [src/index.ts](src/index.ts)；[适配器测试](tests/adapter.spec.ts)覆盖目录准入、后端撤权与流结束。
 
 </details>
 
@@ -106,6 +107,12 @@ kind: "package-reference"
 
 </details>
 
+## 组织反馈
+
+组织模式使用当前用户令牌向 `/v1/feedback` 提交反馈。显式会话反馈包含当前会话日志，拒绝超过 2,000,000 字符的日志，请求超时为 30 秒且禁止重定向。AIGC 后端负责存储和管理员访问。
+
 ## 持久登录
 
 AIGC 与 SSO 登录共用本机持久会话凭据，关闭程序不会清除。访问令牌即将过期或重启后按需自动续期；网络故障保留凭据，手动退出或会话撤销会清除。sessionTiming 可配置 renewBeforeMs、pollMs 和 requestTimeoutMs，默认分别为 300000、60000、10000 毫秒，均要求正整数。
+
+托管模型目录接受可选的 `multiplier` 字符串（最多 32 个字符），并在列表、解析和请求准备信息中保留该值。

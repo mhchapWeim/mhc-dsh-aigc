@@ -1,0 +1,18 @@
+# Strategic merge patch, not a standalone Deployment. Retains existing env/envFrom.
+spec:
+  template:
+    spec:
+      containers:
+        - name: api
+          env:
+            - {name: BackupStorage__Enabled, value: 'true'}
+            - {name: BackupStorage__Endpoint, value: 'http://aigc-backup-minio:9000'}
+            - {name: BackupStorage__Bucket, value: dsh-backups}
+            - {name: BackupStorage__MaximumBytes, value: '1073741824'}
+            - {name: BackupStorage__AccountQuotaBytes, value: '10737418240'}
+            - {name: BackupStorage__PartBytes, value: '8388608'}
+            - {name: BackupStorage__UploadLifetimeHours, value: '168'}
+            - name: BackupStorage__AccessKey
+              valueFrom: {secretKeyRef: {name: aigc-backup-minio, key: access-key}}
+            - name: BackupStorage__SecretKey
+              valueFrom: {secretKeyRef: {name: aigc-backup-minio, key: secret-key}}

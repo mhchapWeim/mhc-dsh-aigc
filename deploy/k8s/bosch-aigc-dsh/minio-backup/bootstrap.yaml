@@ -1,0 +1,50 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: aigc-backup-minio-policy
+  namespace: bosch-aigc-dsh
+data:
+  policy.json: |
+    {"Version":"2012-10-17","Statement":[
+      {"Effect":"Allow","Action":["s3:GetBucketLocation","s3:ListBucket","s3:ListBucketMultipartUploads"],"Resource":["arn:aws:s3:::dsh-backups"]},
+      {"Effect":"Allow","Action":["s3:GetObject","s3:PutObject","s3:DeleteObject","s3:AbortMultipartUpload","s3:ListMultipartUploadParts"],"Resource":["arn:aws:s3:::dsh-backups/accounts/*"]}
+    ]}
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: aigc-backup-minio-bootstrap
+  namespace: bosch-aigc-dsh
+spec:
+  backoffLimit: 3
+  activeDeadlineSeconds: 300
+  template:
+    spec:
+      restartPolicy: OnFailure
+      containers:
+        - name: bootstrap
+          # The verified server image includes /usr/bin/mc.
+          image: quay.io/minio/minio@sha256:064117214caceaa8d8a90ef7caa58f2b2aeb316b5156afe9ee8da5b4d83e12c8
+          command: [/bin/sh, -ec]
+          args:
+            - |
+              mc alias set local http://aigc-backup-minio:9000 "$ROOT_USER" "$ROOT_PASSWORD" >/dev/null
+              mc mb --ignore-existing local/dsh-backups
+              mc anonymous set none local/dsh-backups
+              mc admin user add local "$APP_KEY" "$APP_SECRET"
+              mc admin policy create local dsh-backups /policy/policy.json
+              mc admin policy attach local dsh-backups --user "$APP_KEY"
+          env:
+            - name: ROOT_USER
+              valueFrom: {secretKeyRef: {name: aigc-backup-minio, key: root-user}}
+            - name: ROOT_PASSWORD
+              valueFrom: {secretKeyRef: {name: aigc-backup-minio, key: root-password}}
+            - name: APP_KEY
+              valueFrom: {secretKeyRef: {name: aigc-backup-minio, key: access-key}}
+            - name: APP_SECRET
+              valueFrom: {secretKeyRef: {name: aigc-backup-minio, key: secret-key}}
+          volumeMounts:
+            - {name: policy, mountPath: /policy, readOnly: true}
+      volumes:
+        - name: policy
+          configMap: {name: aigc-backup-minio-policy}

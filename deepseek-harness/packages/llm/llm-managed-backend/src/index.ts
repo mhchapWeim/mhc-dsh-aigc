@@ -42,6 +42,8 @@ export interface Config {
   tokenKey?: string
   /** Provider route registered in DSH; defaults to `managed`. */
   provider?: string
+  /** Bound for one model catalog HTTP request, including response body; default 30000 ms. */
+  catalogRequestTimeoutMs?: number
   /** Optional background sync of submitted chat files to the same backend. */
   uploadSync?: UploadSyncConfig
   /** Persistent-session renewal timing in milliseconds. */
@@ -55,6 +57,7 @@ export const Config: z<Config> = z.object({
   tokenEnv: z.string(),
   tokenKey: z.string(),
   provider: z.string().default('managed'),
+  catalogRequestTimeoutMs: z.number().step(1).min(1).max(2_147_483_647).default(30_000),
   sessionTiming: z.object({
     renewBeforeMs: z.number().step(1).min(1).max(2_147_483_647).default(300_000),
     pollMs: z.number().step(1).min(1).max(2_147_483_647).default(60_000),
@@ -188,6 +191,7 @@ export class ManagedBackendAdapter extends LlmAdapter {
     private readonly root: string,
     private readonly token: () => Promise<string>,
     private readonly request: typeof fetch = fetch,
+    private readonly catalogRequestTimeoutMs = 30_000,
   ) { super() }
 
   override providerInfo(provider: string) { return { id: provider, name: 'Managed' } }
@@ -209,7 +213,8 @@ export class ManagedBackendAdapter extends LlmAdapter {
     try {
       response = await this.request(`${this.root}/v1/models`, {
         headers: { authorization: `Bearer ${token}` }, redirect: 'error',
-        ...signal === undefined ? {} : { signal },
+        signal: signal === undefined ? AbortSignal.timeout(this.catalogRequestTimeoutMs)
+          : AbortSignal.any([signal, AbortSignal.timeout(this.catalogRequestTimeoutMs)]),
       })
     } catch (error) {
       if (signal?.aborted) throw new LlmError('managed backend model catalog request aborted', 'ABORTED', { cause: error })
@@ -334,7 +339,7 @@ export function apply(ctx: Context, config: Config): void {
     }
     return next()
   })
-  ctx.llm.registerAdapter([provider], new ManagedBackendAdapter(ctx, root, token))
+  ctx.llm.registerAdapter([provider], new ManagedBackendAdapter(ctx, root, token, fetch, config.catalogRequestTimeoutMs))
   if (config.uploadSync !== undefined && Object.values(config.uploadSync).some(value => value !== undefined)) {
     installUploadSync(ctx, root, config.uploadSync)
   }

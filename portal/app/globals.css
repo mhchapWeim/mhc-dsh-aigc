@@ -7024,20 +7024,22 @@ tbody tr:hover {
 /* model registry */
 .model-table-panel .data-grid-wrap {
   overflow-x: auto;
+  max-height: min(720px, 68dvh);
 }
 .model-table-panel .data-grid {
   width: 100%;
-  min-width: 1300px;
+  min-width: 1080px;
   table-layout: fixed;
 }
-.model-table-panel .data-grid th:nth-child(1) { width: 260px; }
-.model-table-panel .data-grid th:nth-child(2) { width: 128px; }
-.model-table-panel .data-grid th:nth-child(3) { width: 260px; }
-.model-table-panel .data-grid th:nth-child(5) { width: 110px; }
-/* The capabilities column (col 4) stays flexible to absorb leftover width. */
+.model-table-panel .data-grid th:nth-child(1) { width: 28%; }
+.model-table-panel .data-grid th:nth-child(2) { width: 120px; }
+.model-table-panel .data-grid th:nth-child(3) { width: 76px; }
+.model-table-panel .data-grid th:nth-child(5) { width: 112px; }
+.model-table-panel .data-grid td { height: 80px; padding: 12px 16px; vertical-align: middle; }
+.model-table-panel .data-grid th { position: sticky; top: 0; z-index: 2; background: var(--page); padding: 14px 16px; }
 .model-table-panel .data-grid th:last-child,
 .model-table-panel .data-grid td:last-child {
-  width: 224px;
+  width: 188px;
   position: sticky;
   right: 0;
   z-index: 1;
@@ -7045,11 +7047,8 @@ tbody tr:hover {
   box-shadow: -8px 0 12px -10px rgba(25, 42, 69, 0.4);
 }
 .model-table-panel .data-grid thead th:last-child {
-  z-index: 2;
-  background: var(--ant-fill-secondary, #fafafa);
-}
-:root[data-theme="dark"] .model-table-panel .data-grid thead th:last-child {
-  background: #122035;
+  z-index: 3;
+  background: var(--page);
 }
 .model-row-actions {
   display: flex;
@@ -7059,8 +7058,66 @@ tbody tr:hover {
   white-space: nowrap;
 }
 .model-row-actions .icon-button {
-  flex: 0 0 44px;
+  flex: 0 0 36px;
 }
+.model-toolbar { gap: 20px; align-items: flex-end; flex-wrap: wrap; }
+.model-search-field, .model-filter-field { display: flex; flex-direction: column; gap: 8px; font-size: 12px; color: var(--muted); }
+.model-search-field { flex: 1; max-width: 420px; min-width: 240px; }
+.model-search-field .table-search { width: 100%; }
+.model-toolbar .toolbar-filters { margin-left: auto; align-items: flex-end; }
+.model-name-button { display: block; width: 100%; padding: 0; border: 0; background: transparent; color: var(--ink); text-align: left; font: inherit; font-weight: 650; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer; }
+.model-name-button:hover { color: var(--blue-600); }
+.model-identifier { display: block; margin-top: 6px; color: var(--muted); font: 12px/1.5 ui-monospace, Consolas, monospace; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.model-state { display: flex; align-items: flex-start; flex-direction: column; gap: 5px; }
+.model-state > small { font-size: 11px; color: var(--blue-600); padding-left: 9px; }
+.model-state .status-pill, .model-details-heading .status-pill { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); white-space: nowrap; }
+.model-state .status-pill.is-enabled, .model-details-heading .status-pill.is-enabled { color: var(--success); }
+.model-state .status-pill i, .model-details-heading .status-pill i { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+.model-text-action { display: inline-flex; gap: 4px; align-items: center; justify-content: center; min-height: 36px; padding: 6px; border: 0; background: transparent; color: var(--blue-600); font: inherit; font-size: 12px; cursor: pointer; }
+.model-text-action:hover { background: var(--page); border-radius: 6px; }
+.model-action-menu { position: fixed; z-index: 190; margin: 0; width: 168px; padding: 6px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--ink); box-shadow: 0 8px 28px #0002; }
+.model-action-menu button { display: flex; align-items: center; gap: 8px; width: 100%; padding: 10px; background: transparent; border: 0; text-align: left; color: inherit; font: inherit; font-size: 13px; border-radius: 5px; cursor: pointer; }
+.model-action-menu button:hover { background: var(--page); }
+.model-action-menu .danger { color: var(--red); }
+.model-capability-summary { display: flex; flex-direction: column; align-items: flex-start; gap: 5px; }
+.model-capability-summary .model-capability-tags { min-width: 0; gap: 4px; flex-wrap: nowrap; }
+.model-capability-summary .model-capability-tag { padding: 2px 6px; font-size: 11px; }
+.model-more-capabilities { padding: 0; background: transparent; border: 0; color: var(--blue-600); font: inherit; font-size: 12px; cursor: pointer; }
+.modal-scrim:has(.model-details-drawer) { padding: 0; justify-content: flex-end; }
+.modal.model-details-drawer { width: min(480px, 100vw); height: 100dvh; max-height: 100dvh; margin: 0; border-radius: 0; display: flex; flex-direction: column; overflow: hidden; animation: none; background: var(--surface); }
+.model-details-drawer > header { flex: none; border-bottom: 1px solid var(--line); padding: 20px 24px; }
+.model-details-body { flex: 1 1 auto; min-height: 0; overflow: auto; padding: 24px; overscroll-behavior: contain; }
+.model-details-body > section, .model-advanced-capabilities { padding: 22px 0; border-bottom: 1px solid var(--line); }
+.model-details-heading { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.model-details-heading h3 { flex-basis: 100%; overflow-wrap: anywhere; margin: 0 0 4px; font-size: 20px; color: var(--ink); }
+.model-details-body section h3 { margin: 0 0 16px; color: var(--ink); font-size: 14px; }
+.model-detail-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; margin: 0; }
+.model-detail-wide { grid-column: 1 / -1; }
+.model-detail-fields dt { margin-bottom: 6px; font-size: 12px; color: var(--muted); }
+.model-detail-fields dd { margin: 0; font-size: 13px; line-height: 1.7; color: var(--ink); overflow-wrap: anywhere; white-space: pre-wrap; }
+.model-detail-fields code { font-size: 12px; user-select: text; }
+.model-details-body p { font-size: 12px; line-height: 1.7; white-space: pre-wrap; overflow-wrap: anywhere; color: var(--muted); }
+.model-advanced-capabilities summary { font-size: 14px; font-weight: 600; color: var(--ink); cursor: pointer; }
+.model-advanced-capabilities .model-capability-tags { margin-top: 16px; }
+.model-details-footer { flex: none; display: flex; justify-content: flex-end; gap: 10px; padding: 16px 24px; border-top: 1px solid var(--line); background: var(--surface); }
+@media (max-width: 600px) {
+  .model-management-page > .page-title { flex-direction: column; align-items: stretch; gap: 16px; }
+  .model-management-page > .page-title > div { min-width: 0; }
+  .model-management-page .page-title-actions { display: flex; flex-wrap: wrap; width: 100%; }
+  .model-management-page .page-title-actions > button { white-space: nowrap; flex: 1 1 auto; }
+  .model-search-field { min-width: 0; max-width: none; width: 100%; flex-basis: 100%; }
+  .model-toolbar .toolbar-filters { width: 100%; flex-wrap: wrap; }
+  .model-filter-field { flex: 1; min-width: 120px; }
+  .model-details-body { padding: 16px; }
+  .model-detail-fields { grid-template-columns: minmax(0, 1fr); }
+}
+.model-management-page .secondary-action { background: var(--surface); color: var(--ink); }
+.model-management-page .modern-select__trigger,
+.model-management-page .modern-select__popup,
+.model-management-page .modern-select__options > button { background: var(--surface); color: var(--ink); }
+.model-management-page .modern-select__trigger,
+.model-management-page .modern-select__popup,
+.model-management-page .modern-select__options > button { background: var(--surface); color: var(--ink); }
 .model-capability-tags {
   display: flex;
   flex-wrap: wrap;
@@ -8263,3 +8320,10 @@ tbody tr:hover {
 .password-change-form input { width: 100%; min-height: 38px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 6px; color: var(--ink); background: var(--surface); }
 .profile-password-section { padding: 16px 0 0; border-top: 1px solid var(--line); }
 .profile-password-section .password-change-form { padding: 12px 0; }
+
+/* Third-level desktop version navigation. */
+.admin-version-nav summary, .admin-version-nav > span { padding: 10px 11px; color: #aabbd1; font-size: 14px; cursor: pointer; }
+.admin-version-nav summary { list-style: none; }
+.admin-version-nav summary::-webkit-details-marker { display: none; }
+.admin-version-nav > div { margin-left: 14px; padding-left: 8px; border-left: 1px solid #30435c; }
+.admin-nav-flyout .admin-version-nav > a { margin-left: 14px; }

@@ -30,7 +30,7 @@ A deployment that routes models through `@deepseek-ai/dsh-llm-managed-backend` s
 
 Session selection supports Select all / Clear selection for readable, unarchived Sessions in the selected workspace. Completed receipts expose Sync migrated session display to repair title caches and hide copied originals without copying history again. Migration completion refreshes the Session list.
 
-The data dialog presents account-owned cloud backups first: upload all history or selected Sessions, browse dated snapshots, download and restore into a local directory, or delete a snapshot. Signed-out users retain access to the expandable local repair tools. Cloud commands use the [Workspace Controller](../../api/workspace-controller/README.md#data-repair-and-copy-migration); restoring refreshes the Session list and retains the local retry receipt.
+The signed-in data dialog contains upload and restore controls, each supporting all or selected conversations. It displays server-provided capacity, transfer progress and pause/resume. A dated snapshot selector and conversation checkboxes control restoration into a local directory. Scope disclosure and local repair/migration sections are absent from the cloud dialog; signed-out local recovery remains available separately. Cloud commands use the [Workspace Controller](../../api/workspace-controller/README.md#data-repair-and-copy-migration). Restoration refreshes the Session list and retains receipts for safe retries.
 
 The step mounts through `settings.onboarding`, so the settings shell shows it as an ordered first-run step. The shipped Web bundle enables this plugin when `DSH_MANAGED_BACKEND_URL` is configured. Once mounted, the step asks the managed backend for its current sign-in state:
 

@@ -1,7 +1,6 @@
 /** Launch the Desktop profile through the Web application and report its URL to Electron. */
 
 import { delimiter, join } from 'node:path'
-import { mkdir } from 'node:fs/promises'
 import { inspect } from 'node:util'
 import { writeSync } from 'node:fs'
 import { loadLayeredEnv, loadProfileDirectory } from '@deepseek-ai/dsh-app-boot'
@@ -17,9 +16,10 @@ import { installPlatformSessionPublisher } from './platform-session.ts'
 import { installOfficeEngineResolution } from './office-engine.ts'
 import { installManagedSessionPublisher } from './managed-session.ts'
 import { installFailureDiagnostics } from './failure-diagnostics.ts'
+import { prepareWorkspacePermissions } from './workspace-permissions.ts'
 
 async function main(): Promise<void> {
-  if (process.env.DSH_WORKSPACE_ROOT !== undefined) await mkdir(process.env.DSH_WORKSPACE_ROOT, { recursive: true })
+  await prepareWorkspacePermissions(process.env.DSH_WORKSPACE_ROOT)
   const runtimeDir = process.argv[2] as string
   const projectDir = process.argv[3] as string
   installOfficeEngineResolution(runtimeDir)

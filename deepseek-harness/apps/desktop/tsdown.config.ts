@@ -44,7 +44,8 @@ export default defineConfig([
     fixedExtension: false,
     dts: false,
     clean: false,
-    deps: { neverBundle: ['electron'] },
+    // These workspace helpers are development dependencies and are absent from the installed shell.
+    deps: { neverBundle: ['electron'], alwaysBundle: ['@deepseek-ai/dsh-home-paths', '@deepseek-ai/dsh-deepseek-account'] },
   },
   ...(['preload-app', 'preload-welcome', 'preload-platform-account', 'preload-mandatory', 'preload-update-dialog'] as const).map(name => ({
     // Sandboxed Electron preloads run as CommonJS even though the application package is ESM.

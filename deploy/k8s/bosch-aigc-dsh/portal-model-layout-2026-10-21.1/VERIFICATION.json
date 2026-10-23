@@ -1,0 +1,37 @@
+{
+  "image": "aigc-portal:2026-10-21-model-layout.1",
+  "platform": "linux/amd64",
+  "imageId": "sha256:524f72cc24aef55042b0a9a90ba126b23a3c88e8eb201d13c15d80ea51421123",
+  "http": {
+    "/login/local": 200,
+    "/desktop": 200
+  },
+  "assets": {
+    "files": 92,
+    "old": 0,
+    "expected": 1
+  },
+  "frontendTests": {
+    "files": 2,
+    "passed": 32
+  },
+  "typecheck": "passed",
+  "changedFileLint": "passed",
+  "preflightTests": {
+    "passed": 6
+  },
+  "linuxShellSyntax": "passed",
+  "packageChecksums": "passed",
+  "browser": {
+    "target": "isolated built Portal image",
+    "mockApi": true,
+    "rowHeight": 80,
+    "maxVisibleCapabilityTags": 3,
+    "desktop": "1560x900",
+    "lowHeight": "1280x540",
+    "narrow": "390x720",
+    "longUnbrokenText": 32768,
+    "pageErrors": 0
+  },
+  "productionDeployed": false
+}

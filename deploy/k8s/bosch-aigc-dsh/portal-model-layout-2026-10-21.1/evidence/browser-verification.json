@@ -1,0 +1,50 @@
+{
+  "mockApi": true,
+  "metrics": {
+    "rows": [
+      80,
+      80,
+      80,
+      80,
+      80,
+      80,
+      80,
+      80,
+      80,
+      80
+    ],
+    "pageOverflow": false,
+    "tags": 3
+  },
+  "responsive": [
+    {
+      "viewport": {
+        "width": 1280,
+        "height": 540
+      },
+      "width": 480,
+      "height": 540,
+      "right": 1280,
+      "bottom": 540,
+      "bodyScroll": true,
+      "pageOverflow": false
+    },
+    {
+      "viewport": {
+        "width": 390,
+        "height": 720
+      },
+      "width": 390,
+      "height": 720,
+      "right": 390,
+      "bottom": 720,
+      "bodyScroll": true,
+      "pageOverflow": false
+    }
+  ],
+  "filteringAndPagination": "passed",
+  "noMatches": "passed",
+  "emptyState": "passed",
+  "loadError": "passed",
+  "errors": []
+}

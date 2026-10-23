@@ -70,6 +70,7 @@
     "@deepseek-ai/dsh-deque": "workspace:*",
     "@deepseek-ai/dsh-native-command": "workspace:*",
     "@deepseek-ai/schemastery": "workspace:~",
+    "tar": "7.5.0",
     "zod": "^4.4.3"
   },
   "peerDependencies": {

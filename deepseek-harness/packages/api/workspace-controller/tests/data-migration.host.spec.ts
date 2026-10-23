@@ -4,6 +4,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { pathToFileURL } from 'node:url'
 import { afterEach, expect, it, vi } from 'vitest'
+import * as tar from 'tar'
 import { Context } from '@deepseek-ai/cordis'
 import Loader from '@deepseek-ai/cordis-plugin-loader'
 import Include from '@deepseek-ai/cordis-plugin-include'
@@ -18,6 +19,7 @@ import { DomainFacility } from '@deepseek-ai/dsh-storage-domain'
 import WorkspaceRegistry from '@deepseek-ai/dsh-workspace'
 import { WorkspaceDataMigration } from '../src/data-migration.ts'
 import { CloudBackup } from '../src/cloud-backup.ts'
+import { fileHash, packArchive, unpackArchive } from '../src/cloud-archive.ts'
 import LocalAttachmentStore from '../../../attachment/attachment-local/src/index.ts'
 import { exportObjects, importObjects, measureObjects } from '../src/portable-attachments.ts'
 import WorkspaceController from '../src/index.ts'
@@ -26,6 +28,74 @@ import { MemoryStorageBackend } from '../../../storage/storage-domain/tests/help
 
 const cleanup: (() => Promise<void>)[] = []
 afterEach(async () => { vi.restoreAllMocks(); for (const dispose of cleanup.splice(0).reverse()) await dispose() })
+
+it('rejects undeclared archive files and file checksum mismatches', async () => {
+  const test = await fixture()
+  const folder = join(test.root, 'snapshot')
+  const manifest = await test.data.exportCloudSnapshot(folder, 1024 * 1024, [test.id])
+  await writeFile(join(folder, 'unexpected.txt'), 'extra file')
+  await tar.c({ cwd: folder, file: join(folder, 'snapshot.tar.gz'), gzip: true }, [manifest.sessions[0]!.file, 'unexpected.txt'])
+  await expect(unpackArchive(folder, manifest, 1024 * 1024)).rejects.toThrow('Invalid backup archive entry')
+  await writeFile(join(folder, manifest.sessions[0]!.file), 'x'.repeat(manifest.sessions[0]!.bytes))
+  await packArchive(folder, manifest)
+  await expect(unpackArchive(folder, manifest, 1024 * 1024)).rejects.toThrow('Backup file checksum mismatch')
+})
+
+it('exports a binary archive and selectively restores it once across Host restarts', async () => {
+  const test = await fixture()
+  const folder = join(test.root, 'snapshot')
+  const manifest = await test.data.exportCloudSnapshot(folder, 1024 * 1024, [test.id])
+  const archive = await packArchive(folder, manifest)
+  await unpackArchive(folder, manifest, 1024 * 1024)
+  const payload = await readFile(join(folder, 'snapshot.tar.gz'))
+  const id = '00000000-0000-4000-8000-000000000001'
+  test.ctx.provide('managedBackend', { endpoint: 'https://aigc.test', accessToken: async () => 'test-token' } as never)
+  const fetcher = vi.spyOn(globalThis, 'fetch').mockImplementation(async (url, init) => {
+    const path = String(url)
+    if (path.endsWith('/limits')) return Response.json({ userId: id, maximumBytes: 1024 * 1024, partBytes: 5 * 1024 * 1024 })
+    if (path.endsWith('/download')) return new Response(payload, { status: 206, headers: { 'content-range': `bytes 0-${payload.length - 1}/${payload.length}` } })
+    expect(init?.headers).toMatchObject({ authorization: 'Bearer test-token' })
+    return Response.json({ id, state: 'complete', ...archive, partBytes: 5 * 1024 * 1024, manifest })
+  })
+  const first = new CloudBackup(test.ctx, test.data, 10000, () => join(test.root, 'home'))
+  const restored = await first.restore({ id, targetPath: test.targetPath, sessionIds: [test.id] })
+  expect(restored.completed).toBe(true)
+  expect(restored.sessionCount).toBe(1)
+  const restarted = new CloudBackup(test.ctx, test.data, 10000, () => join(test.root, 'home'))
+  const repeated = await restarted.restore({ id, targetPath: test.targetPath, sessionIds: [test.id] })
+  expect(repeated.results).toEqual(restored.results)
+  expect(fetcher.mock.calls.filter(([url]) => String(url).endsWith('/download'))).toHaveLength(1)
+  await writeFile(join(folder, 'extracted', manifest.sessions[0]!.file), 'tampered')
+  expect(await fileHash(join(folder, 'extracted', manifest.sessions[0]!.file))).not.toBe(manifest.sessions[0]!.sha256)
+})
+
+it('resumes an acknowledged part after a lost response and Host restart', async () => {
+  const test = await fixture()
+  const id = '00000000-0000-4000-8000-000000000002'
+  test.ctx.provide('managedBackend', { endpoint: 'https://aigc.test', accessToken: async () => 'test-token' } as never)
+  let input: { bytes: number; sha256: string; manifest: unknown } | undefined
+  let uploaded = false
+  let starts = 0
+  let puts = 0
+  vi.spyOn(globalThis, 'fetch').mockImplementation(async (url, options) => {
+    const path = String(url)
+    if (path.endsWith('/limits')) return Response.json({ userId: id, maximumBytes: 1024 * 1024, partBytes: 5 * 1024 * 1024 })
+    if (options?.method === 'POST' && path.endsWith('/backup-transfers')) {
+      starts++; input = JSON.parse(String(options.body)) as typeof input
+      return Response.json({ id })
+    }
+    if (options?.method === 'PUT') { puts++; uploaded = true; throw new Error('Response lost after durable upload') }
+    if (path.endsWith('/complete')) return Response.json({ id, createdAt: new Date().toISOString(), bytes: input!.bytes, sha256: input!.sha256, sessionCount: 1, scope: 'selected' })
+    return Response.json({ id, state: 'uploading', ...input, partBytes: 5 * 1024 * 1024,
+      parts: uploaded ? [{ number: 1, bytes: input!.bytes, eTag: 'test' }] : [] })
+  })
+  const first = new CloudBackup(test.ctx, test.data, 10000, () => join(test.root, 'home'))
+  await expect(first.upload({ sessionIds: [test.id] })).rejects.toThrow('Response lost')
+  const restarted = new CloudBackup(test.ctx, test.data, 10000, () => join(test.root, 'home'))
+  expect((await restarted.upload({ sessionIds: [test.id] })).sessionCount).toBe(1)
+  expect(starts).toBe(1)
+  expect(puts).toBe(1)
+})
 
 async function fixture(looseLogs = false) {
   const root = await mkdtemp(join(tmpdir(), 'dsh-data-migration-'))
@@ -100,29 +170,13 @@ it('carries referenced files across attachment stores and refuses altered binary
 
 it('uses the renewed Host credential and refuses corrupt cloud payloads before restore', async () => {
   const test = await fixture()
-  const cloud = new CloudBackup(test.ctx, test.data, 120_000)
+  const cloud = new CloudBackup(test.ctx, test.data, 120_000, () => join(test.root, 'home'))
   await expect(cloud.list(1)).rejects.toThrow('Sign in')
   test.ctx.provide('managedBackend', { endpoint: 'https://aigc.example', accessToken: async () => 'host-token' })
-  const request = vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(JSON.stringify({ payload: '{}', sha256: 'bad' })))
+  const request = vi.spyOn(globalThis, 'fetch').mockImplementation(async url => String(url).includes('backup-transfers') ? Response.json({ id: 'f95234b0-6b06-4564-8b9a-63767fe7d7e5', state: 'legacy', bytes: 2, sha256: 'a'.repeat(64) }) : Response.json({ payload: '{}', sha256: 'bad' }))
   await expect(cloud.restore({ id: 'f95234b0-6b06-4564-8b9a-63767fe7d7e5', targetPath: test.targetPath })).rejects.toThrow('checksum')
   expect(request).toHaveBeenCalledWith('https://aigc.example/v1/backups/f95234b0-6b06-4564-8b9a-63767fe7d7e5', expect.objectContaining({ redirect: 'error', headers: expect.objectContaining({ authorization: 'Bearer host-token' }) }))
   expect((await test.ctx.sessionPersistence.list())).toHaveLength(1)
-})
-
-it('uploads through the scoped WorkspaceController using the managed origin and persistence store', async () => {
-  const test = await fixture()
-  test.ctx.provide('managedBackend', { endpoint: 'https://aigc.example', accessToken: async () => 'host-token' })
-  await test.ctx.plugin(TypertRegistry)
-  await test.ctx.plugin(WorkspaceController)
-  const request = vi.spyOn(globalThis, 'fetch').mockImplementation(async (_url, init) => {
-    const input = JSON.parse(String(init?.body)) as { payload: string; sha256: string; scope: string }
-    expect(JSON.parse(input.payload).sessions).toHaveLength(1)
-    return new Response(JSON.stringify({ id: 'f95234b0-6b06-4564-8b9a-63767fe7d7e5', createdAt: new Date().toISOString(),
-      bytes: Buffer.byteLength(input.payload), sessionCount: 1, scope: input.scope, sha256: input.sha256 }))
-  })
-  const result = await test.ctx.workspaceController.uploadCloudBackup({})
-  expect(result.sessionCount).toBe(1)
-  expect(request).toHaveBeenCalledWith('https://aigc.example/v1/backups', expect.objectContaining({ method: 'POST' }))
 })
 
 it('lists a saved conversation name instead of requiring users to identify a session id', async () => {
@@ -291,13 +345,14 @@ it('stress: 30 migrations with injected disk failures resume and retain every or
   expect((await test.ctx.sessionPersistence.list()).length).toBe(31)
 }, 60_000)
 
-it('measures the exact serialized backup bytes locally without a cloud request', async () => {
+it('uses the backend capacity while measuring history locally', async () => {
   const test = await fixture()
-  const cloud = new CloudBackup(test.ctx, test.data, 120_000)
-  const request = vi.spyOn(globalThis, 'fetch')
+  const cloud = new CloudBackup(test.ctx, test.data, 120_000, () => join(test.root, 'home'))
+  test.ctx.provide('managedBackend', { endpoint: 'https://aigc.example', accessToken: async () => 'host-token' })
+  const request = vi.spyOn(globalThis, 'fetch').mockResolvedValue(Response.json({ userId: 'f95234b0-6b06-4564-8b9a-63767fe7d7e5', maximumBytes: 1024 ** 3, partBytes: 8 * 1024 ** 2 }))
   const payload = await test.data.exportSessions([test.id])
-  expect(await cloud.measure({ sessionIds: [test.id] })).toEqual({ bytes: Buffer.byteLength(payload), limit: 24 * 1024 * 1024 })
-  expect(request).not.toHaveBeenCalled()
+  expect(await cloud.measure({ sessionIds: [test.id] })).toEqual({ bytes: Buffer.byteLength(payload), limit: 1024 ** 3 })
+  expect(request).toHaveBeenCalledTimes(1)
 })
 
 it('counts oversized encoded attachments without reading or rejecting them', () => {
@@ -309,8 +364,10 @@ it('counts oversized encoded attachments without reading or rejecting them', () 
 
 it('measures persisted history while work is running but still blocks upload', async () => {
   const test = await fixture()
+  test.ctx.provide('managedBackend', { endpoint: 'https://aigc.example', accessToken: async () => 'host-token' })
+  vi.spyOn(globalThis, 'fetch').mockImplementation(async () => Response.json({ userId: 'f95234b0-6b06-4564-8b9a-63767fe7d7e5', maximumBytes: 1024 ** 3, partBytes: 8 * 1024 ** 2 }))
   vi.spyOn(test.ctx, 'waterfall').mockResolvedValue([{ kind: 'running' }] as never)
-  const cloud = new CloudBackup(test.ctx, test.data, 120_000)
+  const cloud = new CloudBackup(test.ctx, test.data, 120_000, () => join(test.root, 'home'))
   expect((await cloud.measure({ sessionIds: [test.id] })).bytes).toBeGreaterThan(0)
   await expect(cloud.upload({ sessionIds: [test.id] })).rejects.toThrow('Session is running')
 })

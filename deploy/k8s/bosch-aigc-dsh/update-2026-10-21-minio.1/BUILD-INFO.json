@@ -1,0 +1,806 @@
+{
+  "branch": "main",
+  "commit": "6a99e38bb2f66cf2365f86aacc9f27049ff36a48",
+  "dirty": true,
+  "platform": "linux/amd64",
+  "sourceFiles": [
+    {
+      "path": "server/AigcHub.Api/.dockerignore",
+      "sha256": "61e0474aa3094567a39fd4c86f5e86cf39f9e6b857af48b234c25a5493b81683"
+    },
+    {
+      "path": "server/AigcHub.Api/AigcHub.Api.csproj",
+      "sha256": "7ee9cbfdf6685ee0c75ae5a3c7f85720c7b9a9b1c05f238497c49a88619e465a"
+    },
+    {
+      "path": "server/AigcHub.Api/AigcHub.Api.csproj.user",
+      "sha256": "a7aa504322d6c8938a15e2552de43f74af29633849b03c50a3135caccdf935d9"
+    },
+    {
+      "path": "server/AigcHub.Api/AigcHub.Api.http",
+      "sha256": "8462aa806c901cbe07df350b3bbfdd669488ac4d0196965291bdeb223aa9569a"
+    },
+    {
+      "path": "server/AigcHub.Api/Configuration/ApplicationConfiguration.cs",
+      "sha256": "1a2e61efdcedcb4116d3239c2ffc1c3faf842dde1053a0a2b6e7cc0a792b34fb"
+    },
+    {
+      "path": "server/AigcHub.Api/Contracts/ApiContracts.cs",
+      "sha256": "193277e1906c7e5eb9e40574d17b2ea988bc7bf290252ae279da9609b4e716ed"
+    },
+    {
+      "path": "server/AigcHub.Api/Data/AigcHubDbContext.cs",
+      "sha256": "e81ddb01136005a7af7ed80e60c4a6310495c1770a83a5aabfc8902a7dfd8863"
+    },
+    {
+      "path": "server/AigcHub.Api/Data/DatabaseSchemaInitializer.cs",
+      "sha256": "0c31b479bd5a1101b4292b19effb193cd82fe59698e45b7498d537e05a8b8375"
+    },
+    {
+      "path": "server/AigcHub.Api/Data/SeedData.cs",
+      "sha256": "5d2352b2ca90b2f3ed8e0bfd0dee0e2a68658794350c1e47878bd12e3a11a820"
+    },
+    {
+      "path": "server/AigcHub.Api/Dockerfile",
+      "sha256": "37266fdd50d7592610e54b1f25bda1713849746e36fddadc0797a80b5d7763a5"
+    },
+    {
+      "path": "server/AigcHub.Api/Domain/AccessGrant.cs",
+      "sha256": "9d2a6bb2ec24512010e177c30c01053d4323d2e4505980fffd30849533d20e2d"
+    },
+    {
+      "path": "server/AigcHub.Api/Domain/DesktopDistribution.cs",
+      "sha256": "671f54f44ea2526da777a63af1e77872089313ff70ca9ed11d8467c4190cc2cb"
+    },
+    {
+      "path": "server/AigcHub.Api/Domain/DshAccessToken.cs",
+      "sha256": "1d582304ceab17a18255ce6162658c633dde284b031591410c5d4b94d2701a41"
+    },
+    {
+      "path": "server/AigcHub.Api/Domain/DshBackup.cs",
+      "sha256": "2d9e2748851f9bc90157af66bd888793f106907bfc9a4032243582aab1d79dd1"
+    },
+    {
+      "path": "server/AigcHub.Api/Domain/DshFailure.cs",
+      "sha256": "864a2d59493b101b931bcef355e3e842cd937c8dd15d8e096c962ef988088fa0"
+    },
+    {
+      "path": "server/AigcHub.Api/Domain/DshFeedback.cs",
+      "sha256": "948664f6e38d65e4cccdafaf094b28cb6ca8dbd1a638508cf9064ab8cf7fccca"
+    },
+    {
+      "path": "server/AigcHub.Api/Domain/DshLoginResult.cs",
+      "sha256": "2675818684125344ecc64549d2b34e259b3b4d75419c0ffc9a6637aa034ff39a"
+    },
+    {
+      "path": "server/AigcHub.Api/Domain/DshPersistentSession.cs",
+      "sha256": "efc5169e0b340bff048e2f14c53b1f2b4ea8173378aa001b6446a9f9a3d15508"
+    },
+    {
+      "path": "server/AigcHub.Api/Domain/DshUpload.cs",
+      "sha256": "a0a4cdb12ac3e8fa2ab4b34a3a0fe0c0d9d3c3c4294ec7e099499e47b9437db7"
+    },
+    {
+      "path": "server/AigcHub.Api/Domain/Entities.cs",
+      "sha256": "0e4adb3e4b038fcbc55fe29b63cea14ad699106876258d4d5a19bac9d593ec57"
+    },
+    {
+      "path": "server/AigcHub.Api/Domain/ManagedPlugin.cs",
+      "sha256": "2dc038e78f3cbab47187dc96fe1227581b852d45680edf3d01174b949c694712"
+    },
+    {
+      "path": "server/AigcHub.Api/Domain/SensitiveWord.cs",
+      "sha256": "5a2e101913ae632f5fabcddfe065c5558befb78bf8ec026dbceabc7b0d898ff6"
+    },
+    {
+      "path": "server/AigcHub.Api/Domain/UserModelGrant.cs",
+      "sha256": "092e52375dc510ed54518efeaf08fb580ce10cb45ba15e326a44db1a9b6a8426"
+    },
+    {
+      "path": "server/AigcHub.Api/Endpoints/AuthEndpoints.cs",
+      "sha256": "6ceccfc1a509ea61922ee14ce329c9f369964dd626d0ab22eebf8796f2c204a4"
+    },
+    {
+      "path": "server/AigcHub.Api/Endpoints/BackupTransferEndpoints.cs",
+      "sha256": "f01ceb35732093b3d57102e83d8948a43fcb1b54897df5fa073fbd69d3d08f32"
+    },
+    {
+      "path": "server/AigcHub.Api/Endpoints/CatalogEndpoints.cs",
+      "sha256": "0294b55692f69eb4b29e81b4078da9cc9a4c6705d5b6a6f46e4183ab160c4c82"
+    },
+    {
+      "path": "server/AigcHub.Api/Endpoints/ChatEndpoints.cs",
+      "sha256": "7a94ef9a2745e54fadccbb5bd995aa11c4cd70c20aa4c611912874eba27c0517"
+    },
+    {
+      "path": "server/AigcHub.Api/Endpoints/DesktopDistributionEndpoints.cs",
+      "sha256": "d1b3ec79a9b89374e898a12971d39ee4531c875439a32aad891859c17e2ea013"
+    },
+    {
+      "path": "server/AigcHub.Api/Endpoints/DesktopDownloadEndpoints.cs",
+      "sha256": "d47e7d1f0c6cfcdf663d5f27d5f3c5f1dfc2e2fab91eb3d749ab5f4fa6dcc0c8"
+    },
+    {
+      "path": "server/AigcHub.Api/Endpoints/DshBackupEndpoints.cs",
+      "sha256": "d25592bde4641b18cb9b5175141f2c2da20e63ec1dc02361ef47a7bc759e6db3"
+    },
+    {
+      "path": "server/AigcHub.Api/Endpoints/DshFailureEndpoints.cs",
+      "sha256": "8618c29aff41d2b761a1d1e2806fecb90b183ed5e8a394ca1e4b1d713b2c9dfd"
+    },
+    {
+      "path": "server/AigcHub.Api/Endpoints/DshFeedbackEndpoints.cs",
+      "sha256": "df66150a18237ca9a7badfa33d0f0800a6d55dfab960be59f34a47da4501b43f"
+    },
+    {
+      "path": "server/AigcHub.Api/Endpoints/DshManagedEndpoints.cs",
+      "sha256": "a3467228e805d831b161426e3c49ca25bb86390ec78901053820e08415c8d5ce"
+    },
+    {
+      "path": "server/AigcHub.Api/Endpoints/DshUploadEndpoints.cs",
+      "sha256": "d7507512f0ef9d106a53e4a9b87074cf56dfca0e55e80a12753cf2bc2a08aba5"
+    },
+    {
+      "path": "server/AigcHub.Api/Endpoints/EndpointHelpers.cs",
+      "sha256": "af4590a1f879f493fd8de67053f1ca189767950dee7524741899fc2269714306"
+    },
+    {
+      "path": "server/AigcHub.Api/Endpoints/EndpointRouteBuilderExtensions.cs",
+      "sha256": "4747432c8a8869b920a04eb0c32b7a361391642da31147be7fb6650eb44b5b64"
+    },
+    {
+      "path": "server/AigcHub.Api/Endpoints/ModelEndpoints.cs",
+      "sha256": "3d8554aa6f9679d434295302efb8657eb2b6194e712a06dc71bf0d4a54625035"
+    },
+    {
+      "path": "server/AigcHub.Api/Endpoints/NotificationEndpoints.cs",
+      "sha256": "4f877774d89ac3424cae78d498bb2d145ee93f1279dccce8221c95a55bd9a859"
+    },
+    {
+      "path": "server/AigcHub.Api/Endpoints/OrganizationEndpoints.cs",
+      "sha256": "fe890ed6c28cd926020092a5f4c4083d80d5edf44c2b209d43d71a0e429db0f9"
+    },
+    {
+      "path": "server/AigcHub.Api/Endpoints/PluginMarketEndpoints.cs",
+      "sha256": "3905771fce590f5cb6dd508eed9ce5ac5d42d1ac6f17091f8274e672fbc69386"
+    },
+    {
+      "path": "server/AigcHub.Api/Endpoints/PortalSsoEndpoints.cs",
+      "sha256": "38ce511a40e76ef5e6418bcc86954432e305cec35be913f0db58d661a8656857"
+    },
+    {
+      "path": "server/AigcHub.Api/Endpoints/ProcessEndpoints.cs",
+      "sha256": "ee1f360ba69717832dd0d1f9809f60ee5df1e18dd1fbeeb8498267829b41f5fe"
+    },
+    {
+      "path": "server/AigcHub.Api/Endpoints/PublicationEndpoints.cs",
+      "sha256": "0da64f77e85517df4c110442f5e8e77c0f0e73b92fb54a076f854e4bd4e17da4"
+    },
+    {
+      "path": "server/AigcHub.Api/Endpoints/RoleEndpoints.cs",
+      "sha256": "da8a5ac839d2689a04812177d72715ba7752a083cf54e804376f7dad6e5fe341"
+    },
+    {
+      "path": "server/AigcHub.Api/Endpoints/SensitiveWordEndpoints.cs",
+      "sha256": "615508724ab1438e1fc545816107bf219599a53d72477ae0e3a6648c588fdb29"
+    },
+    {
+      "path": "server/AigcHub.Api/Endpoints/UserEndpoints.cs",
+      "sha256": "b592f886fe589ad567a8a2c52c3aea9ded06c018db28b2336138580e2732527e"
+    },
+    {
+      "path": "server/AigcHub.Api/Endpoints/VirtualKeyEndpoints.cs",
+      "sha256": "a136f2f41e5923c0122900fa85b22ef6eaa2f48b8eb9c8485465b303dacd7cb1"
+    },
+    {
+      "path": "server/AigcHub.Api/Endpoints/WebSearchEndpoints.cs",
+      "sha256": "71670f6246980c35ad9f27ddcd5b48ee247f88a94545f5fa983d2be8e2610e8a"
+    },
+    {
+      "path": "server/AigcHub.Api/Endpoints/WorkflowCallbackEndpoints.cs",
+      "sha256": "675501c0bddfd8339a6981ad06d964ee4a20f38854b76c1a8d8d96ff6b52424a"
+    },
+    {
+      "path": "server/AigcHub.Api/Program.cs",
+      "sha256": "5a208473b3d9dee42860036f1b3031e49b646737d95603f927b1ac4b14d03588"
+    },
+    {
+      "path": "server/AigcHub.Api/Properties/launchSettings.json",
+      "sha256": "c0693958db39d5023e50869c40562f81daedeb2be5f5bb7e9f8265230a42b238"
+    },
+    {
+      "path": "server/AigcHub.Api/Services/AccessGrantService.cs",
+      "sha256": "e022d0dbd7ad4452f74879b703190e98473bcc8cd969e3da4c7dbbbd2459d687"
+    },
+    {
+      "path": "server/AigcHub.Api/Services/BackupObjectStore.cs",
+      "sha256": "b742de7bb1d52ca6023a7209f1c7808c77d23cd58827529c6efbb904cacb5594"
+    },
+    {
+      "path": "server/AigcHub.Api/Services/BackupTransferCleanup.cs",
+      "sha256": "287cccee8fea7166700de98e5d30b29dfe7ffc5f17a504b5ac394fef2873a98b"
+    },
+    {
+      "path": "server/AigcHub.Api/Services/BochaSearchService.cs",
+      "sha256": "90b7e2078732b2dbff52f7543bb70010f63b20751159d98ec39972e617f2770d"
+    },
+    {
+      "path": "server/AigcHub.Api/Services/CasAuthenticationService.cs",
+      "sha256": "6b33a38a46678ae5b111af51d695991fd9090f7d9f5bf05dd2277cdfd1c13099"
+    },
+    {
+      "path": "server/AigcHub.Api/Services/CasDeviceLoginStore.cs",
+      "sha256": "256fcbcb06e79511af9c316f6ac494976a35baa82900a35cd982de12a2364959"
+    },
+    {
+      "path": "server/AigcHub.Api/Services/ChatServices.cs",
+      "sha256": "5c29d0e22db7b5ffe8e2d4bc5e4664ae64f9c2b9de6f509b58edd8e6a0201c1e"
+    },
+    {
+      "path": "server/AigcHub.Api/Services/ChatToolServices.cs",
+      "sha256": "f45f40461fbf578ab8acf106df5b505a657e0b25e6787bbdaf6e88a432e970ab"
+    },
+    {
+      "path": "server/AigcHub.Api/Services/DesktopVersion.cs",
+      "sha256": "84e165186f2bb5686b5c8c92cf88c53f93a94a8a04c56adeb7923e17fd76a1dc"
+    },
+    {
+      "path": "server/AigcHub.Api/Services/DshFailureCleanup.cs",
+      "sha256": "2c3374667a27dbc12ff0694483f0d5f9780b06850e3985e2aa772c735ab33507"
+    },
+    {
+      "path": "server/AigcHub.Api/Services/IdentityServices.cs",
+      "sha256": "09a6b0def745a706f5950db907c3c6795923004418ed26f140215438d535a71f"
+    },
+    {
+      "path": "server/AigcHub.Api/Services/LiteLlmModelSyncService.cs",
+      "sha256": "c9656ba12dd1c2c6ac0bc763c9532f17f609364119338018172a02dc3d221413"
+    },
+    {
+      "path": "server/AigcHub.Api/Services/LiteLlmVirtualKeyService.cs",
+      "sha256": "0e1aa503ca2b2741c7aeb1a135607e62df3e9113c1834bcef43bbd9098a628ac"
+    },
+    {
+      "path": "server/AigcHub.Api/Services/ModelConfigurationService.cs",
+      "sha256": "9404f1b13728e83ac2dff198015c924c56da77967ab744491ca57077f107e85c"
+    },
+    {
+      "path": "server/AigcHub.Api/Services/ModelImageCapability.cs",
+      "sha256": "f2b5ceef26173335609846d6d0a88eae7613042e64aedc559f84d323a2731313"
+    },
+    {
+      "path": "server/AigcHub.Api/Services/PluginPackageReader.cs",
+      "sha256": "a0c4f9a89963363d9990ddaabbcd66fdc72673d870c05e7518edd3a35c573358"
+    },
+    {
+      "path": "server/AigcHub.Api/Services/PortalSsoFlow.cs",
+      "sha256": "abc4409762c66845bdb98ae229bbb3df5a0961205a9d649d3f6a4eadfa1d25bf"
+    },
+    {
+      "path": "server/AigcHub.Api/Services/RequestLoggingMiddleware.cs",
+      "sha256": "055e958b0fcf4faca27ddba5236c2fdc91c580cf7a0455a575cd978b59c42d26"
+    },
+    {
+      "path": "server/AigcHub.Api/Services/RollingFileLoggerProvider.cs",
+      "sha256": "0f8a6d06426ae9dcf252c9524beae01771d33d935431009c710480e69b453a49"
+    },
+    {
+      "path": "server/AigcHub.Api/Services/UserAccessAdministration.cs",
+      "sha256": "7876c9f05f11f43c5ea2295d2c5853591f8330494972dd0a2c7f5832c3de597b"
+    },
+    {
+      "path": "server/AigcHub.Api/Services/UserPasswordService.cs",
+      "sha256": "be265ed3c8f4bfc0658db215cca77a55c3380bc088e219f4c5213dd0b2026112"
+    },
+    {
+      "path": "server/AigcHub.Api/Services/VirtualKeyGrantRules.cs",
+      "sha256": "953f85490c4369a593f94c16eaf66cdfeb90534ce1a5110ee89b1a63461da69a"
+    },
+    {
+      "path": "server/AigcHub.Api/Services/VirtualKeyPolicy.cs",
+      "sha256": "640d3bd267c9cc696fd05cae611d4b7e91fc4cd728309d793c539ce8ea68577a"
+    },
+    {
+      "path": "server/AigcHub.Api/Services/WorkflowDefinitionReader.cs",
+      "sha256": "8f5114d11cb1e6ec64b84c425517f1efcedd4ffb054b3fe087808d8cadd25d73"
+    },
+    {
+      "path": "server/AigcHub.Api/Services/WorkflowService.cs",
+      "sha256": "e1fd67e1ff4980c7afa893d54e64fa8318a4ee146ebebf3c3a39b23415f8b15f"
+    },
+    {
+      "path": "server/AigcHub.Api/appsettings.json",
+      "sha256": "4a499288a5baaf506a97214f1fd0d39d92b4250f7ece26b74b8216185ad0957c"
+    },
+    {
+      "path": "portal/.dockerignore",
+      "sha256": "1928e43a5a541c325b308586be7c671eec2f7ad5835e1ff09c919e8f716801c9"
+    },
+    {
+      "path": "portal/.gitignore",
+      "sha256": "14c2d4b7781dcd266e563c4f08880637ae620c7e8a182246a23b138e5f791e8e"
+    },
+    {
+      "path": "portal/AGENTS.md",
+      "sha256": "738c623d507ec5773261e398074d5926d195f49f05f65928de4af98d5f0f66f7"
+    },
+    {
+      "path": "portal/Dockerfile",
+      "sha256": "cce97563d9af87b16e8228dbc549cb51bd7a55305843bfa6e3849446eb349740"
+    },
+    {
+      "path": "portal/app/admin/admin-pages.test.tsx",
+      "sha256": "699c07a5bbfea9ae76a1e039ba419e02dca5afc8c06f5b66238730efac78a0b4"
+    },
+    {
+      "path": "portal/app/admin/announcements/announcement-receipts.test.tsx",
+      "sha256": "dd25db8f80d2ed08a227ce364f0d9b7562df05fd10592b3d5a9fd54cec965dcc"
+    },
+    {
+      "path": "portal/app/admin/announcements/announcement-receipts.tsx",
+      "sha256": "b93a4e58a6d7513a715bab53e442146dc1b6ca82084c57591699d4f5262d9025"
+    },
+    {
+      "path": "portal/app/admin/announcements/page.tsx",
+      "sha256": "56c18d0dc9a8c8998a991ea707564ce3f8503de3a1856ca52130579e81084e21"
+    },
+    {
+      "path": "portal/app/admin/audits/page.test.tsx",
+      "sha256": "925d5ad563b2af064560eff3d7d7e204daf5d9ef871a1a5e04d2ebf3581d8676"
+    },
+    {
+      "path": "portal/app/admin/audits/page.tsx",
+      "sha256": "88a8b9b1b84df68f94e7e1b5c763fb94d3643da2a5344f1e30fb8810eb157283"
+    },
+    {
+      "path": "portal/app/admin/categories/page.tsx",
+      "sha256": "0ac7992e83f5130eb4a55ecfa34c25f92b231ec15478c53a4d74641f9733f1ce"
+    },
+    {
+      "path": "portal/app/admin/client-releases/page.tsx",
+      "sha256": "66316fc2421285f7ebdc687c6008bc7ebba1f9fa6a17e7743687849643102085"
+    },
+    {
+      "path": "portal/app/admin/components/admin-shell.tsx",
+      "sha256": "19278fff86d0966737d874ae18e4f90949e563b0e40e33b2f4eaddca440e11b5"
+    },
+    {
+      "path": "portal/app/admin/components/recipient-picker.test.tsx",
+      "sha256": "4e45689d8d2edc17ae9fd2f58283e78fe90e39073cd9fa58cfe1bf5431773c8b"
+    },
+    {
+      "path": "portal/app/admin/components/recipient-picker.tsx",
+      "sha256": "ac56af850f5d13a2c7428c23373d4e07c1479ec6ff8c0354e509301914185664"
+    },
+    {
+      "path": "portal/app/admin/departments/page.tsx",
+      "sha256": "60bac884630abde6161562d70729bc59aba7b3e264bf51b825039c86bfd567fd"
+    },
+    {
+      "path": "portal/app/admin/distribution-pages.test.tsx",
+      "sha256": "8720b88dc83d953e2091750f4b284e26d765c9c38a0843c5895c888c708caae2"
+    },
+    {
+      "path": "portal/app/admin/dsh-backups/page.test.tsx",
+      "sha256": "e66d205797c0fbd40874c496608592bcd6b937af2e70f89ed561c4097925edbe"
+    },
+    {
+      "path": "portal/app/admin/dsh-backups/page.tsx",
+      "sha256": "02a25170a6dde77bc11a86b54820170da13470b936bce0487786114db08bf7ee"
+    },
+    {
+      "path": "portal/app/admin/dsh-backups/style.css",
+      "sha256": "24da56464abd5cce8e3fb8dd1a670c3e3f614842b00ea6c424d64612eea08e98"
+    },
+    {
+      "path": "portal/app/admin/dsh-failures/page.test.tsx",
+      "sha256": "480670bbc61f9631992f2f46d9b1facd66605a4f25e0b012b5a3484ccb576bd9"
+    },
+    {
+      "path": "portal/app/admin/dsh-failures/page.tsx",
+      "sha256": "596891f852af3aad7984e49cb49df096d1517f9b86ab475f6d28acb5a8f9d047"
+    },
+    {
+      "path": "portal/app/admin/dsh-failures/style.css",
+      "sha256": "15ae9acd999be4cb7f37d6763358f5ab34741272962a9de5260be8ab0ef3ae6c"
+    },
+    {
+      "path": "portal/app/admin/dsh-feedback/page.test.tsx",
+      "sha256": "cd6a87b45547b96a3c807ad0dffed628516b626bb4784fdf9188bd15d743acb1"
+    },
+    {
+      "path": "portal/app/admin/dsh-feedback/page.tsx",
+      "sha256": "96bd8651b75440a0154c3e2eef1c05d73b758d1ead4b6d0a28f919c7d5ff0cb9"
+    },
+    {
+      "path": "portal/app/admin/dsh-feedback/style.css",
+      "sha256": "336026866a8482c88188f9b57a76eb5b71f804f524d5b13ff3ba960fbed90521"
+    },
+    {
+      "path": "portal/app/admin/layout.tsx",
+      "sha256": "ae4e9d5980db76a86140b59b188d70fb0cf4edf333b94263050a357f0ee374f3"
+    },
+    {
+      "path": "portal/app/admin/models/grant-selector.tsx",
+      "sha256": "f4bcf5226c58bff69a0e127cd9de5bf8c1e5fa4583b28706ef27c5718842ecfd"
+    },
+    {
+      "path": "portal/app/admin/models/model-details.tsx",
+      "sha256": "075b67ad8cfdd8d2cb1055852d94feee05dbfd1d9a7c926f7557620c916bc9c1"
+    },
+    {
+      "path": "portal/app/admin/models/model-grants.test.tsx",
+      "sha256": "543509bda17c088d611166d44fc81748c56669bb2962bdeb583b368129efee5b"
+    },
+    {
+      "path": "portal/app/admin/models/page.tsx",
+      "sha256": "979ec72ed27319c758223c6a1f7e1c50c19161e75c962a87d27a58ecbbe1fd88"
+    },
+    {
+      "path": "portal/app/admin/page.tsx",
+      "sha256": "fb349b013baa114f841b1eb99f2d02069c80f94916a70a9a9b33aeb3b10701f4"
+    },
+    {
+      "path": "portal/app/admin/plugins/page.test.tsx",
+      "sha256": "603b98fce3c2f3cd54e1cb76d0c602d449dde97e23069f7a2ebb0ddae642c9e3"
+    },
+    {
+      "path": "portal/app/admin/plugins/page.tsx",
+      "sha256": "dfd49e4c598ab71ddedbf8e70ad676eea3697df3b210356d0dc6d521f5a3571c"
+    },
+    {
+      "path": "portal/app/admin/plugins/plugins.css",
+      "sha256": "3c06696d47f3c780d6b949a869628a65d326843f02cb046972f2a99eee2ad775"
+    },
+    {
+      "path": "portal/app/admin/plugins/status/page.test.tsx",
+      "sha256": "4fa64a5a48502b9b3dc5e5be100b89860df3f44411d64fad788b84070f034f03"
+    },
+    {
+      "path": "portal/app/admin/plugins/status/page.tsx",
+      "sha256": "f1e016ebc1e5c562f8eb9036b2185b54f07ef9acf8fff89079cd0c01f015acc1"
+    },
+    {
+      "path": "portal/app/admin/processes/page.tsx",
+      "sha256": "337fd5eb344f98e6bf89f58a24ca2fc18400a121a6fe0dc7f8df361d984a71f3"
+    },
+    {
+      "path": "portal/app/admin/publications/page.tsx",
+      "sha256": "0ccf7e61821af9cf1b136c17035a1c7b648d6f46117eb7eb86c01d47beb36288"
+    },
+    {
+      "path": "portal/app/admin/reviews/page.tsx",
+      "sha256": "865b00f5a556d59ded344f24bb9d805f3bcfcf62a57b312b83d9e07a26616280"
+    },
+    {
+      "path": "portal/app/admin/roles/page.tsx",
+      "sha256": "b6b06833bf52e2f8fd3896a8d3dd8da925b556d5ba5de593dfc5d69568a538cd"
+    },
+    {
+      "path": "portal/app/admin/sensitive-words/page.test.tsx",
+      "sha256": "b71c1ae637499f77231a09f7eef1bd0b84dd75a3d92590bf5d0dd61e65a1f1da"
+    },
+    {
+      "path": "portal/app/admin/sensitive-words/page.tsx",
+      "sha256": "4fddfa4546f2ea0771d21e01bb9199ce86f12fa402f3aac44ff3b37b79506bf5"
+    },
+    {
+      "path": "portal/app/admin/uploads/page.test.tsx",
+      "sha256": "9e0345bd88d525e9b3cfcd41891b03785d7b7d5320dce29cde8a23095ff83cbf"
+    },
+    {
+      "path": "portal/app/admin/uploads/page.tsx",
+      "sha256": "6845212811a238548b82e80ef01b29b304782f7ce1d3d633ca9c0276e239f859"
+    },
+    {
+      "path": "portal/app/admin/users/access.test.tsx",
+      "sha256": "0d3bd94450532d385c05354f559ae3b89f36c7a36d6594b16bb4f9cb0b2779c2"
+    },
+    {
+      "path": "portal/app/admin/users/page.tsx",
+      "sha256": "f3ec8862553d0cf82b43e96381d314726e52faf0c37eed7f93d1c9844305c2ab"
+    },
+    {
+      "path": "portal/app/admin/users/user-model-picker.tsx",
+      "sha256": "1d6b46c7532bcb95727a243439bbc731015dc0ffd95d5ea64ef2bb684ad9c1f8"
+    },
+    {
+      "path": "portal/app/admin/virtual-keys/departments.test.tsx",
+      "sha256": "34d9f11e806122f13f42d2a7fae417bed8c90a69b3fc0f6721d7418490ab0506"
+    },
+    {
+      "path": "portal/app/admin/virtual-keys/key-policy-form.tsx",
+      "sha256": "78d6c9b0418e7d5ee926c3b8d86531dfbcb8e4e98a8640bed23d3bf7fa4e8165"
+    },
+    {
+      "path": "portal/app/admin/virtual-keys/page.tsx",
+      "sha256": "ff8c65642df838b05afa450e4cd6d6aa7ec188e060d60a994d27eae8cd4defbf"
+    },
+    {
+      "path": "portal/app/admin/virtual-keys/policy.test.tsx",
+      "sha256": "05d2be0f9be19d24d3a471a2700bb9fe166238a32241f268575533680d4afa48"
+    },
+    {
+      "path": "portal/app/apps/page.tsx",
+      "sha256": "ec758ef03704d69850c8f7cf5a09050157fc28f24603b5b5e8fe0364dffe94e8"
+    },
+    {
+      "path": "portal/app/chat/page.tsx",
+      "sha256": "a1a7879d5d4e59ef7e82c22524cde931b60b28cc332d4728c025d635f246cfa1"
+    },
+    {
+      "path": "portal/app/components/ant-pagination.test.tsx",
+      "sha256": "d67834d699b1e9bf54949a5a8305efcef86f1b502699652a09709a5ba5870e67"
+    },
+    {
+      "path": "portal/app/components/ant-pagination.tsx",
+      "sha256": "3d261088d9345d70765014d05692fab57ff1f58d61d11d245f4901fcd4fe67fe"
+    },
+    {
+      "path": "portal/app/components/app-card.tsx",
+      "sha256": "44ef68e5aff9f20fbf29ad0a13e1317281a16203ada8f30e6abfa1c4f92723e1"
+    },
+    {
+      "path": "portal/app/components/auth-guard.test.tsx",
+      "sha256": "68dff2ad06296d1b3a83c76cf03a93d75504e187acee475111a74c06f76801bb"
+    },
+    {
+      "path": "portal/app/components/auth-guard.tsx",
+      "sha256": "78590770b81de1667519483b57b58fcecdb73da56b140769cfa27b1c1f26d30e"
+    },
+    {
+      "path": "portal/app/components/chat-confirmation.test.tsx",
+      "sha256": "64f2c8d1bfad7c5c3cdeb2dfaf954bd5d174b095ac5384174baf9526f6d9d7b8"
+    },
+    {
+      "path": "portal/app/components/chat-markdown.test.tsx",
+      "sha256": "f2bbe8d9583628b8fe81d2c45dcba1a16bf51ffd28c3fadaacd928901cbbe376"
+    },
+    {
+      "path": "portal/app/components/chat-markdown.tsx",
+      "sha256": "156dd66aaf643329a06fc633a95b51344e96d932c18691821d37d5f8ec9a1c86"
+    },
+    {
+      "path": "portal/app/components/chat-shell.tsx",
+      "sha256": "58d696d2d237ba56339516bc6283c0fed7a7b3cc2c525d750b479f2b8b21c479"
+    },
+    {
+      "path": "portal/app/components/directory-user-picker.tsx",
+      "sha256": "74cfecfe23cbc50ffb5d20ef6aab668b86a9d6bc22fe31c24da8bba89279bf55"
+    },
+    {
+      "path": "portal/app/components/landing-shell.tsx",
+      "sha256": "078373ca762391d8d4409b57bc8a824735634030e83a3076f0860f5b5f0b731a"
+    },
+    {
+      "path": "portal/app/components/login-entry.tsx",
+      "sha256": "3f9761b78e7da97e9f6b9b999428c8f0783581e67404279b6b7e39e7d4a88382"
+    },
+    {
+      "path": "portal/app/components/modal.tsx",
+      "sha256": "af42140c75102329054939c7b097df7746cee714c855704f2c030f0a79669649"
+    },
+    {
+      "path": "portal/app/components/modern-multi-select.tsx",
+      "sha256": "63c6b6172f0e586bdc0f1d94f85285d43bf62f3f69918e2573391ed84d8f8784"
+    },
+    {
+      "path": "portal/app/components/modern-select.tsx",
+      "sha256": "c215154618aa5d05da9d1fd8f61b50dc09faa711aa96afbacc8221997b8c2e72"
+    },
+    {
+      "path": "portal/app/components/password-change-form.test.tsx",
+      "sha256": "cbb66bebb86487d7c03f40f4513587284481064e12e32a989db0950c4e05d827"
+    },
+    {
+      "path": "portal/app/components/password-change-form.tsx",
+      "sha256": "a6e080cab79cde9d4f68e0829be26e6ed21ecb67fa15b22bb4e2450f6b665558"
+    },
+    {
+      "path": "portal/app/components/platform-provider-login.test.tsx",
+      "sha256": "ec16544253da32b3c128d8a2c26412a09c4417dac264bf28b70e621a3d7cc22c"
+    },
+    {
+      "path": "portal/app/components/platform-provider.tsx",
+      "sha256": "4b4e6c083d4c1fa5be017d6cc9fb05e4ef69023c257ead8f07fdee0c2e9c2c1b"
+    },
+    {
+      "path": "portal/app/components/portal-shell.tsx",
+      "sha256": "c252d5f1943c4ca797501574a30608296b12bac80b9b557e24b6dd611ba71193"
+    },
+    {
+      "path": "portal/app/components/use-page-size.ts",
+      "sha256": "2901fd084eb523101d348842d96031e3aae3f8790f47fba7c0c07ac9f5fbd737"
+    },
+    {
+      "path": "portal/app/desktop/layout.tsx",
+      "sha256": "45b61b74c4699193bf942376df5c22c29c20f194e907f0d6df48d85c7aea8ffd"
+    },
+    {
+      "path": "portal/app/desktop/page.module.css",
+      "sha256": "3dbb295145df4a4127be0e8414679196889771fbea93e2b22a06be4ed50c368e"
+    },
+    {
+      "path": "portal/app/desktop/page.test.tsx",
+      "sha256": "2c4ec70a764f2a322a8342e2060d7eb43770d02d467d207ac5821a64f3806820"
+    },
+    {
+      "path": "portal/app/desktop/page.tsx",
+      "sha256": "c0ce3daa351883b07d8deec9729a525482765f14fee85b4d76f706ac253317f7"
+    },
+    {
+      "path": "portal/app/globals.css",
+      "sha256": "6591c3954a66b3e525d69c33ddd4bafc6c4a13bbaab66a52e039cdfc2d1535f8"
+    },
+    {
+      "path": "portal/app/layout.tsx",
+      "sha256": "24ab8b2f98c30edb6170bb1912b5a107af06a38ec933904f6d5ede9f34ebb5b4"
+    },
+    {
+      "path": "portal/app/lib/api-client.ts",
+      "sha256": "9230f1ccccb4204ecee83feb119a4de77c23b02c8d50a763db7307abdc72fd3d"
+    },
+    {
+      "path": "portal/app/lib/backup-download.test.ts",
+      "sha256": "b1eebb31d338af502c54b8299c99ca493d0ce93f3eca040da208972f043c8b8e"
+    },
+    {
+      "path": "portal/app/lib/login-return.ts",
+      "sha256": "6db59dba80680594c1ab680c72273f556507fe1bbfdaf2f91b0d0bf0a1487c33"
+    },
+    {
+      "path": "portal/app/lib/mock-data.ts",
+      "sha256": "cb458927c92dd4163e59a45318e2675b3d1aba5673196e7218068bf8a3ae4952"
+    },
+    {
+      "path": "portal/app/lib/platform-state.test.ts",
+      "sha256": "dbd4ddad6e3dbb32ee9b7b3662f14a6db83eae3d5579f3a45a9dae39157793ce"
+    },
+    {
+      "path": "portal/app/lib/platform-state.ts",
+      "sha256": "ce2f4cde166790ba8e08d375b242e79f241f8d6a0143fe36040c65d4fde3903d"
+    },
+    {
+      "path": "portal/app/lib/plugin-api.test.ts",
+      "sha256": "c270676d48ba58277b91d03303c50bd3524a1a3b84c2a880ba98c952815fb960"
+    },
+    {
+      "path": "portal/app/lib/plugin-api.ts",
+      "sha256": "bd949991bc304200173e36c01e90758fabb16ff7a37a6e6917a553f2ddc4bfeb"
+    },
+    {
+      "path": "portal/app/lib/portal-i18n.ts",
+      "sha256": "34dcc5179cbae40e2644cfc008f220516415752691727cbf0094f0a2458e2dde"
+    },
+    {
+      "path": "portal/app/lib/process-history.test.ts",
+      "sha256": "e1eaa3d739aa2f7159ea2a5a08fdb1f5d048c40ed0cce689e84dfd804493e135"
+    },
+    {
+      "path": "portal/app/lib/process-history.ts",
+      "sha256": "2b90807e7492cfe9b3579641e2c3147550f2a83c3bc15dbb44bba013a33402a5"
+    },
+    {
+      "path": "portal/app/lib/process-types.ts",
+      "sha256": "f96f887d92f19dadeebb6f4ee9444ff4a91ffbdfa29bd459dfcf0b355ae6f6cd"
+    },
+    {
+      "path": "portal/app/lib/types.ts",
+      "sha256": "81e1e27f1e7903ecee9d782f8d1a8f8955bde270cfd2fbb97fe37cb3bb06d454"
+    },
+    {
+      "path": "portal/app/login/local/page.tsx",
+      "sha256": "a30c7d14a63e9c952471be648eaf79b093b0a65572e5f5ab090f03c9c48840d7"
+    },
+    {
+      "path": "portal/app/login/page.test.tsx",
+      "sha256": "cdff887f768c8dd0ae8bb21d5de4213e3cc708ed120c2224af687c81c7212e7a"
+    },
+    {
+      "path": "portal/app/login/page.tsx",
+      "sha256": "db856272bc0a88a1e9b927ba661471691c17569c92ffec0aac61ed7fd3048930"
+    },
+    {
+      "path": "portal/app/page.test.tsx",
+      "sha256": "7cab2cf7c69f9932ff08ff9fda395add9395575af1e2c1a4f9a7a3d03a6fd5c9"
+    },
+    {
+      "path": "portal/app/page.tsx",
+      "sha256": "07cc2a225fdc48964d57642f6a5a809ba4bbc5dfad8f5d5096493c36de9b7e2e"
+    },
+    {
+      "path": "portal/docs/superpowers/plans/2026-08-27-application-publishing.md",
+      "sha256": "c52f7427dd18597e24c432615164f7eaf9ffb9d89f94db023cd2be3b059a9f73"
+    },
+    {
+      "path": "portal/eslint.config.mjs",
+      "sha256": "5c697206f302dadc0c8b7b2f7a707257dab15129a2149872b0f84ea1ac17d263"
+    },
+    {
+      "path": "portal/next.config.ts",
+      "sha256": "26c2ebe375f14bd185f520f39a965cbd6803ae333df72406d59665eda3f15faa"
+    },
+    {
+      "path": "portal/package-lock.json",
+      "sha256": "023cd073b67148c5712668300f1ed77e802d7ff75050ae50d2c6d3d29d72fe4e"
+    },
+    {
+      "path": "portal/package.json",
+      "sha256": "da19d476642e3df695022b79cb02c91914287c373c750b4a992248ed1ebfe0f5"
+    },
+    {
+      "path": "portal/pnpm-lock.yaml",
+      "sha256": "cad052dc294903f4541083e62456cba448a2f1e746975a81a3dfe671da3a03c7"
+    },
+    {
+      "path": "portal/pnpm-workspace.yaml",
+      "sha256": "292fd47301600b58632766a8381903c76b9df41d2ee32897b2ace69f890e230f"
+    },
+    {
+      "path": "portal/public/bhss-logo.png",
+      "sha256": "6004f1eb3b705602b227a9e24e0ee6894abfe5166ec8b6109c5d5d4f4fd59ede"
+    },
+    {
+      "path": "portal/public/bosch-supergraphic-line.svg",
+      "sha256": "c87687d04e996ef05867e0fbcaddc52b416c57a1b612755e1b2279e3a61e6bc4"
+    },
+    {
+      "path": "portal/public/favicon.svg",
+      "sha256": "e6d2e59b7b5bbb0342e0fb496dfc262decbfe4426bbb7b047aec8d467d1dc6f7"
+    },
+    {
+      "path": "portal/public/hub-hero-blue.webp",
+      "sha256": "24f71d341a2a9ace3df3d7b8b00b07a73140989f3cf0f2d556335168d083e6b1"
+    },
+    {
+      "path": "portal/public/wanzai.svg",
+      "sha256": "0ed99263ed050a49459a6c39a248bd33e113242b57201b852982cee83fb51eaf"
+    },
+    {
+      "path": "portal/test/setup.ts",
+      "sha256": "718207841ae36bb97911463d330e0a8b95191163b90532f928d9a6b496d6c639"
+    },
+    {
+      "path": "portal/tsconfig.json",
+      "sha256": "e32e364348957cc421eca71c51ed473d21aa7764ae4e401f95bafdecc913ab10"
+    },
+    {
+      "path": "portal/vite.config.ts",
+      "sha256": "fa48c72b3be98b94c1a8e83a7e6703b0741fbbb6930c6bf2aa8bde81d2d04ec0"
+    },
+    {
+      "path": "portal/vitest.config.ts",
+      "sha256": "8fcfafcf70ee36c61c7e36710e7c5d0b7344f7f3b418da516c036edcd6fc73c6"
+    }
+  ],
+  "excluded": "Local development BackupStorage configuration, credentials and runtime data",
+  "builtAt": "2026-10-21T07:19:55.787973+00:00",
+  "release": "2026-10-21-minio.1",
+  "publicApiUrl": "https://aigcplatform.boschhuayu-steering.com",
+  "images": [
+    {
+      "name": "aigc-api:2026-10-21-minio.1",
+      "id": "sha256:9bf4ab2e52c65f9b4e9c2d04f1af48527196bd6f765d95c4fd31e3153bf73e4e",
+      "os": "linux",
+      "architecture": "amd64"
+    },
+    {
+      "name": "aigc-portal:2026-10-21-minio.1",
+      "id": "sha256:68d228dbdf112e3a8f2d9902ea80ba8d447f6cd11be85451678b8eae759bb65c",
+      "os": "linux",
+      "architecture": "amd64"
+    },
+    {
+      "name": "aigc-backup-minio:2025-06-13-offline.1",
+      "id": "sha256:064117214caceaa8d8a90ef7caa58f2b2aeb316b5156afe9ee8da5b4d83e12c8",
+      "os": "linux",
+      "architecture": "amd64"
+    }
+  ],
+  "imageArchive": "aigc-images-2026-10-21-minio.1-linux-amd64.tar",
+  "imageArchiveBytes": 252222976,
+  "imageArchiveSha256": "212f6f5127c27b9c45351301aa8ef17fec5b092dfbfcc595e90373c16aa6d753",
+  "supplement": "Portal ignored .openai/hosting.json={} in build context only; API local development BackupStorage excluded",
+  "desktopInstallerIncluded": false,
+  "productionDeployed": false
+}
