@@ -8,6 +8,7 @@ node_modules/
 .verification/
 .config/
 output/
+/deploy/
 tmp/
 *-evidence/
 **/bin/
