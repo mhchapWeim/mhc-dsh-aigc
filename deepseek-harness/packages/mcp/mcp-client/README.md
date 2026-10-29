@@ -228,3 +228,5 @@ This Dev Note is working context for maintainers: open design questions and dire
 - The pinned MCP SDK is still evolving; a breaking upstream change requires updating the bridge.
 
 </details>
+
+`mountManagedMcp` mounts an effect-owned remote connection for organization policy. Its per-request header resolver checks the current identity and refreshes credentials before sending; disposal cancels pending negotiation and removes tools. It does not serialize credentials into configuration.

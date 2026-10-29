@@ -70,6 +70,9 @@
     },
     {
       "path": "../../llm/llm-managed-backend"
+    },
+    {
+      "path": "../../mcp/mcp-client"
     }
   ]
 }

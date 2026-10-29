@@ -149,3 +149,5 @@ None.
 ## Organization session renewal
 
 Managed policy reconciliation resolves the organization access token before reading its credential record, so persistent logins can resume synchronization after access expiry.
+
+Organization MCP services are reconciled independently of package installation. AIGC owns service configuration and grants; authorized tools connect automatically, and sign-out, account changes, policy failure, or revocation removes them. The display-only `connectors()` Remote exposes no upstream credentials. See [deployment integration](../../../../docs/AIGC-DSH-MCP-INTEGRATION.md).

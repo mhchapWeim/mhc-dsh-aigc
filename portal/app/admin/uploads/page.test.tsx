@@ -1,31 +1,28 @@
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, expect, it, vi } from 'vitest';
 import DshUploadsPage from './page';
 
-const { getMock, downloadMock } = vi.hoisted(() => ({
-  getMock: vi.fn(), downloadMock: vi.fn(),
-}));
+const { getMock } = vi.hoisted(() => ({ getMock: vi.fn() }));
 vi.mock('../../lib/api-client', () => ({
-  getDshUploadBatches: getMock, downloadDshUpload: downloadMock,
+  getDshUploadBatches: getMock,
 }));
-beforeEach(() => { getMock.mockReset(); downloadMock.mockReset(); });
+beforeEach(() => { getMock.mockReset(); });
 
-it('shows upload progress and downloads only completed files', async () => {
+it('shows upload progress without an action column', async () => {
   getMock.mockResolvedValue({ items: [{ userId: 'user-1', sessionId: 'session-1', eventSeq: 3, createdAt: '2026-09-18T00:00:00Z', files: [
     { id: 'one', fileName: 'pending.txt', userName: '张敏', employeeNo: 'wh00136', computerName: 'PC-1', storedPath: 'C:/pending.txt', prompt: '分析', offset: 2, bytes: 4, status: 'Uploading', completed: false, createdAt: '2026-09-18T00:00:00Z' },
     { id: 'two', fileName: 'ready.pdf', userName: '张敏', employeeNo: 'wh00136', computerName: 'PC-1', storedPath: 'C:/ready.pdf', prompt: '分析', offset: 4, bytes: 4, status: 'Completed', completed: true, createdAt: '2026-09-18T00:00:00Z' },
   ] }], page: 1, pageSize: 10, total: 1 });
-  downloadMock.mockResolvedValue(undefined);
   render(<DshUploadsPage />);
   await screen.findByText('ready.pdf');
-  expect(screen.getByRole('button', { name: '下载pending.txt' })).toBeDisabled();
+  expect(screen.queryByRole('button', { name: '下载pending.txt' })).not.toBeInTheDocument();
   expect(screen.getAllByText('上传中').length).toBeGreaterThan(0);
   expect(screen.getByRole('columnheader', { name: 'User Prompt' })).toBeInTheDocument();
   expect(screen.getByRole('columnheader', { name: '批次' })).toBeInTheDocument();
   expect(screen.getByRole('columnheader', { name: '用户' })).toBeInTheDocument();
   expect(screen.getByRole('columnheader', { name: '计算机' })).toBeInTheDocument();
-  expect(screen.getByRole('columnheader', { name: '操作' })).toHaveClass('dsh-upload-action-cell');
+  expect(screen.queryByRole('columnheader', { name: '操作' })).not.toBeInTheDocument();
   const batchCell = screen.getByTitle('会话 session-1，事件 3').closest('th')!;
   expect(batchCell).toHaveAttribute('rowspan', '2');
   expect(batchCell.closest('tbody')).toContainElement(screen.getByText('ready.pdf'));
@@ -40,8 +37,6 @@ it('shows upload progress and downloads only completed files', async () => {
   await userEvent.click(screen.getByRole('button', { name: '查看ready.pdf的 User Prompt' }));
   expect(within(screen.getByRole('dialog')).getByText('分析')).toBeInTheDocument();
   await userEvent.click(screen.getByRole('button', { name: '关闭弹窗' }));
-  await userEvent.click(screen.getByRole('button', { name: '下载ready.pdf' }));
-  await waitFor(() => expect(downloadMock).toHaveBeenCalledWith(expect.objectContaining({ id: 'two' })));
 });
 
 it('loads the selected page from the backend', async () => {
@@ -56,7 +51,7 @@ it('loads the selected page from the backend', async () => {
   expect(getMock).toHaveBeenCalledWith(2, 5, '', '');
 });
 
-it('keeps all review columns while disabling downloads and transfer progress for metadata records', async () => {
+it('keeps all review columns while hiding transfer progress for metadata records', async () => {
     getMock.mockResolvedValue({ total: 1, items: [{
     userId: 'u1', sessionId: 'session-1', eventSeq: 1, createdAt: '2026-10-23T00:00:00Z',
     files: ['Recorded', 'Completed'].map((status, index) => ({
@@ -69,11 +64,11 @@ it('keeps all review columns while disabling downloads and transfer progress for
   render(<DshUploadsPage />);
   const recorded = (await screen.findByText('record.txt')).closest('tr')!;
   expect(within(recorded).getByText('已记录')).toBeVisible();
-  expect(within(recorded).getByRole('button', { name: '下载record.txt' })).toBeDisabled();
+  expect(within(recorded).queryByRole('button', { name: '下载record.txt' })).not.toBeInTheDocument();
   expect(within(recorded).queryByRole('progressbar')).not.toBeInTheDocument();
-  expect(screen.getByRole('button', { name: '下载historical.txt' })).toBeEnabled();
+  expect(screen.queryByRole('button', { name: '下载historical.txt' })).not.toBeInTheDocument();
   expect(screen.getAllByRole('columnheader').map(cell => cell.textContent)).toEqual([
-    '批次', '文件', '用户', '计算机', 'User Prompt', '源路径', '进度', '状态', '创建时间', '操作',
+    '批次', '文件', '用户', '计算机', 'User Prompt', '源路径', '进度', '状态', '创建时间',
   ]);
   expect(within(recorded).getByText('test-pc')).toBeVisible();
   expect(within(recorded).getByText('审查记录')).toBeVisible();

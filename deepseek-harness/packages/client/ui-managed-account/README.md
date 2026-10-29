@@ -95,3 +95,5 @@ Temporary status failures preserve the previously verified identity and show a c
 ### Dev Note
 
 None.
+
+The Connectors panel is available in managed deployments when the organization authorizes MCP services. Cards show connection health and descriptions; AIGC controls authorization and the Client offers no activation toggle.

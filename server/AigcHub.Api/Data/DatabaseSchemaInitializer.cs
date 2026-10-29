@@ -8,6 +8,16 @@ public static class DatabaseSchemaInitializer
     {
         if (!db.Database.IsRelational()) return;
         const string sql = """
+        CREATE TABLE IF NOT EXISTS aigc_hub."ManagedMcpServices" (
+            "Id" uuid PRIMARY KEY, "Name" text NOT NULL, "Description" text NOT NULL,
+            "Url" text NOT NULL, "IsEnabled" boolean NOT NULL, "Revision" bigint NOT NULL,
+            "TimeoutSeconds" integer NOT NULL, "SecretProtected" text NOT NULL, "IconDataUrl" text NOT NULL
+        );
+        ALTER TABLE aigc_hub."ManagedMcpServices" ADD COLUMN IF NOT EXISTS "AuthenticationMode" integer NOT NULL DEFAULT 0;
+        ALTER TABLE aigc_hub."ManagedMcpServices" ADD COLUMN IF NOT EXISTS "TokenExchangeUrl" text NOT NULL DEFAULT '';
+        ALTER TABLE aigc_hub."ManagedMcpServices" ADD COLUMN IF NOT EXISTS "AssertionAudience" text NOT NULL DEFAULT '';
+        ALTER TABLE aigc_hub."ManagedMcpServices" ADD COLUMN IF NOT EXISTS "TokenResource" text NOT NULL DEFAULT '';
+        ALTER TABLE aigc_hub."ManagedMcpServices" ADD COLUMN IF NOT EXISTS "TokenScopes" text NOT NULL DEFAULT '';
         CREATE TABLE IF NOT EXISTS aigc_hub."DshBackups" (
             "Id" uuid PRIMARY KEY, "UserId" uuid NOT NULL REFERENCES aigc_hub."Users" ("Id"),
             "Payload" text NOT NULL, "Sha256" text NOT NULL, "Bytes" bigint NOT NULL,

@@ -1,0 +1,141 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-26T07:58:22.112601+00:00",
+  "title": "Design System: AIGC Hub Admin",
+  "extensions": {
+    "colorMeta": {
+      "primary": {
+        "role": "primary",
+        "displayName": "企业蓝"
+      },
+      "surface": {
+        "role": "neutral",
+        "displayName": "内容白"
+      },
+      "page": {
+        "role": "neutral",
+        "displayName": "浅冷工作区"
+      }
+    },
+    "typographyMeta": {
+      "title": {
+        "displayName": "页面标题",
+        "purpose": "管理页面主标题。"
+      },
+      "data": {
+        "displayName": "数据正文",
+        "purpose": "表格与紧凑界面正文。"
+      }
+    },
+    "shadows": [
+      {
+        "name": "navigation-flyout",
+        "value": "0 8px 28px #1027471a",
+        "purpose": "折叠侧栏菜单浮层。"
+      }
+    ],
+    "motion": [
+      {
+        "name": "button-state",
+        "value": "150ms ease",
+        "purpose": "按钮背景、边框与文字颜色变化；减少动态偏好下关闭。"
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "compact-desktop",
+        "value": "900px"
+      },
+      {
+        "name": "mobile-navigation",
+        "value": "760px"
+      },
+      {
+        "name": "phone",
+        "value": "600px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "提交当前页面主要操作；最小高度对应桌面规则。",
+      "html": "<button class=\"ds-primary\">保存设置</button>",
+      "css": ".ds-primary{font-family:'Segoe UI','Microsoft YaHei','PingFang SC',sans-serif;font-size:13px;min-height:38px;padding:0 14px;border-radius:6px;font-weight:600;cursor:pointer;transition:background-color .15s ease,border-color .15s ease,color .15s ease;background:#225dcc;color:#fff;border:1px solid #225dcc}.ds-primary:hover{background:#174ea6;border-color:#174ea6}.ds-primary:focus-visible{outline:2px solid #225dcc;outline-offset:3px}.ds-primary:disabled{opacity:.5;cursor:not-allowed}"
+    },
+    {
+      "name": "Secondary Button",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "刷新、取消与查看等次要操作。",
+      "html": "<button class=\"ds-secondary\">刷新</button>",
+      "css": ".ds-secondary{font-family:'Segoe UI','Microsoft YaHei','PingFang SC',sans-serif;font-size:13px;min-height:38px;padding:0 14px;border-radius:6px;font-weight:600;cursor:pointer;transition:background-color .15s ease,border-color .15s ease,color .15s ease;background:#fff;color:#475467;border:1px solid #e2e7ef}.ds-secondary:hover{background:#f0f3f8;color:#1d2939;border-color:#667085}.ds-secondary:focus-visible{outline:2px solid #225dcc;outline-offset:3px}.ds-secondary:disabled{opacity:.5;cursor:not-allowed}"
+    },
+    {
+      "name": "Search Input",
+      "kind": "input",
+      "description": "工具栏搜索框，保留可访问名称。",
+      "html": "<label class=\"ds-search\"><input aria-label=\"搜索记录\" placeholder=\"搜索记录\" /></label>",
+      "css": ".ds-search{display:flex;align-items:center;min-height:38px;border:1px solid #e2e7ef;border-radius:6px;padding:0 10px;background:#fff}.ds-search input{font-family:'Segoe UI','Microsoft YaHei','PingFang SC',sans-serif;font-size:13px;width:100%;min-height:36px;border:0;color:#1d2939;background:transparent;caret-color:#225dcc}.ds-search input::placeholder{color:#667085;opacity:1}.ds-search:focus-within{outline:2px solid #225dcc;outline-offset:3px}"
+    },
+    {
+      "name": "Selected Navigation",
+      "kind": "nav",
+      "refersTo": "navigation-active",
+      "description": "侧栏当前页面；文字与 aria-current 同时表达选择。",
+      "html": "<nav class=\"ds-nav\" aria-label=\"后台导航\"><a href=\"#users\" aria-current=\"page\">用户管理</a><a href=\"#roles\">角色管理</a></nav>",
+      "css": ".ds-nav{display:flex;flex-direction:column;gap:2px}.ds-nav a{font-family:'Segoe UI','Microsoft YaHei','PingFang SC',sans-serif;font-size:13px;display:flex;align-items:center;min-height:36px;padding:0 11px;border-radius:6px;color:#475467;text-decoration:none}.ds-nav a:hover{background:#f0f3f8;color:#1d2939}.ds-nav a[aria-current=page]{background:#e8effc;color:#174ea6;font-weight:600}.ds-nav a:focus-visible{outline:2px solid #225dcc;outline-offset:3px}"
+    },
+    {
+      "name": "Panel",
+      "kind": "card",
+      "refersTo": "panel",
+      "description": "以内容面和细边框组织表格、筛选和管理信息。",
+      "html": "<section class=\"ds-panel\"><h2>客户端插件状态</h2><p>查看客户端上报的实际运行状态。</p></section>",
+      "css": ".ds-panel{font-family:'Segoe UI','Microsoft YaHei','PingFang SC',sans-serif;font-size:13px;padding:20px;background:#fff;color:#1d2939;border:1px solid #e2e7ef;border-radius:8px;box-shadow:none}.ds-panel h2{font-size:16px;font-weight:600;margin:0 0 6px}.ds-panel p{font-size:12px;color:#667085;margin:0}"
+    },
+    {
+      "name": "Enabled State",
+      "kind": "chip",
+      "description": "沿用 globals.css 的启用状态标签；静态标签无需交互状态。",
+      "html": "<span class=\"ds-enabled\">启用</span>",
+      "css": ".ds-enabled{font-family:'Segoe UI','Microsoft YaHei','PingFang SC',sans-serif;display:inline-flex;align-items:center;min-height:24px;padding:0 8px;border-radius:999px;background:#e8f8f1;color:#087a4d;font-size:9px;font-weight:700}"
+    }
+  ],
+  "narrative": {
+    "northStar": "企业蓝、清爽紧凑",
+    "overview": "管理后台采用 Operate 模式：管理员在熟悉的框架中完成任务，设计以可读性、数据密度、键盘导航和明确反馈服务查找、筛选与维护。品牌蓝集中在主操作、当前选中和焦点；内容面通过浅色背景与细线形成秩序。",
+    "keyCharacteristics": [
+      "单一企业蓝强调，导航与内容使用中性层次。",
+      "紧凑字阶与一致的表格、筛选和按钮语言。",
+      "浅色和深色成对维护，保留现有权限与业务行为。",
+      "内网本机字体，减少装饰和页面入场动画。"
+    ],
+    "rules": [
+      {
+        "name": "The Accent Rule",
+        "body": "强调色用于当前选择、主要操作和焦点；不把所有普通导航、面板或表格装饰成强调色。",
+        "section": "colors"
+      },
+      {
+        "name": "The Heading Rule",
+        "body": "标题直接承担层级；现有重复英文眉题在后台隐藏，不追加新的装饰性 kicker。",
+        "section": "typography"
+      }
+    ],
+    "dos": [
+      "先读取本规范与管理页面样式规范，再修改管理页面。",
+      "使用已有组件与主题变量，同步检查浅色、深色、窄屏和键盘焦点。",
+      "保留原有搜索、分页、授权、导出、API 与字段含义。",
+      "把实际构建、测试、浏览器验证与生产部署证据分开记录。"
+    ],
+    "donts": [
+      "不复制参考网站的品牌字体、营销页大字号或宽大留白。",
+      "不为每一页引入一套按钮、表格或弹窗样式。",
+      "不用渐变、光晕、重阴影或页面入场动画替代信息层级。",
+      "不修改数据或伪造统计来展示视觉效果。"
+    ]
+  }
+}

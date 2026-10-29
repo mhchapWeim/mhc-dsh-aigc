@@ -1,6 +1,6 @@
 export type UserStatus = '启用' | '停用';
 export type UserRole = string;
-export type AdminPath = '/admin' | '/admin/publications' | '/admin/reviews' | '/admin/processes' | '/admin/users' | '/admin/departments' | '/admin/categories' | '/admin/roles' | '/admin/models' | '/admin/virtual-keys' | '/admin/audits' | '/admin/sensitive-words' | '/admin/uploads' | '/admin/announcements' | '/admin/client-releases' | '/admin/dsh-feedback' | '/admin/dsh-failures' | '/admin/plugins' | '/admin/dsh-backups';
+export type AdminPath = '/admin' | '/admin/publications' | '/admin/reviews' | '/admin/processes' | '/admin/users' | '/admin/departments' | '/admin/categories' | '/admin/roles' | '/admin/models' | '/admin/virtual-keys' | '/admin/audits' | '/admin/sensitive-words' | '/admin/uploads' | '/admin/announcements' | '/admin/client-releases' | '/admin/dsh-feedback' | '/admin/dsh-failures' | '/admin/mcp' | '/admin/plugins' | '/admin/dsh-backups';
 
 export type PlatformUser = {
   id: string;
@@ -114,12 +114,12 @@ export function createInitialPlatformState(): PlatformState {
       { id: 'legal', name: '法务部', manager: '王磊', description: '合同与合规管理', enabled: true },
     ],
     rolePermissions: {
-      平台管理员: ['/admin', '/admin/publications', '/admin/reviews', '/admin/processes', '/admin/users', '/admin/departments', '/admin/categories', '/admin/roles', '/admin/models', '/admin/virtual-keys', '/admin/audits', '/admin/sensitive-words', '/admin/uploads', '/admin/announcements', '/admin/client-releases', '/admin/dsh-feedback', '/admin/dsh-failures', '/admin/plugins'],
+      平台管理员: ['/admin', '/admin/publications', '/admin/reviews', '/admin/processes', '/admin/users', '/admin/departments', '/admin/categories', '/admin/roles', '/admin/models', '/admin/virtual-keys', '/admin/audits', '/admin/sensitive-words', '/admin/uploads', '/admin/announcements', '/admin/client-releases', '/admin/dsh-feedback', '/admin/dsh-failures', '/admin/plugins', '/admin/mcp'],
       流程管理员: ['/admin', '/admin/publications', '/admin/reviews', '/admin/processes'],
       普通用户: ['/admin', '/admin/publications'],
     },
     roles: [
-      { id: 'platform-admin', name: '平台管理员', description: '管理平台配置、用户与全部业务功能', permissions: ['/admin', '/admin/publications', '/admin/reviews', '/admin/processes', '/admin/users', '/admin/departments', '/admin/categories', '/admin/roles', '/admin/models', '/admin/virtual-keys', '/admin/audits', '/admin/sensitive-words', '/admin/uploads', '/admin/announcements', '/admin/client-releases', '/admin/dsh-feedback', '/admin/dsh-failures', '/admin/plugins'], builtIn: true },
+      { id: 'platform-admin', name: '平台管理员', description: '管理平台配置、用户与全部业务功能', permissions: ['/admin', '/admin/publications', '/admin/reviews', '/admin/processes', '/admin/users', '/admin/departments', '/admin/categories', '/admin/roles', '/admin/models', '/admin/virtual-keys', '/admin/audits', '/admin/sensitive-words', '/admin/uploads', '/admin/announcements', '/admin/client-releases', '/admin/dsh-feedback', '/admin/dsh-failures', '/admin/plugins', '/admin/mcp'], builtIn: true },
       { id: 'workflow-admin', name: '流程管理员', description: '设计流程并处理应用发布审核', permissions: ['/admin', '/admin/publications', '/admin/reviews', '/admin/processes'], builtIn: true },
       { id: 'normal-user', name: '普通用户', description: '提交并跟踪自己的应用发布申请', permissions: ['/admin', '/admin/publications'], builtIn: true },
     ],

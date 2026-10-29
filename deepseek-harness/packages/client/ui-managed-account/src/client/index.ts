@@ -20,6 +20,7 @@ import type { RemoteResult } from '@deepseek-ai/dsh-typert-protocol'
 import type { ManagedAuthState } from '@deepseek-ai/dsh-api-settings-controller/types'
 import type { WorkspaceId } from '@deepseek-ai/dsh-api-workspace-controller/types'
 import type {} from '@deepseek-ai/dsh-api-session-controller/client'
+import { installConnectors } from './connectors.tsx'
 import { ManagedAccountMenu } from './ManagedAccountMenu.tsx'
 import type { ManagedSignInInjected } from './ManagedSignInDialog.tsx'
 import { en, zh } from './locales.ts'
@@ -47,6 +48,8 @@ function accepted<T>(result: RemoteResult<T>): T {
  * @param ctx - client plugin context.
  */
 export function apply(ctx: ClientContext): void {
+  // The organization catalog is independent of the local plugin management UI.
+  ctx.inject(['remote.pluginManager'], scope => { installConnectors(scope) })
   ctx.effect(() => ctx.locale.register('settings.managedAccount', { en, zh }), 'managed-account: dictionaries')
   const t = ctx.locale.bind('settings.managedAccount')
   const injected: ManagedSignInInjected = {

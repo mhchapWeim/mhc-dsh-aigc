@@ -25,6 +25,7 @@ public static class EndpointRouteBuilderExtensions
         app.MapVirtualKeyEndpoints();
         app.MapWebSearchEndpoints();
         app.MapPluginMarketEndpoints();
+        app.MapMcpMarketEndpoints();
         app.MapDshManagedEndpoints();
         app.MapDshUploadEndpoints();
         app.MapDshBackupEndpoints();

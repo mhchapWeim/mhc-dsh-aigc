@@ -8,8 +8,8 @@ beforeEach(() => {
   vi.clearAllMocks();
   api.getPlugins.mockResolvedValue([{ id: 'p1', name: '博查搜索' }]);
   api.getPluginGrantOptions.mockResolvedValue({ users: [{ id: 'u1', name: '测试用户' }] });
-  api.getPluginReports.mockImplementation(async (page: number) => ({
-    items: [{ userId: 'u1', deviceId: `device-${page}`, pluginId: 'p1', version: '1.0.0', revision: 1, status: 'RestartRequired', error: '', updatedAt: '2026-10-10T02:00:00Z' }],
+  api.getPluginReports.mockImplementation(async (page: number, _pageSize: number, search = '') => ({
+    items: [{ userId: 'u1', deviceId: search ? `device-${search}` : `device-${page}`, pluginId: 'p1', version: '1.0.0', revision: 1, status: 'RestartRequired', error: '', updatedAt: '2026-10-10T02:00:00Z' }],
     total: 21, page, pageSize: 20,
   }));
 });
@@ -23,10 +23,18 @@ it('renders client reports separately and fetches each page from the server', as
   await user.click(within(screen.getByRole('navigation', { name: '插件状态分页' })).getByRole('button', { name: '下一页' }));
   expect(await screen.findByText('device-2')).toBeInTheDocument();
   expect(screen.queryByText('device-1')).not.toBeInTheDocument();
-  expect(api.getPluginReports).toHaveBeenLastCalledWith(2, 5);
+  expect(api.getPluginReports).toHaveBeenLastCalledWith(2, 5, '');
   await user.click(screen.getByRole('button', { name: '刷新' }));
   await waitFor(() => expect(api.getPluginReports).toHaveBeenCalledTimes(3));
-  expect(api.getPluginReports).toHaveBeenLastCalledWith(2, 5);
+  expect(api.getPluginReports).toHaveBeenLastCalledWith(2, 5, '');
+});
+
+it('searches reports by keyword after debounce', async () => {
+  const user = userEvent.setup(); render(<PluginStatusPage />);
+  await screen.findByRole('table', { name: '客户端插件状态表格' });
+  await user.type(screen.getByRole('searchbox', { name: '搜索插件状态' }), 'wh00028');
+  expect(await screen.findByText('device-wh00028')).toBeInTheDocument();
+  expect(api.getPluginReports).toHaveBeenLastCalledWith(1, 5, 'wh00028');
 });
 
 it('shows empty reports and recovers from failed loading', async () => {

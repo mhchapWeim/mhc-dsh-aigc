@@ -36,6 +36,7 @@ public static class SeedData
             Permission("role.manage", "角色与权限管理", "/admin/roles"),
             Permission("model.manage", "模型接入管理", "/admin/models"),
             Permission("plugin.manage", "插件市场管理", "/admin/plugins"),
+            Permission("mcp.manage", "MCP 市场管理", "/admin/mcp"),
             Permission("announcement.manage", "客户端公告管理", "/admin/announcements"),
             Permission("client-release.manage", "客户端版本发布", "/admin/client-releases"),
             Permission("diagnostic.manage", "DSH 失败日志", "/admin/dsh-failures")
@@ -83,6 +84,7 @@ public static class SeedData
             ("announcement.manage", "客户端公告管理", "/admin/announcements"),
             ("client-release.manage", "客户端版本发布", "/admin/client-releases"),
             ("plugin.manage", "插件市场管理", "/admin/plugins"),
+            ("mcp.manage", "MCP 市场管理", "/admin/mcp"),
             ("diagnostic.manage", "DSH 失败日志", "/admin/dsh-failures") })
         {
             var permission = await db.Permissions.SingleOrDefaultAsync(x => x.Code == code, ct);

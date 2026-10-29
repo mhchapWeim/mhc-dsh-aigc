@@ -35,6 +35,7 @@ import { desktopTargetBuildPaths, resolveDesktopBuildTarget } from './desktop-bu
 import { installWindowsDirectoryInstaller } from './windows-directory-installer.mjs'
 import { preserveWindowsRuntimeSignature, signWindowsCode } from './windows-runtime-signature.mjs'
 import { prepareWindowsAsarUnpack, verifyWindowsAsarUnpack } from './windows-asar-unpack.mjs'
+import { bashPayloadExtraResources } from './bash-payload.mjs'
 import { recordPackagingEvent } from './packaging-run.mjs'
 import {
   resolveMacOSAppUpdateFeed,
@@ -111,6 +112,11 @@ export function createElectronBuilderConfig(
   const productVersion = JSON.parse(readFileSync(fileURLToPath(new URL('../package.json', import.meta.url)), 'utf8')).version
   const buildVersion = resolveDesktopBuildVersion(env, productVersion)
   const packaged = resolveDesktopBuildCommit(env)
+  // The dsh-ops bash payload is bundled only for Windows builds whose release
+  // environment names a payload (DSH_DESKTOP_BASH_PAYLOAD); verification and
+  // staging happen before the config is assembled so a bad payload fails the
+  // build instead of shipping.
+  const bashPayload = bashPayloadExtraResources(env, resolvedPlatform, join(buildPaths.root, '.bash-payload-stage'))
   return {
     appId,
     protocols: [{ name: '弯崽工作伙伴', schemes: ['dsh'] }],
@@ -159,6 +165,7 @@ export function createElectronBuilderConfig(
     extraResources: [
       { from: buildPaths.runtime, to: 'runtime' },
       { from: fileURLToPath(new URL('../resources/icon-windows.png', import.meta.url)), to: 'icon.png' },
+      ...bashPayload,
     ],
     mac: {
       icon: fileURLToPath(new URL('../resources/icon-macos.png', import.meta.url)),

@@ -40,7 +40,13 @@ export function createTransport(config: Config): Transport {
     case 'streamable-http':
       return new StreamableHTTPClientTransport(
         new URL(config.url),
-        { requestInit: { headers: config.headers } },
+        { requestInit: { headers: config.headers }, ...(config.requestHeaders ? {
+          fetch: async (input, init) => {
+            const headers = new Headers(init?.headers)
+            for (const [key, value] of Object.entries(await config.requestHeaders!())) headers.set(key, value)
+            return fetch(input, { ...init, headers, redirect: 'error' })
+          },
+        } : {}) },
       )
   }
 }

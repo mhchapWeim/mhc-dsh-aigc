@@ -90,6 +90,8 @@ export interface StreamableHttpConfig {
   url: string
   /** Additional headers attached to MCP requests. */
   headers: Record<string, string>
+  /** Host-owned credentials resolved afresh for every HTTP exchange; never serialized. */
+  requestHeaders?: () => Promise<Record<string, string>>
   /** Timeout per tool call or resource request in milliseconds. */
   toolCallTimeoutMs: number
   /** Fail plugin activation when the initial connection or tool synchronization fails. */
@@ -200,4 +202,30 @@ export async function apply(ctx: Context, config: Config): Promise<void> {
   if (outcome.error !== undefined && config.failOnStartupError) {
     throw new Error(`mcp-client(${config.serverName}): initial connection or tool synchronization failed`, { cause: outcome.error })
   }
+}
+
+/** Mount an organization-controlled server with independent effect ownership.
+ * @param ctx Owning Host context.
+ * @param config Resolved remote connection, with a per-request identity check.
+ * @returns Live health and an awaited disposer that removes registered tools.
+ */
+export function mountManagedMcp(ctx: Context, config: StreamableHttpConfig): { connected(): boolean; dispose(): Promise<void> } {
+  let connection: ReturnType<typeof startConnection> | undefined
+  const fiber = ctx.plugin({
+    name: `managed-mcp-${config.serverName}`,
+    inject: ['tools'],
+    async apply(inner: Context): Promise<void> {
+      connection = startConnection(inner, config, resolveReconnectPolicy(config.reconnect, config.serverName))
+      const active = connection
+      let closing: Promise<void> | undefined
+      const close = (): Promise<void> => closing ??= active.dispose()
+      // Unload can arrive before negotiation resolves; release the transport before awaiting apply().
+      inner.on('internal/plugin', fiber => {
+        if (fiber === inner.fiber && fiber.uid === null) return close()
+      }, { global: true })
+      inner.effect(() => close, 'managed-mcp.connection')
+      await active.ready
+    },
+  })
+  return { connected: () => connection?.connected() ?? false, async dispose() { await fiber.dispose() } }
 }

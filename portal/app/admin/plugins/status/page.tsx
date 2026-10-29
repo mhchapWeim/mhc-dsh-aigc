@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { RefreshCw } from 'lucide-react';
+import { RefreshCw, Search } from 'lucide-react';
 import { usePageSize } from '../../../components/use-page-size';
 import { AntPagination } from '../../../components/ant-pagination';
 import { getPlugins, getPluginGrantOptions, getPluginReports, type PluginReportPage } from '../../../lib/plugin-api';
@@ -13,15 +13,21 @@ export default function PluginStatusPage() {
   const [pageSize, setPageSize] = usePageSize();
   const [page, setPage] = useState(1);
   const [refresh, setRefresh] = useState(0);
+  const [query, setQuery] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
   const [result, setResult] = useState<PluginReportPage>({ items: [], total: 0, page: 1, pageSize });
   const [pluginNames, setPluginNames] = useState<Record<string, string>>({});
   const [userNames, setUserNames] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   useEffect(() => {
+    const timer = window.setTimeout(() => { setSearchTerm(query); setPage(1); }, 300);
+    return () => window.clearTimeout(timer);
+  }, [query]);
+  useEffect(() => {
     let active = true;
     setLoading(true); setError('');
-    void Promise.all([getPluginReports(page, pageSize), getPlugins(), getPluginGrantOptions()]).then(([reports, plugins, options]) => {
+    void Promise.all([getPluginReports(page, pageSize, searchTerm), getPlugins(), getPluginGrantOptions()]).then(([reports, plugins, options]) => {
       if (!active) return;
       setResult(reports);
       setPluginNames(Object.fromEntries(plugins.map(plugin => [plugin.id, plugin.name])));
@@ -29,7 +35,7 @@ export default function PluginStatusPage() {
     }).catch(error => { if (active) setError(error instanceof Error ? error.message : String(error)); })
       .finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
-  }, [page, refresh, pageSize]);
+  }, [page, refresh, pageSize, searchTerm]);
   return <div className="plugin-market">
     <div className="page-title"><div><span className="section-kicker">DSH PLUGIN STATUS</span><h1>插件状态</h1><p>查看客户端上报的实际运行状态。离线客户端以最后上报时间为准。</p></div>
       <button type="button" className="secondary-action" disabled={loading} onClick={() => setRefresh(value => value + 1)}><RefreshCw size={16} />刷新</button></div>
@@ -37,6 +43,7 @@ export default function PluginStatusPage() {
     {!loading && !error && result.legacyResponse && <p role="status" className="plugin-notice">当前后端仍返回旧版数据，已在页面内分页，最多展示最近 500 条。请更新并重启 AIGC 后端以启用完整分页。</p>}
     <section className="admin-panel plugin-status-panel" aria-label="客户端插件状态" aria-busy={loading}>
       {loading ? <p role="status">正在读取客户端状态…</p> : error ? <p>读取失败，请刷新重试。</p> : <>
+        <div className="toolbar"><label className="table-search"><Search size={18} /><input type="search" maxLength={200} aria-label="搜索插件状态" placeholder="搜索插件、设备、用户、版本或状态" value={query} onChange={(event) => setQuery(event.target.value)} /></label></div>
         <div className="plugin-table-scroll"><table className="plugin-status-table" aria-label="客户端插件状态表格"><thead><tr>
           <th scope="col">插件</th><th scope="col">设备 / 用户</th><th scope="col">版本</th><th scope="col">状态</th><th scope="col">策略版本</th><th scope="col">最近上报</th><th scope="col">诊断</th>
         </tr></thead><tbody>{result.items.map(report => <tr key={`${report.userId}/${report.deviceId}/${report.pluginId}`}>
@@ -44,7 +51,7 @@ export default function PluginStatusPage() {
           <td>{report.version || '—'}</td><td>{statuses[report.status] ?? report.status}</td><td>{report.revision}</td>
           <td>{new Date(report.updatedAt).toLocaleString()}</td><td>{report.error || '—'}</td>
         </tr>)}</tbody></table></div>
-        {result.items.length === 0 && <p className="table-empty">尚无客户端回报。</p>}
+        {result.items.length === 0 && <p className="table-empty">{searchTerm ? '没有匹配的状态记录。' : '尚无客户端回报。'}</p>}
         <AntPagination onPageSizeChange={setPageSize} ariaLabel="插件状态分页" current={result.page} pageSize={pageSize} total={result.total} onChange={setPage} />
       </>}
     </section>

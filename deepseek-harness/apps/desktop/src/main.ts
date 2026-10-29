@@ -25,6 +25,8 @@ import {
   type MenuItemConstructorOptions,
 } from 'electron'
 import { resolveDesktopPaths } from './paths.ts'
+import { resolveDshHome } from '@deepseek-ai/dsh-home-paths'
+import { ensureBashPayload } from './bash-payload.ts'
 import { DesktopProjectManager } from './project-manager.ts'
 import { DesktopHostFatalError, DesktopHostProcess, DesktopHostUncleanExitError } from './host-process.ts'
 import { DesktopPlatformView, PLATFORM_IPC, platformBounds } from './platform-view.ts'
@@ -1247,6 +1249,18 @@ async function main(): Promise<void> {
     }).catch((error: unknown) => { diagnosticError(error) })
   }
   automaticCheck()
+  // Extract the bundled dsh-ops bash payload (if any) into the plugin's
+  // provisioned shell store before the backend starts, so the plugin's shell
+  // ladder resolves it on first mount. Failures are logged and non-fatal:
+  // the plugin degrades to "bash unavailable" rather than the app failing.
+  const bashPayloadResources = app.isPackaged ? process.resourcesPath : join(app.getAppPath(), 'resources')
+  const bashPayload = await ensureBashPayload(bashPayloadResources, resolveDshHome(), message => console.info(message))
+    .catch((error: unknown) => ({ outcome: 'failed' as const, reason: String(error) }))
+  if (bashPayload.outcome === 'failed') {
+    console.warn(`desktop bash payload: ${bashPayload.reason}`)
+  } else if (bashPayload.outcome === 'installed') {
+    console.info(`desktop bash payload: installed version ${bashPayload.version} at ${bashPayload.target}`)
+  }
   await reconcileBackend().catch(() => undefined)
   // Window lifecycle callbacks run while backend startup is pending.
   if (isQuitting()) return

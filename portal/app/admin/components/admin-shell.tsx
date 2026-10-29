@@ -8,6 +8,7 @@ import {
   Bell,
   Download,
   Boxes,
+  MonitorCog,
   Bot,
   KeyRound,
   ScrollText,
@@ -69,7 +70,7 @@ const sections = [
   },
   {
     label: "客户端运维",
-    icon: Boxes,
+    icon: MonitorCog,
     items: [
       { href: "/admin/uploads", label: "附件审查", icon: Files },
       { href: "/admin/announcements", label: "公告管理", icon: Bell },
@@ -87,6 +88,8 @@ const sections = [
       { href: "/admin/plugins/status", label: "插件状态", icon: ScrollText },
     ],
   },
+
+  { label: "MCP 市场", icon: Network, items: [{ href: "/admin/mcp", label: "MCP 管理", icon: Network }] }
 ];
 const versionPages = [
   { href: '/admin/client-releases', label: '版本发布', icon: Download },

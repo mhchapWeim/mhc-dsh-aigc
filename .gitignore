@@ -12,6 +12,7 @@ output/
 tmp/
 *-evidence/
 **/bin/
+!plugins/dsh-ops/bin/
 **/obj/
 **/.build/
 **/dist/
@@ -39,3 +40,13 @@ tmp/
 **/uploads/
 /data/
 /dsh-pnpm-collector-*.json
+/.cache/dsh-ops-*
+
+# Agent workflow state (local only)
+/.agent-handoff/
+/.workbuddy/
+/skills/
+/plugins/
+
+# Build output backups
+**/dist.bak-*/

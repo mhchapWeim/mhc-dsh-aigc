@@ -34,6 +34,7 @@ public sealed class AigcHubDbContext(DbContextOptions<AigcHubDbContext> options)
     public DbSet<UserModelGrant> UserModelGrants => Set<UserModelGrant>();
     public DbSet<AccessGrant> AccessGrants => Set<AccessGrant>();
     public DbSet<WebSearchConfiguration> WebSearchConfigurations => Set<WebSearchConfiguration>();
+    public DbSet<ManagedMcpService> ManagedMcpServices => Set<ManagedMcpService>();
     public DbSet<ManagedPlugin> ManagedPlugins => Set<ManagedPlugin>();
     public DbSet<ManagedPluginVersion> ManagedPluginVersions => Set<ManagedPluginVersion>();
     public DbSet<ManagedPluginReport> ManagedPluginReports => Set<ManagedPluginReport>();

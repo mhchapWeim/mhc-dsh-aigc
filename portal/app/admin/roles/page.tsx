@@ -18,6 +18,7 @@ export const adminPageOptions: Array<{ path: AdminPath; label: string; descripti
   { path: '/admin/departments', label: '部门管理', description: '维护组织部门信息' },
   { path: '/admin/categories', label: '分类管理', description: '维护应用分类目录' },
   { path: '/admin/roles', label: '角色管理', description: '配置角色及页面权限' },
+  { path: '/admin/mcp', label: 'MCP 市场', description: '管理 MCP 服务、图标与使用授权' },
   { path: '/admin/plugins', label: '插件市场', description: '管理插件发布、授权与客户端状态' },
   { path: '/admin/models', label: '模型管理', description: '配置本地与在线 AI 模型接入' },
   { path: '/admin/announcements', label: '公告管理', description: '发布客户端定向公告' },

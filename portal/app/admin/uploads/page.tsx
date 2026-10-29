@@ -1,11 +1,11 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Download, FileClock, RefreshCw, Search } from 'lucide-react';
+import { FileClock, RefreshCw, Search } from 'lucide-react';
 import { usePageSize } from '../../components/use-page-size';
 import { AntPagination } from '../../components/ant-pagination';
 import { Modal } from '../../components/modal';
-import { BackendDshUpload, BackendDshUploadBatch, downloadDshUpload, getDshUploadBatches } from '../../lib/api-client';
+import { BackendDshUpload, BackendDshUploadBatch, getDshUploadBatches } from '../../lib/api-client';
 
 const labels: Record<BackendDshUpload['status'], string> = {
   Pending: '等待上传', Uploading: '上传中', Finalizing: '等待校验', Completed: '已完成', Recorded: '已记录',
@@ -26,7 +26,6 @@ export default function DshUploadsPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [status, setStatus] = useState('');
   const [error, setError] = useState('');
-  const [busyId, setBusyId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [detail, setDetail] = useState<{ title: string; value: string } | null>(null);
   const requestId = useRef(0);
@@ -61,13 +60,6 @@ export default function DshUploadsPage() {
     return () => { window.clearInterval(timer); requestId.current++; };
   }, [refresh]);
 
-  const download = async (item: BackendDshUpload) => {
-    setBusyId(item.id);
-    try { await downloadDshUpload(item); setError(''); }
-    catch (cause) { setError(cause instanceof Error ? cause.message : '下载失败，请重试'); }
-    finally { setBusyId(null); }
-  };
-
   return <div className="admin-page page-enter">
     <div className="page-title"><div><span className="section-kicker">DSH FILE TRANSFERS</span><h1>附件审查</h1><p>记录 DSH 附件文件名及相关信息，不上传文件内容。</p></div><button className="secondary-action" type="button" onClick={() => void refresh()}><RefreshCw size={17} />刷新</button></div>
     {error && <div className="model-form-error" role="alert">{error} <button type="button" onClick={() => void refresh()}>重试</button></div>}
@@ -76,8 +68,8 @@ export default function DshUploadsPage() {
       <div className="table-meta"><span>共 {total} 个批次{(searchTerm || status) && ' · 匹配批次展示全部文件'}</span><span>每 10 秒自动刷新</span></div>
       <div className="dsh-upload-table-wrap">
         <table className="data-grid dsh-upload-table">
-          <colgroup><col className="dsh-col-batch" /><col className="dsh-col-file" /><col className="dsh-col-user" /><col className="dsh-col-computer" /><col className="dsh-col-prompt" /><col className="dsh-col-path" /><col className="dsh-col-progress" /><col className="dsh-col-status" /><col className="dsh-col-time" /><col className="dsh-col-action" /></colgroup>
-          <thead><tr><th>批次</th><th>文件</th><th>用户</th><th>计算机</th><th>User Prompt</th><th>源路径</th><th>进度</th><th>状态</th><th>创建时间</th><th className="dsh-upload-action-cell">操作</th></tr></thead>
+          <colgroup><col className="dsh-col-batch" /><col className="dsh-col-file" /><col className="dsh-col-user" /><col className="dsh-col-computer" /><col className="dsh-col-prompt" /><col className="dsh-col-path" /><col className="dsh-col-progress" /><col className="dsh-col-status" /><col className="dsh-col-time" /></colgroup>
+          <thead><tr><th>批次</th><th>文件</th><th>用户</th><th>计算机</th><th>User Prompt</th><th>源路径</th><th>进度</th><th>状态</th><th>创建时间</th></tr></thead>
           {items.map((batch) => {
             return <tbody key={`${batch.userId}:${batch.sessionId}:${batch.eventSeq}`} className="dsh-upload-batch">
               {batch.files.map((item, index) => {
@@ -94,7 +86,6 @@ export default function DshUploadsPage() {
               <td>{item.status === 'Recorded' ? <span>—</span> : <><div className="dsh-upload-progress-label"><span>{percent}%</span><small title={`${formatBytes(item.offset)} / ${formatBytes(item.bytes)}`}>{formatBytes(item.offset)} / {formatBytes(item.bytes)}</small></div><progress className={`dsh-upload-progress-bar${item.completed ? ' is-complete' : ''}`} value={percent} max={100} aria-label={`${item.fileName}上传进度`} /></>}</td>
               <td><span className={`status-pill ${item.completed ? 'is-enabled' : 'is-disabled'}`}><i />{labels[item.status]}</span></td>
               <td >{new Date(item.createdAt).toLocaleString('zh-CN')}</td>
-              <td className="dsh-upload-action-cell"><button className="secondary-action" type="button" disabled={item.status === 'Recorded' || !item.completed || busyId === item.id} onClick={() => void download(item)} aria-label={`下载${item.fileName}`}><Download size={16} />{item.status === 'Recorded' ? '不可下载' : busyId === item.id ? '下载中' : '下载'}</button></td>
                 </tr>;
               })}
             </tbody>;

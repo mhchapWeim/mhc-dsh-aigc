@@ -6,6 +6,7 @@ using AigcHub.Api.Services;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 
 namespace AigcHub.Api.Endpoints;
 
@@ -53,10 +54,21 @@ public static class PluginMarketEndpoints
         departments = await db.Departments.AsNoTracking().Where(x => x.IsEnabled).Select(x => new { x.Id, x.Name, x.Code }).ToArrayAsync(ct)
     });
 
-    private static async Task<IResult> ReportsAsync(AigcHubDbContext db, int? page, int? pageSize, CancellationToken ct)
+    private static async Task<IResult> ReportsAsync(AigcHubDbContext db, int? page, int? pageSize, string? search, CancellationToken ct)
     {
         var size = Math.Clamp(pageSize ?? 5, 1, 100);
         var query = db.ManagedPluginReports.AsNoTracking();
+        var term = search?.Trim();
+        if (!string.IsNullOrEmpty(term))
+        {
+            var pattern = $"%{term.Replace("\\", "\\\\").Replace("%", "\\%").Replace("_", "\\_")}%";
+            var users = db.Users.AsNoTracking().Where(x => EF.Functions.Like(x.Name, pattern)
+                || EF.Functions.Like(x.EmployeeNo, pattern)).Select(x => x.Id).ToHashSet();
+            query = query.Where(x => EF.Functions.Like(x.DeviceId, pattern) || EF.Functions.Like(x.Version, pattern)
+                || EF.Functions.Like(x.Status, pattern) || EF.Functions.Like(x.Error, pattern)
+                || x.PluginId.ToString().Contains(term) || x.UserId.ToString().Contains(term)
+                || users.Contains(x.UserId));
+        }
         var total = await query.CountAsync(ct);
         var number = Math.Clamp(page ?? 1, 1, Math.Max(1, (int)Math.Ceiling((double)total / size)));
         var items = await query.OrderByDescending(x => x.UpdatedAt).ThenBy(x => x.UserId)

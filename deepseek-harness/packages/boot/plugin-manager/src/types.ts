@@ -224,8 +224,22 @@ export interface PluginChange {
   readonly reason: 'plugin' | 'bundle' | 'install' | 'remove'
 }
 
+/** Organization-authorized connector display; contains no upstream URL or credentials. */
+export interface ManagedMcpConnector {
+  readonly id: string
+  readonly name: string
+  readonly description: string
+  readonly iconDataUrl: string
+  readonly status: 'Connecting' | 'Ready' | 'Unavailable'
+}
+
 declare module '@deepseek-ai/cordis' {
   interface Events {
+    /** Authorized connectors or their live connection state changed.
+     * @mode emit
+     * @param connectors Current account's display-only catalog.
+     */
+    'plugin-manager/connectors-updated'(connectors: readonly ManagedMcpConnector[]): void
     /**
      * Organization releases awaiting restart changed, including clearing on sign-out or revocation.
      * @mode emit

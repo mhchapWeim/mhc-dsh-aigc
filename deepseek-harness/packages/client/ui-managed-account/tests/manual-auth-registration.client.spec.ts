@@ -6,6 +6,7 @@ it('registers only the manual account launcher and no automatic authentication s
   const register = vi.fn()
   const ctx = {
     effect: (callback: () => unknown) => callback(),
+    inject: vi.fn(),
     locale: { register: vi.fn(), bind: () => vi.fn() },
     slots: { inject: (_name: string, callback: () => unknown) => callback(), register },
   } as unknown as Parameters<typeof apply>[0]

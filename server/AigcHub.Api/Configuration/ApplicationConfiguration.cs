@@ -20,7 +20,7 @@ public static class ApplicationConfiguration
     private static readonly string[] Permissions =
     [
         "portal.view", "admin.view", "publication.create", "publication.review", "process.design",
-        "user.manage", "department.manage", "category.manage", "role.manage", "model.manage", "announcement.manage", "client-release.manage", "diagnostic.manage", "plugin.manage"
+        "user.manage", "department.manage", "category.manage", "role.manage", "model.manage", "announcement.manage", "client-release.manage", "diagnostic.manage", "plugin.manage", "mcp.manage"
     ];
 
     public static void AddAigcHubServices(this WebApplicationBuilder builder)
@@ -38,6 +38,7 @@ public static class ApplicationConfiguration
 
         builder.Services.Configure<JwtOptions>(builder.Configuration.GetSection("Jwt"));
         builder.Services.Configure<CasOptions>(builder.Configuration.GetSection("Cas"));
+        builder.Services.Configure<McpIdentityAssertionOptions>(builder.Configuration.GetSection("McpIdentityAssertion"));
         builder.Services.Configure<ChatOptions>(builder.Configuration.GetSection("Chat"));
         builder.Services.Configure<LiteLlmOptions>(builder.Configuration.GetSection("LiteLlm"));
         var jwt = builder.Configuration.GetSection("Jwt").Get<JwtOptions>() ?? new JwtOptions();
@@ -79,6 +80,7 @@ public static class ApplicationConfiguration
             .PersistKeysToFileSystem(new DirectoryInfo(keyPath));
         builder.Services.AddScoped<ICurrentUser, CurrentUser>();
         builder.Services.AddScoped<TokenService>();
+        builder.Services.AddSingleton<McpIdentityAssertionIssuer>();
         builder.Services.AddSingleton<CasDeviceLoginStore>();
         builder.Services.AddScoped<CasAuthenticationService>();
         builder.Services.AddScoped<PortalSsoFlow>();
@@ -95,6 +97,8 @@ public static class ApplicationConfiguration
         builder.Services.AddScoped<IChatTool, CreateDepartmentTool>();
         builder.Services.AddScoped<IChatTool, CreateCategoryTool>();
         builder.Services.AddHttpClient();
+        builder.Services.AddHttpClient("mcp-gateway", client => client.Timeout = Timeout.InfiniteTimeSpan)
+            .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler { AllowAutoRedirect = false, UseCookies = false });
         builder.Services.AddHttpClient("bocha-web-search", client => client.Timeout = TimeSpan.FromSeconds(30))
             .ConfigurePrimaryHttpMessageHandler(() => CreateLiteLlmHttpHandler(
                 builder.Configuration.GetValue("BochaSearch:VerifySsl", true), false));

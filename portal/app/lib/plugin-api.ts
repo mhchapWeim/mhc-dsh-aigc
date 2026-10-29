@@ -9,8 +9,10 @@ export type PluginReport = { userId: string; deviceId: string; pluginId: string;
 export const getPlugins = () => apiRequest<ManagedPlugin[]>('/api/plugins');
 export const getPluginGrantOptions = () => apiRequest<GrantOptions>('/api/plugins/grant-options');
 export type PluginReportPage = { items: PluginReport[]; total: number; page: number; pageSize: number; legacyResponse?: boolean };
-export const getPluginReports = async (page = 1, pageSize = 5): Promise<PluginReportPage> => {
-  const result = await apiRequest<unknown>(`/api/plugins/reports?page=${page}&pageSize=${pageSize}`);
+export const getPluginReports = async (page = 1, pageSize = 5, search = ''): Promise<PluginReportPage> => {
+  const params = new URLSearchParams({ page: String(page), pageSize: String(pageSize) });
+  if (search.trim()) params.set('search', search.trim());
+  const result = await apiRequest<unknown>(`/api/plugins/reports?${params.toString()}`);
   // Older running API instances return a capped array instead of a page.
   if (Array.isArray(result)) {
     const size = Math.min(100, Math.max(1, Math.floor(pageSize)));

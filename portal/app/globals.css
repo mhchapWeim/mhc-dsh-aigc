@@ -1359,7 +1359,6 @@ input:focus-visible {
 .dsh-col-progress { width: 13%; }
 .dsh-col-status { width: 8%; }
 .dsh-col-time { width: 10%; }
-.dsh-col-action { width: 9%; }
 .dsh-upload-table th,
 .dsh-upload-table td {
   overflow: hidden;
@@ -1387,39 +1386,6 @@ input:focus-visible {
   font-size: 12px;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
-}
-.dsh-upload-table .dsh-upload-action-cell {
-  position: sticky;
-  right: 0;
-  z-index: 1;
-  overflow: visible;
-  background: var(--surface);
-  box-shadow: -8px 0 12px -10px rgba(25, 42, 69, 0.4);
-}
-.dsh-upload-table thead .dsh-upload-action-cell {
-  z-index: 2;
-  background: #f7f9fc;
-}
-.dsh-upload-table tbody tr:hover .dsh-upload-action-cell {
-  background: #fbfdff;
-}
-.dsh-upload-action-cell .secondary-action {
-  display: inline-flex;
-  min-height: 34px;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
-  padding: 0 8px;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  background: var(--surface);
-  color: var(--blue-600);
-  white-space: nowrap;
-}
-.dsh-upload-action-cell .secondary-action:disabled {
-  cursor: not-allowed;
-  color: var(--muted);
-  opacity: 0.65;
 }
 .dsh-upload-ellipsis {
   display: block;
@@ -1472,12 +1438,6 @@ input:focus-visible {
 }
 .dsh-upload-progress-bar.is-complete::-moz-progress-bar {
   background: var(--success);
-}
-:root[data-theme="dark"] .dsh-upload-table thead .dsh-upload-action-cell {
-  background: #1b2b43;
-}
-:root[data-theme="dark"] .dsh-upload-table tbody tr:hover .dsh-upload-action-cell {
-  background: #1b2b43;
 }
 .dsh-upload-text-button {
   display: block;

@@ -101,6 +101,8 @@ export interface ConnectionOutcome {
 
 /** Handle for one plugin instance's supervised connection. */
 export interface ConnectionHandle extends ServerContext {
+  /** Whether the current generation has completed connection and tool discovery. */
+  connected(): boolean
   /**
    * Settles when the first connection attempt completes (success or failure).
    * The supervisor enters its reconnect loop regardless; the caller decides
@@ -362,6 +364,7 @@ export function startConnection(ctx: Context, config: Config, policy: ResolvedRe
 
   return {
     ready,
+    connected: () => client !== undefined && connectedAt !== undefined && !disposed,
     instructions: () => serverInstructions,
     resources: {
       async request(request, exec): Promise<JsonValue> {

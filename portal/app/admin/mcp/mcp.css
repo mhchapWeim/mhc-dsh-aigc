@@ -1,0 +1,41 @@
+.mcp-filter{padding:20px;margin-bottom:16px}.mcp-filter label{display:grid;gap:8px;max-width:360px}
+.mcp-filter input{height:38px;padding:8px 10px;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:var(--ink);font:inherit}
+.mcp-table-scroll{overflow-x:auto}.mcp-name{display:flex;align-items:center;gap:12px;min-width:200px}.mcp-name img,.mcp-icon-preview{width:48px;height:48px;object-fit:contain;border-radius:10px}.mcp-name p{max-width:420px;white-space:pre-wrap;overflow-wrap:anywhere;color:var(--muted)}
+.mcp-actions{display:flex;gap:8px;flex-wrap:wrap}.modal.mcp-modal{display:flex;flex-direction:column;box-sizing:border-box;width:min(880px,100%);max-width:calc(100vw - 40px);min-width:0;max-height:calc(100dvh - 40px);overflow:hidden}.mcp-form{min-height:0;display:flex;flex-direction:column;overflow:hidden}.mcp-form-body{flex:1 1 auto;min-height:0;overflow:auto;padding:4px 2px 16px;overflow-wrap:anywhere}.mcp-form-body pre{white-space:pre-wrap;overflow-wrap:anywhere}.mcp-check{display:flex!important;flex-direction:row!important;align-items:center;gap:8px}.mcp-check input{width:auto!important}.mcp-form .modal-actions{flex:none}
+@media(max-width:600px){.mcp-filter label{max-width:none}.mcp-form-body{padding:4px 0 16px}}
+
+.modal.mcp-modal>header{flex:none}.mcp-form,.mcp-form-body{min-width:0}.mcp-form input,.mcp-form textarea{box-sizing:border-box}
+
+/* Keep the form independent of generic entity-form spacing and checkbox layouts. */
+.modal.mcp-modal{width:min(760px,100%)}
+.mcp-modal .mcp-form{padding:0}
+.mcp-modal .mcp-form-body{display:flex;flex-direction:column;gap:16px;padding:20px 24px;scrollbar-gutter:stable}
+.mcp-modal .mcp-form-body>label{gap:8px;font-size:13px;font-weight:600;line-height:1.5}
+.mcp-modal .mcp-form-body>p{margin:0;color:var(--muted);font-size:12px;line-height:1.65}
+.mcp-modal .mcp-form-body>h3{margin:4px 0 0;font-size:14px}
+.mcp-modal .mcp-form-body>label>input:not([type=checkbox]),.mcp-modal .mcp-form-body>label>textarea{width:100%;min-width:0;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:var(--ink);padding:9px 10px;font:inherit;font-weight:400;line-height:1.5}
+.mcp-modal .mcp-form-body textarea{resize:vertical;min-height:88px}
+.mcp-modal .mcp-form-body input:focus-visible,.mcp-modal .mcp-form-body textarea:focus-visible{outline:2px solid var(--blue-600);outline-offset:2px}
+.mcp-modal .mcp-form-body input[type=file]{padding:6px;font-size:12px}
+.mcp-modal input[type=file]::file-selector-button{margin-right:12px;padding:7px 12px;border:1px solid var(--line);border-radius:6px;background:var(--page);color:var(--ink);font:inherit;cursor:pointer}
+.mcp-modal .mcp-check{flex-direction:row!important;font-weight:400;gap:8px!important}
+.mcp-modal .mcp-check input{flex:none;width:16px!important;height:16px;margin:0;padding:0;accent-color:var(--blue-600)}
+.mcp-modal .modal-actions{display:flex;justify-content:flex-end;gap:10px;margin:0;padding:16px 24px;border-top:1px solid var(--line);background:var(--surface)}
+/* model-form-error is a global fixed toast; keep the address message inline next to its field. */
+.mcp-modal .mcp-url-error{position:static;width:auto;transform:none;margin:-8px 0 0;padding:8px 10px}
+.mcp-modal .mcp-url-error:empty{display:none}
+/* Disabled primary action must state what is missing instead of leaving a greyed-out button. */
+.mcp-modal .mcp-action-hint{margin:0 auto 0 0;font-size:12px;color:var(--muted);line-height:1.5}
+.mcp-modal .mcp-action-hint:empty{display:none}
+@media(max-width:600px){.mcp-modal .mcp-form-body{padding:16px;gap:14px}.mcp-modal .modal-actions{padding:14px 16px}.mcp-modal .modal-actions button{min-height:40px}.mcp-modal .mcp-action-hint{flex:1 0 100%;order:-1;margin:0 0 4px}}
+
+/* RecipientPicker shares entity-form: checkbox widths must not inherit full-width text fields. */
+.mcp-modal .recipient-list input[type=checkbox]{box-sizing:border-box;flex:0 0 16px;width:16px;height:16px;margin:0;padding:0;accent-color:var(--blue-600)}
+.mcp-modal .recipient-list label{min-width:0}
+.mcp-modal .recipient-list label>span{min-width:0;overflow:hidden}
+.mcp-modal .recipient-list strong,.mcp-modal .recipient-list small{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mcp-modal .recipient-list .recipient-disabled-reason{white-space:normal}
+.mcp-modal .recipient-search input[type=search]{flex:1;min-width:0;width:100%;border:0;border-radius:0;background:transparent;padding:8px 0;box-shadow:none;outline:none}
+.mcp-modal .recipient-search:focus-within{outline:2px solid var(--blue-600);outline-offset:2px}
+.mcp-modal .mcp-form-body>*{flex-shrink:0}
+@media(max-width:600px){.mcp-modal .recipient-list{grid-template-columns:minmax(0,1fr)}.mcp-modal .recipient-search{flex-basis:100%}}

@@ -1,5 +1,88 @@
 # DSH、AIGC 和 Portal 部署记录
 
+## 2026-10-29 KnowEngine assertion `iat` API 热修复交付
+
+已基于 `main` 当前工作区构建 API-only 热修复 `2026-10-29-main.1`。生产已部署的 `2026-10-28-main.1` 构建早于 `iat` 修复；本版本在 RS256 assertion Payload 中显式写入整数型 Unix 秒 `iat`，并保留原有 `nbf`、`exp`、`iss`、`aud`、`sub`、`jti`、`kid` 和员工声明语义。
+
+- 交付目录：`deploy/k8s/bosch-aigc-dsh/update-2026-10-29-main.1-api-only`
+- 离线包：`output/aigc-update-2026-10-29-main.1-api-only.zip`
+- ZIP SHA-256：`db554bfc9ef3222dce036b880635518d5c55dab0b15653ccae95c32a913cecbb`
+- 镜像：`aigc-api:2026-10-29-main.1`，ID `sha256:fbf18cb2aff5380d911fe69b8342342cdf2eff922a18bd9bd4ac200282e9a279`，linux/amd64
+
+本包只更新 `aigc-api` 容器的 image 与 imagePullPolicy；不更新 Portal、DSH、MinIO、PostgreSQL、ConfigMap、Secret、PV/PVC、卷、initContainer 或节点约束。继续复用已注入 `McpIdentityAssertion__*` 的现有 `aigc-secrets`，不要创建新 Secret 或重新写入私钥。本版本无数据库结构变化，默认不执行数据库 dump。
+
+本地验证：`McpMarketHttpTests` 6/6 通过，其中回归测试明确要求 `iat` 存在且 `nbf <= iat <= exp`；API-only 部署脚本测试 16/16 通过；Bash 语法、脱敏镜像内容、TAR 重新加载、linux/amd64 平台、目录及 ZIP 内 `SHA256SUMS` 全部通过。构建使用独立脱敏快照，不含 `appsettings.Development.json`、生产私钥或本地数据。
+
+本次仅完成本地构建和离线交付，**尚未执行生产 CHECK_ONLY、镜像导入、Deployment 更新或 KnowEngine 真实联调**。导入、预检、更新、验证和回退命令以[本次API热修复说明](deploy/k8s/bosch-aigc-dsh/update-2026-10-29-main.1-api-only/README.md)为准。生产更新后运行包内 `verify-knowengine-mcp.sh`，先确认 assertion Payload 含 `iat`，再验证 KnowEngine Token Exchange、MCP初始化、工具发现与员工ACL。
+
+## 2026-10-28 KnowEngine MCP 身份断言生产密钥注入
+
+用户已反馈按 `update-2026-10-28-main.1-app-only` 交付物完成部署，但本记录未直接连接生产集群复核镜像、Pod 或业务接口。用户随后提供的生产查询显示：namespace 为 `bosch-aigc-dsh`，API Deployment 为 `aigc-api`，现有 `Opaque` Secret 为 `aigc-secrets`；该 Secret 当时尚未包含 `McpIdentityAssertion__*` 四项。输出中已有凭据值不得复制进仓库、工单或聊天记录。
+
+AIGC API 通过现有 `aigc-secrets` 取得敏感配置。不要创建同用途的新 Secret，也不要使用只包含四个新键的清单替换整个 `aigc-secrets`；必须使用 merge patch，仅新增或更新下列配置：
+
+```text
+McpIdentityAssertion__Issuer=bhss-aigc
+McpIdentityAssertion__KeyId=aigc-2026-10
+McpIdentityAssertion__PrivateKeyPem=<AIGC 私钥 PEM，仅秘密注入>
+McpIdentityAssertion__LifetimeSeconds=60
+```
+
+Kubernetes Secret 的 `data` 字段显示为 Base64 编码，不代表加密；不要输出或提交完整 Secret YAML。生产私钥只保存在 AIGC 侧，公司密钥库保留备份；KnowEngine 只接收交接包中的公钥、指纹、`kid`、issuer、audience 和改造说明。
+
+在 Kubernetes 控制节点执行以下命令。先通过受控方式把私钥临时放到 `/tmp/aigc-mcp-aigc-2026-10-private-key.pem`；命令依赖 `jq`，利用 `stringData` 让 Kubernetes 完成 Base64 转换，并保留 `aigc-secrets` 的全部既有键：
+
+```bash
+set -euo pipefail
+
+PRIVATE_KEY=/tmp/aigc-mcp-aigc-2026-10-private-key.pem
+PATCH_FILE=/tmp/aigc-mcp-secret-patch.json
+
+test -s "$PRIVATE_KEY"
+chmod 600 "$PRIVATE_KEY"
+
+jq -n \
+  --arg issuer 'bhss-aigc' \
+  --arg keyId 'aigc-2026-10' \
+  --arg lifetime '60' \
+  --rawfile privateKey "$PRIVATE_KEY" \
+  '{
+    stringData: {
+      "McpIdentityAssertion__Issuer": $issuer,
+      "McpIdentityAssertion__KeyId": $keyId,
+      "McpIdentityAssertion__PrivateKeyPem": $privateKey,
+      "McpIdentityAssertion__LifetimeSeconds": $lifetime
+    }
+  }' > "$PATCH_FILE"
+chmod 600 "$PATCH_FILE"
+
+kubectl -n bosch-aigc-dsh patch secret aigc-secrets \
+  --type merge \
+  --patch-file "$PATCH_FILE"
+
+kubectl -n bosch-aigc-dsh rollout restart deployment/aigc-api
+kubectl -n bosch-aigc-dsh rollout status deployment/aigc-api --timeout=300s
+
+rm -f "$PATCH_FILE" "$PRIVATE_KEY"
+```
+
+不输出值的配置存在性检查：
+
+```bash
+for key in \
+  McpIdentityAssertion__Issuer \
+  McpIdentityAssertion__KeyId \
+  McpIdentityAssertion__PrivateKeyPem \
+  McpIdentityAssertion__LifetimeSeconds
+do
+  value="$(kubectl -n bosch-aigc-dsh get secret aigc-secrets -o "jsonpath={.data.$key}")"
+  test -n "$value" || { echo "$key: 未设置"; exit 1; }
+  echo "$key: 已设置"
+done
+```
+
+Secret 注入和 rollout 成功只证明 AIGC Pod 已取得配置，不代表 KnowEngine 端到端联调成功。KnowEngine 改造并部署后，还必须使用已授权员工完成：AIGC `/v1/mcp/{id}/identity-assertion` 签发、KnowEngine `/oauth2/dsh-token` 兑换、携带 Bearer Token 调用 `/mcp`，并确认员工 ACL、Token 到期自动续换、退出/撤权后连接清理。接口合同与密钥轮换要求见 [KnowEngine MCP 无感身份交换改造说明](docs/KNOWENGINE-MCP-TOKEN-EXCHANGE.md)。
+
 ## 2026-10-23 AIGC / DSH 当前工作区构建交付
 
 本次使用 `main` 当前工作区（包含未提交改动），未连接或更新生产服务器。API/Portal 来自独立构建快照，源码清单、散列、镜像标识与开发配置脱敏处理见交付目录的 `BUILD-INFO.json`。

@@ -3,6 +3,8 @@ import type {} from '@deepseek-ai/dsh-llm-managed-backend'
 import { randomUUID } from 'node:crypto'
 import { AsyncLocalStorage } from 'node:async_hooks'
 import { installManagedPluginSync } from './managed-sync.ts'
+import { installManagedMcpSync } from './managed-mcp.ts'
+import type { ManagedMcpConnector } from './types.ts'
 import { existsSync, readFileSync } from 'node:fs'
 import { readFile, rm } from 'node:fs/promises'
 import { join } from 'node:path'
@@ -185,6 +187,7 @@ export class PluginManager extends TypertRemoteService {
     fallbackRegistries: z.array(z.string().pattern(REGISTRY_URL)).default([NPMMIRROR_REGISTRY]),
   })
   /** Management bundles remain protected if their files become unreadable. */
+  private connectorSnapshot: readonly ManagedMcpConnector[] = []
   private readonly managementBundles = new Set<string>()
   private readonly managedOperation = new AsyncLocalStorage<boolean>()
   private readonly managedStatus: { updates: readonly ManagedPluginUpdate[] } = { updates: [] }
@@ -203,6 +206,8 @@ export class PluginManager extends TypertRemoteService {
 
   constructor(ctx: Context, config: Config) {
     super(ctx, 'pluginManager')
+    installManagedMcpSync(ctx, { pollMs: config.managedPollMs ?? 60000, requestTimeoutMs: config.managedRequestTimeoutMs ?? 30000 },
+      connectors => { this.connectorSnapshot = connectors; ctx.emit('plugin-manager/connectors-updated', connectors) })
     this.ownerEntryId = ctx.fiber.entry?.id
     this.ownerContext = ctx
     this.profile = ctx.profileContext
@@ -232,8 +237,14 @@ export class PluginManager extends TypertRemoteService {
     }, 'plugin-manager: package cancellation')
   }
 
-  /** Read staged organization releases that cannot be activated in this process.
-   * @returns Verified packages requiring a Host restart; hot-applied changes are absent.
+  /** Read the current account's authorized MCP catalog and connection state.
+   * @returns Display-only services without upstream addresses or credentials.
+   */
+  @Remote
+  connectors(): readonly ManagedMcpConnector[] { return this.connectorSnapshot }
+
+  /** Read staged organization releases that require restart.
+   * @returns Verified releases awaiting the next Host start.
    */
   @Remote
   managedUpdates(): readonly ManagedPluginUpdate[] { return this.managedStatus.updates }
