@@ -12,6 +12,8 @@ output/
 !/deploy/nj304-rabbitmq/
 __pycache__/
 *.pyc
+# Local cleanup bookkeeping written by maintenance scripts; carries absolute paths.
+.cleanup-manifest.json
 tmp/
 *-evidence/
 **/bin/
