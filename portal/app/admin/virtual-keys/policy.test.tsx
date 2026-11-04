@@ -1,10 +1,11 @@
+import { selectDropdown } from '../../../test/select-dropdown';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, expect, it, vi } from 'vitest';
 import VirtualKeysPage from './page';
 
 const api = vi.hoisted(() => ({
-  getManagedVirtualKeys: vi.fn(), getVirtualKeyOrganizations: vi.fn(), getVirtualKeyGrantOptions: vi.fn(),
+  deleteManagedVirtualKey: vi.fn(), getManagedVirtualKeys: vi.fn(), getVirtualKeyOrganizations: vi.fn(), getVirtualKeyGrantOptions: vi.fn(),
   getVirtualKeyModels: vi.fn(), getVirtualKeyPolicy: vi.fn(), updateVirtualKeyPolicy: vi.fn(),
   getVirtualKeyGrants: vi.fn(), createManagedVirtualKey: vi.fn(), saveVirtualKeyGrants: vi.fn(), setManagedVirtualKeyEnabled: vi.fn(),
 }));
@@ -35,7 +36,7 @@ it('creates a key with the selected model and common plan parameters', async () 
   await user.type(screen.getByLabelText('预算重置周期'), '30d');
   await user.type(screen.getByLabelText('每分钟请求数（RPM）'), '10');
   await user.type(screen.getByLabelText('每分钟 Token 数（TPM）'), '20000');
-  await user.selectOptions(screen.getByLabelText('有效期'), 'duration');
+  selectDropdown(screen.getByRole('combobox', { name: '有效期' }), 'duration');
   await user.type(screen.getByLabelText('有效时长'), '90d');
   await user.click(screen.getByRole('button', { name: '创建并同步' }));
   await waitFor(() => expect(api.createManagedVirtualKey).toHaveBeenCalledWith('研发套餐', '', {
@@ -48,7 +49,7 @@ it('loads current gateway values and keeps expiry unchanged when editing a limit
   const user = userEvent.setup(); render(<VirtualKeysPage />);
   await user.click(await screen.findByRole('button', { name: /^套餐规则/ }));
   expect(await screen.findByLabelText('预算上限（美元）')).toHaveValue(50);
-  expect(screen.getByLabelText('有效期')).toHaveValue('keep');
+  expect(screen.getByRole('combobox', { name: '有效期' })).toHaveTextContent('保持当前到期时间');
   await user.clear(screen.getByLabelText('每分钟请求数（RPM）'));
   await user.type(screen.getByLabelText('每分钟请求数（RPM）'), '20');
   await user.click(screen.getByRole('button', { name: '保存并同步' }));
@@ -92,4 +93,16 @@ it('keeps conflicting existing selections removable and displays server conflict
   expect(await screen.findByRole('alert')).toHaveTextContent('张三已在业务组');
   await user.click(screen.getByRole('checkbox', { name: /张三/ }));
   expect(screen.getByRole('checkbox', { name: /张三/ })).not.toBeChecked();
+});
+
+it('retains key and confirmation on gateway error then removes it after retry', async () => {
+  api.deleteManagedVirtualKey.mockRejectedValueOnce(new Error('网关不可用')).mockResolvedValueOnce(undefined);
+  const user = userEvent.setup(); render(<VirtualKeysPage />);
+  await user.click(await screen.findByRole('button', { name: '删除 · 研发 Key' }));
+  expect(api.deleteManagedVirtualKey).not.toHaveBeenCalled();
+  await user.click(await screen.findByRole('button', { name: /确认删除/ }));
+  expect(await screen.findByRole('alert')).toHaveTextContent('网关不可用');
+  expect(screen.getByText('研发 Key')).toBeVisible();
+  await user.click(await screen.findByRole('button', { name: /确认删除/ }));
+  await waitFor(() => expect(screen.queryByText('研发 Key')).not.toBeInTheDocument());
 });

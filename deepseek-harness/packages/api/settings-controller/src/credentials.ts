@@ -465,7 +465,10 @@ export class CredentialsController extends TypertRemoteService {
     if (!response.ok) {
       throw new RemoteError('managed-auth/rejected', `managed backend identity failed (HTTP ${response.status})`, { reason: 'backend' })
     }
-    const identity = z.object({ user: managedUserSchema }).safeParse(await response.json())
+    const identity = z.object({ user: managedUserSchema, billing: z.object({
+      assigned: z.boolean(), total: z.number().nonnegative(), used: z.number().nonnegative(),
+      reserved: z.number().nonnegative(), remaining: z.number().nonnegative(), resetsAt: z.string(), planName: z.string().nullable(),
+    }).optional() }).safeParse(await response.json())
     if (!identity.success) {
       throw new RemoteError('managed-auth/rejected', 'managed backend returned an invalid user', { reason: 'backend' })
     }
@@ -501,12 +504,14 @@ export class CredentialsController extends TypertRemoteService {
       const workspace = await registry.resolveByPath(path) ?? await registry.create(path)
       return {
         enabled: true, user: identity.data.user, models: [...models.data.models, ...models.data.additionalModels],
+        ...(identity.data.billing === undefined ? {} : { billing: identity.data.billing }),
         workspaceId: workspace.id, workspacePath: path,
       }
     } catch (error) {
       this.ctx.logger.warn('Managed identity accepted; local Workspace needs repair: %s', String(error))
       return {
         enabled: true, user: identity.data.user, models: [...models.data.models, ...models.data.additionalModels],
+        ...(identity.data.billing === undefined ? {} : { billing: identity.data.billing }),
         workspacePath: this.ctx.get('workspaceRegistry')?.allowedRoot ?? join(this.home(), 'workspaces', `bhss-${username}-workspace`),
         workspaceIssue: 'unavailable',
       }

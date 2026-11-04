@@ -61,6 +61,12 @@ it('automatically registers authorized tools, calls the real MCP SDK and removes
     expect(result.content).toEqual([{type:'text',text:'pong'}])
     expect(fixture.authorization).toContain('Bearer employee-mcp-token')
     expect(exchanges).toBe(1)
+    await ctx.credentials.modifyRecord(credentialKey('llm-managed-backend','billing-pending'),async()=>({kind:'grant',payload:[]}))
+    expect(latest[0]?.status).toBe('Ready')
+    expect(ctx.tools.get(name)).toBeDefined()
+    const repeated=await ctx.tools.execute({signal:new AbortController().signal,callId:ToolCallId('managed-mcp-after-billing'),name,arguments:{}})
+    expect(repeated.content).toEqual([{type:'text',text:'pong'}])
+    expect(exchanges).toBe(1)
     authorized=false
     await vi.waitFor(()=>expect(latest).toEqual([]))
     expect(ctx.tools.get(name)).toBeUndefined()

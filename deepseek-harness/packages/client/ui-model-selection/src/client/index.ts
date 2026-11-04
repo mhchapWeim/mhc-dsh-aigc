@@ -70,7 +70,7 @@ function optionsOf(directory: ModelDirectoryState, t: TranslateNS<'model'>): Sel
       rows.push({
         id: rowId(group.id, model.id),
         label: model.name,
-        detail: description !== undefined ? `${group.name} · ${description}` : group.name,
+        detail: [group.source === 'custom' ? t('provider.custom') : undefined, group.name, description].filter(Boolean).join(' · '),
         ...(directory.current !== null
           && directory.current.provider === group.id
           && directory.current.model === model.id

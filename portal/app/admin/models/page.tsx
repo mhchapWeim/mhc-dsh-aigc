@@ -1,5 +1,6 @@
 'use client';
 
+import { useDeleteConfirm } from '../../components/delete-confirm';
 import { useEffect, useMemo, useState } from 'react';
 import { CheckCircle2, Globe2, Plus, Power, RefreshCw, Search, Server } from 'lucide-react';
 import { usePageSize } from '../../components/use-page-size';
@@ -22,6 +23,7 @@ function ModelOptionToggle({ checked, icon, label, onChange }: { checked: boolea
 }
 
 export default function ModelManagementPage() {
+  const { confirmDelete, deleteConfirmHolder } = useDeleteConfirm();
   const [pageSize, setPageSize] = usePageSize();
   const [items, setItems] = useState<BackendModelConfiguration[]>([]);
   const [loading, setLoading] = useState(hasBackend);
@@ -66,7 +68,7 @@ export default function ModelManagementPage() {
     endpointPath: providerKind === 'LiteLLM' ? '/chat/completions' : current.endpointPath,
   } : current);
   const save = async (event: React.FormEvent) => { event.preventDefault(); if (!editing) return; setFormError(''); try { await saveModelConfiguration(editing.id || null, { ...editing, temperature: Number(editing.temperature) || 0.3, maxTokens: editing.maxTokens ? Number(editing.maxTokens) : null, sortOrder: Number(editing.sortOrder) || 0 }); setEditing(null); setNotice('模型配置已保存'); await refresh(); } catch (error) { setFormError(error instanceof Error ? error.message : '保存失败'); } };
-  const remove = async (item: BackendModelConfiguration) => { if (!window.confirm(`确定删除模型“${item.name}”吗？`)) return; try { await deleteModelConfiguration(item.id); setNotice('模型已删除'); await refresh(); } catch (error) { setNotice(error instanceof Error ? error.message : '删除失败'); } };
+  const remove = async (item: BackendModelConfiguration) => { if (!await confirmDelete(`确定删除模型“${item.name}”吗？`)) return; try { await deleteModelConfiguration(item.id); setNotice('模型已删除'); await refresh(); } catch (error) { setNotice(error instanceof Error ? error.message : '删除失败'); } };
   const test = async (item: BackendModelConfiguration) => { try { const result = await testModelConfiguration(item.id); setNotice(result.message || '连接测试成功'); } catch (error) { setNotice(error instanceof Error ? error.message : '连接测试失败'); } };
   const toggleModel = async (item: BackendModelConfiguration) => {
     try { await saveModelConfiguration(item.id, { ...item, apiKey: '', isEnabled: !item.isEnabled }); setNotice(`模型已${item.isEnabled ? '停用' : '启用'}`); await refresh(); }
@@ -123,7 +125,7 @@ export default function ModelManagementPage() {
     finally { setSyncing(false); }
   };
 
-  return <div className="admin-page model-management-page page-enter">
+  return <div className="admin-page model-management-page page-enter">{deleteConfirmHolder}
     <div className="page-title"><div><span className="section-kicker">MODEL PROVIDERS</span><h1>模型管理</h1><p>配置本地 Ollama、vLLM 与在线 OpenAI 兼容模型，Chat 会实时读取启用的配置。</p></div><div className="page-title-actions"><button className="secondary-action" type="button" onClick={() => void openSearch()}><Globe2 size={18} />DeepSeek 搜索</button><button className="secondary-action" type="button" onClick={() => { setFormError(''); setSyncDialogOpen(true); }}><RefreshCw size={18} />同步 LiteLLM</button><button className="primary-action" type="button" onClick={() => openEdit()}><Plus size={18} />新增模型</button></div></div>
     {notice && <div className="inline-notice" role="status"><CheckCircle2 size={16} />{notice}<button type="button" onClick={() => setNotice('')}>×</button></div>}
     {formError && <div className="model-form-error" role="alert">{formError}</div>}

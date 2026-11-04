@@ -147,6 +147,7 @@ export interface ModelProviderGroup {
   readonly id: string
   readonly name: string
   readonly models: readonly ModelCatalogModel[]
+  readonly source?: 'external' | 'internal' | 'custom'
 }
 
 /** One provider whose model catalog lookup failed. */
@@ -351,6 +352,8 @@ export interface SessionPromptAdmission {
   readonly sessionId: SessionId
   readonly content: readonly PromptContentPart[]
   readonly signal: AbortSignal
+  /** Selected route for admission policy; absent for legacy internal callers. */
+  readonly provider?: string
 }
 
 /** Prompt policy result; rejection text is safe to display to the submitting user. */

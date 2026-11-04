@@ -1,5 +1,6 @@
 "use client";
 
+import { useDeleteConfirm } from '../../components/delete-confirm';
 import { useEffect, useState } from 'react';
 import { getDshBackups, deleteDshBackup, downloadDshBackup, type DshBackupRow } from '../../lib/api-client';
 import { usePageSize } from '../../components/use-page-size';
@@ -9,6 +10,7 @@ import './style.css';
 
 const time = (value: string | null) => value ? new Date(value).toLocaleString('zh-CN') : '暂无记录';
 export default function DshBackupsPage() {
+  const { confirmDelete, deleteConfirmHolder } = useDeleteConfirm();
   const [pageSize, setPageSize] = usePageSize();
   const [rows, setRows] = useState<DshBackupRow[]>([]);
   const [total, setTotal] = useState(0);
@@ -34,7 +36,7 @@ export default function DshBackupsPage() {
     try { await operation(); } catch (cause) { setError(cause instanceof Error ? cause.message : '操作失败'); }
     finally { setBusy(false); }
   }
-  return <div className="admin-page page-enter">
+  return <div className="admin-page page-enter">{deleteConfirmHolder}
     <div className="page-title"><div><h1>客户端备份</h1><p>普通用户管理自己的备份，平台管理员可查看和删除全部备份。下载仅限本人。</p></div>
       <button type="button" className="secondary-action" disabled={loading || busy} onClick={() => reload()}>刷新</button></div>
     <div className="admin-panel backup-filters"><label>搜索用户<input aria-label="搜索用户" value={search} onChange={event => { reload(() => { setSearch(event.target.value); setPage(1); }); }} placeholder="姓名或工号" /></label>
@@ -46,8 +48,8 @@ export default function DshBackupsPage() {
         {rows.map(row => <tr key={row.id}><td>{row.userName}<br /><small>{row.employeeNo}</small></td><td>{time(row.lastLoginAt)}</td><td>{time(row.createdAt)}</td><td>{row.scope === 'all' ? '全部历史' : '选中历史'}</td><td>{row.sessionCount}</td><td>{(row.bytes / 1024 / 1024).toFixed(2)} MiB</td>
           <td><div className="backup-actions"><button type="button" className="secondary-action" onClick={() => setDetail(row)}>查看</button>
             {row.canDownload && <button type="button" className="secondary-action" disabled={busy} onClick={() => { void run(() => downloadDshBackup(row.id)); }}>下载</button>}
-            <button type="button" className="secondary-action" disabled={busy} onClick={() => {
-              if (window.confirm('永久删除这份云端备份？客户端已有数据会保留。')) void run(async () => {
+            <button type="button" className="secondary-action" disabled={busy} onClick={async () => {
+              if (await confirmDelete('永久删除这份云端备份？客户端已有数据会保留。')) void run(async () => {
                 await deleteDshBackup(row.id); reload(() => setPage(1));
               });
             }}>删除</button></div></td></tr>)}

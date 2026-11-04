@@ -44,6 +44,16 @@ public static class ApplicationConfiguration
         var jwt = builder.Configuration.GetSection("Jwt").Get<JwtOptions>() ?? new JwtOptions();
         builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(options =>
         {
+            options.Events = new JwtBearerEvents
+            {
+                OnTokenValidated = async context =>
+                {
+                    var id = context.Principal?.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+                    var db = context.HttpContext.RequestServices.GetRequiredService<AigcHubDbContext>();
+                    if (!Guid.TryParse(id, out var userId) || !await db.Users.AnyAsync(x => x.Id == userId, context.HttpContext.RequestAborted))
+                        context.Fail("用户不存在或已删除");
+                }
+            };
             options.TokenValidationParameters = new TokenValidationParameters
             {
                 ValidateIssuer = true,
@@ -132,6 +142,21 @@ public static class ApplicationConfiguration
                 ? null
                 : HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
         });
+        builder.Services.AddOptions<UserSyncOptions>().Bind(builder.Configuration.GetSection("UserSync"))
+            .ValidateDataAnnotations().Validate(x => !x.Enabled || (!string.IsNullOrWhiteSpace(x.UserName) && !string.IsNullOrWhiteSpace(x.Password)),
+                "启用用户同步时必须配置独立的 MQ 生产账号和密码")
+            .Validate(x => x.Consumers.All(c => !string.IsNullOrWhiteSpace(c.ServiceName) && !string.IsNullOrWhiteSpace(c.Queue))
+                && x.Consumers.Select(c => c.Queue).Distinct().Count() == x.Consumers.Length, "接收服务必须有名称和唯一队列").ValidateOnStart();
+        builder.Services.AddSingleton<IUserSyncPublisher, RabbitUserSyncPublisher>();
+        builder.Services.AddScoped<UserSyncDispatcher>();
+        builder.Services.AddHostedService<UserSyncWorker>();
+        builder.Services.AddOptions<ConfigSyncOptions>().Bind(builder.Configuration.GetSection("ConfigSync"))
+            .ValidateDataAnnotations().Validate(x => !x.Enabled || (!string.IsNullOrWhiteSpace(x.UserName) && !string.IsNullOrWhiteSpace(x.Password)),
+                "启用配置热更新 MQ 时必须提供专用运行账号和密码").ValidateOnStart();
+        builder.Services.AddSingleton<ConfigSyncSignals>();
+        builder.Services.AddScoped<ConfigSyncService>();
+        builder.Services.AddHostedService<ConfigSyncWorker>();
+        builder.Services.AddScoped<TokenBillingService>();
         builder.Services.AddScoped<ModelConfigurationService>();
         builder.Services.AddScoped<AccessGrantService>();
         builder.Services.AddScoped<LiteLlmModelSyncService>();

@@ -3,6 +3,10 @@
 .feedback-filters label:first-child { flex: 1 1 280px; max-width: 480px; }
 .feedback-filters input, .feedback-filters select { width: 100%; min-height: 38px; border: 1px solid var(--line); border-radius: 6px; padding: 8px 10px; background: var(--surface); color: var(--ink); font: inherit; }
 .feedback-filters input:focus-visible, .feedback-filters select:focus-visible { outline: 2px solid var(--blue-600); outline-offset: 2px; }
+.feedback-filters .table-search { width: 100%; min-width: 0; }
+.feedback-filters .table-search input,
+.feedback-filters .table-search input:focus-visible { min-height: 0; padding: 0; border: 0; background: transparent; outline: none; box-shadow: none; }
+.feedback-filters .table-search svg { flex: none; }
 .feedback-table { overflow-x: auto; }
 .feedback-table .data-grid { min-width: 800px; }
 .feedback-table th:first-child { width: 180px; }

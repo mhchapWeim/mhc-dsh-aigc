@@ -8,6 +8,53 @@ public static class DatabaseSchemaInitializer
     {
         if (!db.Database.IsRelational()) return;
         const string sql = """
+        ALTER TABLE aigc_hub."Users" ADD COLUMN IF NOT EXISTS "AllowCustomModels" boolean NOT NULL DEFAULT false;
+        ALTER TABLE aigc_hub."Categories" ADD COLUMN IF NOT EXISTS "ParentId" uuid NULL REFERENCES aigc_hub."Categories" ("Id") ON DELETE RESTRICT;
+        CREATE INDEX IF NOT EXISTS "IX_Categories_ParentId" ON aigc_hub."Categories" ("ParentId");
+        CREATE TABLE IF NOT EXISTS aigc_hub."ApplicationClicks" (
+            "Id" uuid PRIMARY KEY, "VisitId" uuid NOT NULL, "ApplicationId" uuid NOT NULL,
+            "UserId" uuid NOT NULL, "CreatedAt" timestamptz NOT NULL
+        );
+        CREATE UNIQUE INDEX IF NOT EXISTS "IX_ApplicationClicks_ApplicationId_UserId_VisitId" ON aigc_hub."ApplicationClicks" ("ApplicationId", "UserId", "VisitId");
+        DROP INDEX IF EXISTS aigc_hub."IX_ApplicationClicks_VisitId";
+        CREATE INDEX IF NOT EXISTS "IX_ApplicationClicks_ApplicationId_CreatedAt" ON aigc_hub."ApplicationClicks" ("ApplicationId", "CreatedAt");
+        CREATE INDEX IF NOT EXISTS "IX_ApplicationClicks_ApplicationId_UserId_CreatedAt" ON aigc_hub."ApplicationClicks" ("ApplicationId", "UserId", "CreatedAt");
+        CREATE TABLE IF NOT EXISTS aigc_hub."ApplicationClickAdjustments" (
+            "ApplicationId" uuid NOT NULL, "Period" text NOT NULL, "PeriodStart" timestamptz NOT NULL,
+            "Offset" bigint NOT NULL, PRIMARY KEY ("ApplicationId", "Period", "PeriodStart")
+        );
+        CREATE TABLE IF NOT EXISTS aigc_hub."ConfigSyncRevisions" (
+            "Id" integer PRIMARY KEY, "Revision" bigint NOT NULL, "UpdatedAt" timestamptz NOT NULL
+        );
+        INSERT INTO aigc_hub."ConfigSyncRevisions" ("Id", "Revision", "UpdatedAt") VALUES (1, 0, now()) ON CONFLICT DO NOTHING;
+        CREATE TABLE IF NOT EXISTS aigc_hub."ConfigSyncEvents" (
+            "Id" uuid PRIMARY KEY, "Revision" bigint NOT NULL, "Domains" text NOT NULL, "Status" text NOT NULL,
+            "Attempts" integer NOT NULL, "CreatedAt" timestamptz NOT NULL, "NextAttemptAt" timestamptz NOT NULL,
+            "SentAt" timestamptz NULL, "ErrorCode" text NOT NULL
+        );
+        CREATE INDEX IF NOT EXISTS "IX_ConfigSyncEvents_Status_NextAttemptAt" ON aigc_hub."ConfigSyncEvents" ("Status", "NextAttemptAt");
+        CREATE TABLE IF NOT EXISTS aigc_hub."ConfigSyncDevices" (
+            "UserId" uuid NOT NULL, "DeviceId" uuid NOT NULL, "DeviceName" text NOT NULL, "ClientVersion" text NOT NULL,
+            "AppliedRevision" bigint NOT NULL, "OfferedRevision" bigint NOT NULL, "OfferId" uuid NOT NULL,
+            "AttemptedRevision" bigint NOT NULL, "Status" text NOT NULL, "ErrorCode" text NOT NULL,
+            "LastSeenAt" timestamptz NOT NULL, "AppliedAt" timestamptz NULL, PRIMARY KEY ("UserId", "DeviceId")
+        );
+        CREATE INDEX IF NOT EXISTS "IX_ConfigSyncDevices_LastSeenAt" ON aigc_hub."ConfigSyncDevices" ("LastSeenAt");
+        CREATE TABLE IF NOT EXISTS aigc_hub."RegisteredApplications" (
+            "Id" uuid PRIMARY KEY, "Name" text NOT NULL, "NameEn" text NOT NULL,
+            "Description" text NOT NULL, "DescriptionEn" text NOT NULL,
+            "Owner" text NOT NULL, "OwnerEn" text NOT NULL, "AccessUrl" text NOT NULL,
+            "CategoryId" uuid NOT NULL REFERENCES aigc_hub."Categories" ("Id"), "CategoryEn" text NOT NULL,
+            "IsEnabled" boolean NOT NULL, "SortOrder" integer NOT NULL, "AccessMode" text NOT NULL,
+            "PublicationRequestId" uuid NULL, "CreatedAt" timestamptz NOT NULL, "UpdatedAt" timestamptz NOT NULL
+        );
+        CREATE INDEX IF NOT EXISTS "IX_RegisteredApplications_CategoryId" ON aigc_hub."RegisteredApplications" ("CategoryId");
+        CREATE TABLE IF NOT EXISTS aigc_hub."RegisteredApplicationGrants" (
+            "Id" uuid PRIMARY KEY, "RegisteredApplicationId" uuid NOT NULL REFERENCES aigc_hub."RegisteredApplications" ("Id") ON DELETE CASCADE,
+            "SubjectType" text NOT NULL, "SubjectId" uuid NOT NULL
+        );
+        CREATE UNIQUE INDEX IF NOT EXISTS "IX_RegisteredApplicationGrant_Subject"
+            ON aigc_hub."RegisteredApplicationGrants" ("RegisteredApplicationId", "SubjectType", "SubjectId");
         CREATE TABLE IF NOT EXISTS aigc_hub."ManagedMcpServices" (
             "Id" uuid PRIMARY KEY, "Name" text NOT NULL, "Description" text NOT NULL,
             "Url" text NOT NULL, "IsEnabled" boolean NOT NULL, "Revision" bigint NOT NULL,
@@ -116,6 +163,7 @@ public static class DatabaseSchemaInitializer
         );
         CREATE UNIQUE INDEX IF NOT EXISTS "IX_DesktopReleases_Version_Platform_Arch" ON aigc_hub."DesktopReleases" ("Version", "Platform", "Arch");
         ALTER TABLE aigc_hub."DesktopAnnouncements" ADD COLUMN IF NOT EXISTS "AudienceJson" text NOT NULL DEFAULT '';
+        ALTER TABLE aigc_hub."DesktopReleases" ADD COLUMN IF NOT EXISTS "IsMandatory" boolean NOT NULL DEFAULT false;
         ALTER TABLE aigc_hub."DesktopReleases" ADD COLUMN IF NOT EXISTS "AudienceJson" text NOT NULL DEFAULT '';
 
         ALTER TABLE aigc_hub."PublicationRequests" ADD COLUMN IF NOT EXISTS "RepositoryUrl" text NOT NULL DEFAULT '';
@@ -300,6 +348,10 @@ public static class DatabaseSchemaInitializer
         CREATE TABLE IF NOT EXISTS aigc_hub."VirtualKeyOrganizationMembers" (
             "OrganizationId" uuid NOT NULL, "UserId" uuid NOT NULL,
             PRIMARY KEY ("OrganizationId", "UserId"));
+        ALTER TABLE aigc_hub."Departments" ADD COLUMN IF NOT EXISTS "DeletedAt" timestamptz NULL;
+        ALTER TABLE aigc_hub."Users" ADD COLUMN IF NOT EXISTS "DeletedAt" timestamptz NULL;
+        ALTER TABLE aigc_hub."ManagedVirtualKeys" ADD COLUMN IF NOT EXISTS "DeletedAt" timestamptz NULL;
+        ALTER TABLE aigc_hub."DesktopReleases" ADD COLUMN IF NOT EXISTS "DeletedAt" timestamptz NULL;
         """;
         await db.Database.ExecuteSqlRawAsync(sql, ct);
     }

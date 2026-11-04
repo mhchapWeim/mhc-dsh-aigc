@@ -3,6 +3,8 @@ export type UserRole = string;
 export type AdminPath = '/admin' | '/admin/publications' | '/admin/reviews' | '/admin/processes' | '/admin/users' | '/admin/departments' | '/admin/categories' | '/admin/roles' | '/admin/models' | '/admin/virtual-keys' | '/admin/audits' | '/admin/sensitive-words' | '/admin/uploads' | '/admin/announcements' | '/admin/client-releases' | '/admin/dsh-feedback' | '/admin/dsh-failures' | '/admin/mcp' | '/admin/plugins' | '/admin/dsh-backups';
 
 export type PlatformUser = {
+  allowCustomModels?: boolean;
+  sync?: { status: 'Pending' | 'Sent' | 'Failed'; sentAt: string | null; createdAt: string; lastError: string } | null;
   id: string;
   name: string;
   employeeNo: string;
@@ -10,14 +12,19 @@ export type PlatformUser = {
   department: string;
   departmentId?: string | null;
   roleIds?: string[];
+  pluginIds?: string[];
+  releaseIds?: string[];
+  mcpIds?: string[];
   modelIds?: string[];
   virtualKeyIds?: string[];
+  billingPlanId?: string | null;
   role: UserRole;
   status: UserStatus;
   lastLogin: string;
 };
 
 export type PlatformCategory = {
+  parentId?: string | null;
   id: string;
   code?: string;
   name: string;
@@ -27,7 +34,7 @@ export type PlatformCategory = {
   enabled: boolean;
   order: number;
 };
-export type PlatformDepartment = { id: string; code?: string; name: string; manager: string; description: string; enabled: boolean };
+export type PlatformDepartment = { id: string; code?: string; name: string; manager: string; description: string; enabled: boolean; billingPlanId?: string | null };
 export type PlatformRole = { id: string; code?: string; name: string; description: string; permissions: AdminPath[]; builtIn: boolean };
 
 export type PublicationStatus = '草稿' | '审核中' | '发布中' | '已通过' | '已退回' | '发布失败';
@@ -62,6 +69,8 @@ export type PlatformAction =
   | { type: 'set-notice'; notice: string }
   | { type: 'save-user'; user: PlatformUser }
   | { type: 'toggle-user-status'; id: string }
+  | { type: 'delete-user'; id: string }
+  | { type: 'delete-department'; id: string }
   | { type: 'save-category'; category: PlatformCategory }
   | { type: 'toggle-category-status'; id: string }
   | { type: 'delete-category'; id: string }
@@ -89,6 +98,12 @@ export function canResubmitPublication(user: PlatformUser | undefined, request: 
 }
 
 export function canAccessAdminPath(state: PlatformState, user: PlatformUser | undefined, path: string) {
+  // Billing management is an extension of model administration; both of its subpages
+  // inherit that grant rather than defining a permission of their own.
+  if (path.startsWith('/admin/billing')) path = '/admin/models';
+  if (path === '/admin/click-reports') path = '/admin/categories';
+  if (path === '/admin/registry') path = '/admin/categories';
+  if (path === '/admin/config-updates') path = '/admin/models';
   if (!user || user.status !== '启用') return false;
   if (path === '/admin/dsh-backups') return true;
   const normalized = path === '/admin' ? '/admin' : (`/${path.split('/').filter(Boolean).slice(0, 2).join('/')}` as AdminPath);
@@ -173,6 +188,8 @@ export function platformReducer(state: PlatformState, action: PlatformAction): P
     const exists = state.users.some((user) => user.id === action.user.id);
     return { ...state, users: exists ? state.users.map((user) => user.id === action.user.id ? action.user : user) : [action.user, ...state.users], notice: exists ? '用户信息已更新' : '用户已添加' };
   }
+  if (action.type === 'delete-department') return { ...state, departments: state.departments.filter(item => item.id !== action.id), notice: '部门已删除' };
+  if (action.type === 'delete-user') return { ...state, users: state.users.filter(user => user.id !== action.id), notice: '用户已删除' };
   if (action.type === 'toggle-user-status') return { ...state, users: state.users.map((user) => user.id === action.id ? { ...user, status: user.status === '启用' ? '停用' : '启用' } : user), notice: '用户状态已更新' };
   if (action.type === 'save-category') {
     const exists = state.categories.some((category) => category.id === action.category.id);

@@ -1,16 +1,22 @@
 'use client';
 
+import { DeleteButton } from '../../components/delete-button';
+import { useDeleteConfirm } from '../../components/delete-confirm';
+import { SearchableSelect } from '../../components/modern-select';
+
 import { useEffect, useRef, useState } from 'react';
-import { Plus, RefreshCw, Users, Upload, Send, Pause } from 'lucide-react';
+import { Plus, RefreshCw, Users, Upload, Send, Pause, ShieldAlert, Trash2 } from 'lucide-react';
 import { usePageSize } from '../../components/use-page-size';
 import { AntPagination } from '../../components/ant-pagination';
 import { Modal } from '../../components/modal';
 import { RecipientPicker, emptyAudience, emptyAudienceOptions } from '../components/recipient-picker';
-import { createDesktopRelease, getDesktopAudienceOptions, getDesktopReleases, setDesktopReleaseRecipients, setDesktopReleaseStatus, uploadDesktopRelease,
+import { deleteDesktopRelease, setDesktopReleaseMandatory, createDesktopRelease, getDesktopAudienceOptions, getDesktopReleases, setDesktopReleaseRecipients, setDesktopReleaseStatus, uploadDesktopRelease,
   type DesktopRelease, type DesktopAudienceOptions, type GrantSelection } from '../../lib/api-client';
 
 const statuses: Record<string, string> = { Draft: '草稿', Published: '发布中', Paused: '已暂停', Current: '当前版本', Available: '发现更新', Downloading: '下载中', Ready: '待重启', Installing: '安装中', Failed: '失败' };
 export default function ClientReleasesPage() {
+  const { confirmDelete, deleteConfirmHolder } = useDeleteConfirm();
+  const [mandatoryTarget, setMandatoryTarget] = useState<DesktopRelease | null>(null);
   const [items, setItems] = useState<DesktopRelease[]>([]);
   const [options, setOptions] = useState<DesktopAudienceOptions>(emptyAudienceOptions);
   const [releasePage, setReleasePage] = useState(1);
@@ -24,18 +30,28 @@ export default function ClientReleasesPage() {
   const refresh = async () => { const [releases, people] = await Promise.all([getDesktopReleases(), getDesktopAudienceOptions('releases')]); setItems(releases); setOptions(people); };
   useEffect(() => { let active = true; Promise.all([getDesktopReleases(), getDesktopAudienceOptions('releases')]).then(([releases, people]) => { if (active) { setItems(releases); setOptions(people); } }).catch(error => { if (active) setNotice(error.message); }); return () => { active = false; }; }, []);
   const run = async (operation: () => Promise<void>) => { setBusy(true); setNotice(''); try { await operation(); await refresh(); } catch (error) { setNotice(error instanceof Error ? error.message : '操作失败'); } finally { setBusy(false); } };
-  return <div className="admin-page page-enter release-management">
+  return <div className="admin-page page-enter release-management">{deleteConfirmHolder}
     <div className="page-title"><div><span className="section-kicker">DESKTOP RELEASES</span><h1>版本发布</h1><p>沿用 DSH 更新流程，向指定人员发布 Windows 新版本。</p></div><button className="primary-action" onClick={() => { setVersion(''); setNotes(''); setArch('x64'); setAudience(emptyAudience()); setNotice(''); setCreate(true); }}><Plus size={18} />新增版本</button></div>
     {notice && <div className="inline-notice" role="status">{notice}</div>}
     <section className="admin-panel table-panel"><div className="toolbar"><strong>版本列表</strong><button className="secondary-action" disabled={busy} onClick={() => void run(async () => {})}><RefreshCw size={16} />刷新</button></div><div className="data-grid-wrap"><table className="data-grid release-table" aria-label="客户端版本列表"><thead><tr><th>版本</th><th>状态</th><th>安装包</th><th>灰度人员</th><th>操作</th></tr></thead><tbody>{items.slice((currentReleasePage - 1) * pageSize, currentReleasePage * pageSize).map(item => <tr key={item.id}>
-      <td><strong>{item.version}</strong><small className="distribution-subtext">Windows {item.arch}</small></td><td>{statuses[item.status]}</td><td>{item.bytes ? `${(item.bytes / 1048576).toFixed(1)} MB${item.hasBlockmap ? ' · 差分文件' : ''}` : '尚未上传'}</td><td>{item.recipients.length} 人</td><td><div className="row-actions">
+      <td><strong>{item.version}</strong><small className="distribution-subtext">Windows {item.arch}</small></td><td>{statuses[item.status]}{item.isMandatory && <small className="distribution-subtext">强制更新</small>}</td><td>{item.bytes ? `${(item.bytes / 1048576).toFixed(1)} MB${item.hasBlockmap ? ' · 差分文件' : ''}` : '尚未上传'}</td><td>{item.recipients.length} 人</td><td><div className="row-actions">
         <button type="button" aria-label="人员与说明" title="人员与说明" disabled={busy} onClick={() => { setAudience(item.audience ?? { ...emptyAudience(), userIds: item.recipients.map(person => person.userId) }); setTarget(item); }}><Users size={16} /></button>
         {item.status === 'Draft' && item.bytes === 0 && <button type="button" aria-label="上传安装包" title="上传安装包" disabled={busy} onClick={() => { setPercent(0); setNotice(''); setUpload(item); }}><Upload size={16} /></button>}
         {item.status !== 'Published' && <button type="button" aria-label={item.status === 'Paused' ? '恢复发布' : '发布'} title={item.status === 'Paused' ? '恢复发布' : '发布'} disabled={busy || !item.bytes} onClick={() => void run(() => setDesktopReleaseStatus(item.id, 'Published'))}><Send size={16} /></button>}
         {item.status === 'Published' && <button type="button" className="danger-icon" aria-label="暂停发布" title="暂停发布" disabled={busy} onClick={() => void run(() => setDesktopReleaseStatus(item.id, 'Paused'))}><Pause size={16} /></button>}
+        <button type="button" aria-label={item.isMandatory ? '取消强制更新' : '强制更新'} title={item.isMandatory ? '取消强制更新' : '强制更新（须先上传并发布）'} disabled={busy || (!item.isMandatory && (item.status !== 'Published' || !item.bytes))} onClick={() => { setNotice(''); setMandatoryTarget(item); }}><ShieldAlert size={16} /></button><DeleteButton type="button" className="danger-icon" title="删除版本" aria-label={`删除版本 ${item.version}`} disabled={busy} onClick={() => void confirmDelete(`删除版本 ${item.version}？将停止分发和此版本的强制更新要求，保留安装包及历史记录。已安装客户端不会降级。`, async () => { setBusy(true); try { await deleteDesktopRelease(item.id); setItems(items => items.filter(release => release.id !== item.id)); setNotice('版本已删除'); } finally { setBusy(false); } })}><Trash2 size={16} /></DeleteButton>
       </div></td></tr>)}</tbody></table></div>{items.length === 0 && <div className="empty-state">创建版本、上传安装包并选择灰度人员后发布。</div>}<AntPagination onPageSizeChange={setPageSize} ariaLabel="客户端版本列表分页" current={currentReleasePage} total={items.length} pageSize={pageSize} onChange={setReleasePage} /></section>
+    {mandatoryTarget && <Modal title={mandatoryTarget.isMandatory ? '取消强制更新' : '确认强制更新'} onClose={() => { if (!busy) setMandatoryTarget(null); }}>
+      <div className="entity-form distribution-form">
+        <p>{mandatoryTarget.isMandatory ? `取消版本 ${mandatoryTarget.version} 的强制更新要求？其他已启用的强制版本要求仍然有效。` : `确定将 ${mandatoryTarget.version} 设为最低可用版本？所有 Windows ${mandatoryTarget.arch} 用户（不限灰度名单），低于此版本时必须升级，否则无法使用客户端。`}</p>
+        <p>策略在客户端下次检查时生效。暂停此版本发布也会取消此版本的强制要求。</p>
+        {notice && <p role="alert">{notice}</p>}
+        <div className="modal-actions"><button type="button" className="secondary-action" disabled={busy} onClick={() => setMandatoryTarget(null)}>取消</button>
+          <button type="button" className="primary-action" disabled={busy} onClick={() => void run(async () => { await setDesktopReleaseMandatory(mandatoryTarget.id, !mandatoryTarget.isMandatory); setMandatoryTarget(null); setNotice('强制更新策略已保存'); })}>{busy ? '保存中…' : '确认'}</button></div>
+      </div>
+    </Modal>}
     {create && <Modal title="新增客户端版本" onClose={() => { if (!busy) setCreate(false); }}><form className="entity-form distribution-form" onSubmit={event => { event.preventDefault(); void run(async () => { if (!(audience.userIds.length + audience.roleIds.length + audience.departmentIds.length)) throw new Error('请选择灰度人员'); await createDesktopRelease({ version, notes, arch, ...audience }); setCreate(false); setNotice('草稿已创建，请上传安装包后发布'); }); }}>
-      <div className="form-grid"><label>版本号<input required placeholder="例如 0.1.7-alpha.3" maxLength={100} value={version} onChange={event => setVersion(event.target.value)} /></label><label>Windows 架构<select value={arch} onChange={event => setArch(event.target.value)}><option value="x64">x64</option><option value="arm64">arm64</option></select></label></div><label>更新说明<textarea rows={3} maxLength={20000} value={notes} onChange={event => setNotes(event.target.value)} /></label><RecipientPicker options={options} value={audience} onChange={setAudience} />{notice && <p role="alert">{notice}</p>}<div className="modal-actions"><button type="button" className="secondary-action" disabled={busy} onClick={() => setCreate(false)}>取消</button><button className="primary-action" disabled={busy}>{busy ? '保存中…' : '创建草稿'}</button></div>
+      <div className="form-grid"><label>版本号<input required placeholder="例如 0.1.7-alpha.3" maxLength={100} value={version} onChange={event => setVersion(event.target.value)} /></label><label>Windows 架构<SearchableSelect aria-label="Windows 架构" value={arch} onChange={event => setArch(event.target.value)}><option value="x64">x64</option><option value="arm64">arm64</option></SearchableSelect></label></div><label>更新说明<textarea rows={3} maxLength={20000} value={notes} onChange={event => setNotes(event.target.value)} /></label><RecipientPicker options={options} value={audience} onChange={setAudience} />{notice && <p role="alert">{notice}</p>}<div className="modal-actions"><button type="button" className="secondary-action" disabled={busy} onClick={() => setCreate(false)}>取消</button><button className="primary-action" disabled={busy}>{busy ? '保存中…' : '创建草稿'}</button></div>
     </form></Modal>}
     {upload && <Modal title={`上传 ${upload.version} 更新包`} onClose={() => { if (!busy) setUpload(null); }}><form className="entity-form distribution-form" onSubmit={event => { event.preventDefault(); void run(async () => { const file = installer.current?.files?.[0]; if (!file) throw new Error('请选择安装包'); await uploadDesktopRelease(upload.id, file, blockmap.current?.files?.[0] ?? null, setPercent); setUpload(null); setNotice('上传完成，可发布给灰度人员'); }); }}>
       <label>Windows 安装包（.exe）<input required ref={installer} type="file" accept=".exe" /></label><label>对应差分文件（可选 .exe.blockmap）<input ref={blockmap} type="file" accept=".blockmap" /></label><p>使用现有打包流程生成的已签名安装包。更新清单与 SHA-512 校验由服务端生成；已上传文件不可覆盖。</p>{busy && <p role="status">上传 {percent}%{percent === 100 ? '，正在校验与保存…' : ''}</p>}{notice && <p role="alert">{notice}</p>}<div className="modal-actions"><button type="button" className="secondary-action" disabled={busy} onClick={() => setUpload(null)}>取消</button><button className="primary-action" disabled={busy}>{busy ? '上传中…' : '上传'}</button></div>

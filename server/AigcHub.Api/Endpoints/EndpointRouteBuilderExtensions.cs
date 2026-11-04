@@ -13,15 +13,19 @@ public static class EndpointRouteBuilderExtensions
 
         app.MapAuthEndpoints();
         app.MapUserEndpoints();
+        app.MapUserSyncEndpoints();
         app.MapRoleEndpoints();
         app.MapOrganizationEndpoints();
         app.MapProcessEndpoints();
         app.MapPublicationEndpoints();
         app.MapCatalogEndpoints();
+        app.MapApplicationRegistryEndpoints();
         app.MapNotificationEndpoints();
         app.MapWorkflowCallbackEndpoints();
         app.MapChatEndpoints();
         app.MapModelEndpoints();
+        app.MapTokenBillingEndpoints();
+        app.MapConfigSyncEndpoints();
         app.MapVirtualKeyEndpoints();
         app.MapWebSearchEndpoints();
         app.MapPluginMarketEndpoints();

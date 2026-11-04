@@ -57,7 +57,10 @@ export function installConnectors(ctx:Context):void {
     name:'main',key:panel,inject:()=>({hooks:{connectors:store,connectorLocale:locale}}),
   },Cards))
   ctx.remote.$on('plugin-manager/connectors-updated',accept)
-  ctx.remote.$on('credentials/record-updated',()=>{accept([]);void refresh()})
+  ctx.remote.$on('credentials/record-updated',key=>{
+    if (key !== 'llm-managed-backend/user-session') return
+    accept([]);void refresh()
+  })
   ctx.on('connection/reset',()=>{accept([]);void refresh()})
   const timer=setInterval(()=>{void refresh()},5000)
   ctx.effect(()=>()=>{disposed=true;generation++;clearInterval(timer);removeEntry?.()},'ui-connectors.catalog')

@@ -41,7 +41,10 @@ export function installManagedMcpSync(ctx: Context, options: {pollMs:number;requ
         await Promise.all(previous.map(item=>item.connection.dispose()))
       }
       const healthTimer = setInterval(publishCatalog, 2000)
-      scope.on('credentials/record-updated', () => { identityGeneration++; catalog = []; publish([]); wake?.() })
+      scope.on('credentials/record-updated', key => {
+        if (key !== credentialKey('llm-managed-backend', 'user-session')) return
+        identityGeneration++; catalog = []; publish([]); wake?.()
+      })
       const task = (async () => {
         while (!lifetime.signal.aborted) {
           const generation = identityGeneration

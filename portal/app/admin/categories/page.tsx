@@ -1,5 +1,7 @@
 "use client";
 
+import { DeleteButton } from '../../components/delete-button';
+import { useDeleteConfirm } from '../../components/delete-confirm';
 import { useMemo, useState } from "react";
 import {
   ArrowDown,
@@ -30,6 +32,7 @@ const emptyCategory = (order: number): PlatformCategory => ({
 });
 
 export default function CategoryManagementPage() {
+  const { confirmDelete, deleteConfirmHolder } = useDeleteConfirm();
   const [pageSize, setPageSize] = usePageSize();
   const { categories, dispatch, notice } = usePlatform();
   const [editing, setEditing] = useState<PlatformCategory | null>(null);
@@ -67,7 +70,7 @@ export default function CategoryManagementPage() {
   };
 
   return (
-    <div className="admin-page page-enter">
+    <div className="admin-page page-enter">{deleteConfirmHolder}
       <div className="page-title">
         <div>
           <span className="section-kicker">PORTAL TAXONOMY</span>
@@ -183,7 +186,7 @@ export default function CategoryManagementPage() {
                     <td>
                       <div className="category-name-cell">
                         <i style={{ background: category.color }} />
-                        <strong>{category.name}</strong>
+                        <strong>{category.parentId ? `${categories.find(x => x.id === category.parentId)?.name || ""} / ` : ""}{category.name}</strong>
                       </div>
                     </td>
                     <td>
@@ -228,19 +231,15 @@ export default function CategoryManagementPage() {
                         >
                           <Power size={16} />
                         </button>
-                        <button
+                        <DeleteButton
                           className="danger-icon"
                           type="button"
                           aria-label={`删除${category.name}`}
-                          onClick={() =>
-                            dispatch({
-                              type: "delete-category",
-                              id: category.id,
-                            })
-                          }
+                          blockedReason={categories.some(x => x.parentId === category.id) ? "请先删除或调整下属二级分类" : category.appCount > 0 ? `该分类仍有关联应用（${category.appCount} 个），请先转移或移除应用` : undefined}
+                          onClick={() => void confirmDelete(`删除分类“${category.name}”？`, () => dispatch({ type: "delete-category", id: category.id }))}
                         >
                           <Trash2 size={16} />
-                        </button>
+                        </DeleteButton>
                       </div>
                     </td>
                   </tr>
@@ -280,6 +279,7 @@ export default function CategoryManagementPage() {
         >
           <form className="entity-form" onSubmit={save}>
             <div className="form-grid">
+              <div className="form-field form-span"><span>上级分类</span><ModernSelect ariaLabel="上级分类" value={editing.parentId || ''} options={[{value: '', label: '无（一级分类）'}, ...categories.filter(x => !x.parentId && x.id !== editing.id && x.enabled).map(x => ({value: x.id, label: x.name}))]} onChange={parentId => setEditing({...editing, parentId: parentId || null})}/></div>
               <label>
                 <span>分类名称 *</span>
                 <input

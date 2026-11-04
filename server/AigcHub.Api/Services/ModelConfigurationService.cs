@@ -19,7 +19,7 @@ public sealed class ModelConfigurationService(
     AigcHubDbContext db,
     AccessGrantService grants,
     IDataProtectionProvider protectionProvider,
-    IOptions<ChatOptions> legacyOptions)
+    IOptions<ChatOptions> legacyOptions, LiteLlmVirtualKeyService? virtualKeys = null)
 {
     public ModelConfigurationService(AigcHubDbContext db, IDataProtectionProvider protectionProvider,
         IOptions<ChatOptions> legacyOptions) : this(db, new AccessGrantService(db), protectionProvider, legacyOptions) { }
@@ -42,7 +42,14 @@ public sealed class ModelConfigurationService(
         var allowed = directIds.ToHashSet();
         foreach (var key in keys)
             if (Guid.TryParse(key["model:".Length..], out var id)) allowed.Add(id);
-        var items = await db.ModelConfigurations.AsNoTracking().Where(x => x.IsEnabled && allowed.Contains(x.Id))
+        // Assigned Keys are authoritative for LiteLLM, including an empty/revoked catalog.
+        var keyModels = virtualKeys is null ? null : await virtualKeys.AllowedModelNamesAsync(userId, ct);
+        var candidates = db.ModelConfigurations.AsNoTracking().Where(x => x.IsEnabled);
+        candidates = keyModels is null
+            ? candidates.Where(x => allowed.Contains(x.Id))
+            : candidates.Where(x => x.ProviderKind == "LiteLLM"
+                ? keyModels.Contains(x.ModelIdentifier) : allowed.Contains(x.Id));
+        var items = await candidates
             .OrderByDescending(x => x.IsDefault).ThenBy(x => x.SortOrder).ThenBy(x => x.Name)
             .Select(x => new AvailableChatModel(x.Id, x.Name, x.ProviderKind, x.ModelIdentifier, x.SupportsTools, x.IsDefault, x.ImageInputMode, x.Multiplier))
             .ToListAsync(ct);
@@ -52,12 +59,10 @@ public sealed class ModelConfigurationService(
     public async Task<ResolvedChatModel?> ResolveGrantedAsync(Guid userId, Guid? modelId, CancellationToken ct)
     {
         if (modelId == Guid.Empty) throw new WorkflowException("该模型未向当前用户授权", 403);
-        var selected = modelId ?? (await AvailableAsync(userId, ct)).FirstOrDefault()?.Id;
+        var available = await AvailableAsync(userId, ct);
+        var selected = modelId ?? available.FirstOrDefault()?.Id;
         if (selected is null) return null;
-        var allowed = await db.Users.AnyAsync(x => x.Id == userId && x.IsEnabled, ct)
-            && (await db.UserModelGrants.AnyAsync(x => x.UserId == userId && x.ModelId == selected, ct)
-                || await grants.AllowsAsync(AccessGrantService.ModelKey(selected.Value), userId, ct));
-        if (!allowed) throw new WorkflowException("该模型未向当前用户授权", 403);
+        if (!available.Any(x => x.Id == selected)) throw new WorkflowException("该模型未向当前用户授权", 403);
         return await ResolveAsync(selected, ct);
     }
 

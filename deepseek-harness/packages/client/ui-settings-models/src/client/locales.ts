@@ -3,6 +3,8 @@
 /** English strings (the key-set source of truth for this pair). */
 export const en = {
   nav: 'Models',
+  customNav: 'Custom Models',
+  customIntro: 'Models configured on this device connect directly to your provider and do not consume your organization quota.',
   title: 'Models',
   intro: 'Enter your API keys to use models from the following providers.',
   edit: 'Edit',
@@ -122,6 +124,8 @@ export type ModelsKey = keyof typeof en
 /** Chinese strings (same keys as {@link en}). */
 export const zh: { [Key in keyof typeof en]: string } = {
   nav: '模型',
+  customNav: '自定义模型',
+  customIntro: '配置仅保存在本机，客户端直连模型服务，不消耗中台配额。',
   title: '模型',
   intro: '填入各提供商的 API 密钥即可使用其模型。',
   edit: '编辑',

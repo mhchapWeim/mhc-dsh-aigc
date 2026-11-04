@@ -1,5 +1,7 @@
 "use client";
 
+import { SearchableSelect } from '../../components/modern-select';
+
 import { useEffect, useRef, useState } from "react";
 import { usePageSize } from '../../components/use-page-size';
 import { AntPagination } from "../../components/ant-pagination";
@@ -201,7 +203,7 @@ export default function DshFailuresPage() {
         </label>
         <label>
           错误类型
-          <select
+          <SearchableSelect
             aria-label="错误类型"
             value={draft.category}
             onChange={(event) =>
@@ -214,7 +216,7 @@ export default function DshFailuresPage() {
                 {categoryLabels[value]}
               </option>
             ))}
-          </select>
+          </SearchableSelect>
         </label>
         <label>
           开始时间

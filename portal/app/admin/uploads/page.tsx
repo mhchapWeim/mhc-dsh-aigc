@@ -1,5 +1,7 @@
 'use client';
 
+import { SearchableSelect } from '../../components/modern-select';
+
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { FileClock, RefreshCw, Search } from 'lucide-react';
 import { usePageSize } from '../../components/use-page-size';
@@ -64,7 +66,7 @@ export default function DshUploadsPage() {
     <div className="page-title"><div><span className="section-kicker">DSH FILE TRANSFERS</span><h1>附件审查</h1><p>记录 DSH 附件文件名及相关信息，不上传文件内容。</p></div><button className="secondary-action" type="button" onClick={() => void refresh()}><RefreshCw size={17} />刷新</button></div>
     {error && <div className="model-form-error" role="alert">{error} <button type="button" onClick={() => void refresh()}>重试</button></div>}
     <section className="admin-panel table-panel dsh-upload-panel">
-      <div className="toolbar"><label className="table-search"><Search size={18} /><input type="search" maxLength={200} aria-label="搜索上传任务" placeholder="搜索文件、用户或计算机" value={query} onChange={(event) => setQuery(event.target.value)} /></label><div className="toolbar-filters"><select aria-label="上传状态筛选" value={status} onChange={(event) => { setStatus(event.target.value); setPage(1); }}><option value="">全部状态</option>{Object.entries(labels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></div></div>
+      <div className="toolbar"><label className="table-search"><Search size={18} /><input type="search" maxLength={200} aria-label="搜索上传任务" placeholder="搜索文件、用户或计算机" value={query} onChange={(event) => setQuery(event.target.value)} /></label><div className="toolbar-filters"><SearchableSelect aria-label="上传状态筛选" value={status} onChange={(event) => { setStatus(event.target.value); setPage(1); }}><option value="">全部状态</option>{Object.entries(labels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</SearchableSelect></div></div>
       <div className="table-meta"><span>共 {total} 个批次{(searchTerm || status) && ' · 匹配批次展示全部文件'}</span><span>每 10 秒自动刷新</span></div>
       <div className="dsh-upload-table-wrap">
         <table className="data-grid dsh-upload-table">

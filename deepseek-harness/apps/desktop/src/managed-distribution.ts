@@ -1,4 +1,6 @@
 /** Organization-scoped announcement polling and update-feed selection in the Electron main process. */
+import { lt, valid } from 'semver'
+import type { DesktopPolicyState } from './mandatory-update-policy.ts'
 import type { DesktopUpdateState } from './ipc.ts'
 
 /** Private Host credentials, never exposed to a page or saved in update metadata. */
@@ -64,6 +66,10 @@ export class ManagedDesktopDistribution {
   private readonly notified = new Set<string>()
   private current: ManagedAnnouncement[] = []
   private stopped = false
+  private policy: DesktopPolicyState = { blocking: false, checking: false }
+
+  /** Current managed minimum-version decision; transport failures retain a known block. */
+  get mandatoryPolicy(): DesktopPolicyState { return this.policy }
 
   /**
    * @param identity - Installed version and a stable per-profile device id.
@@ -72,10 +78,12 @@ export class ManagedDesktopDistribution {
    * @param changed - Refresh the tray's unread indicator.
    * @param request - Network transport owned by the Electron process.
    * @param intervalMs - Announcement polling interval.
+   * @param policyChanged - Refresh the shell gate when the minimum-version decision changes.
    */
   constructor(private readonly identity: ManagedDesktopIdentity, private readonly state: () => DesktopUpdateState,
     private readonly notify: (item: ManagedAnnouncement) => void, private readonly changed: () => void,
-    private readonly request: typeof fetch = fetch, private readonly intervalMs = 45_000) {}
+    private readonly request: typeof fetch = fetch, private readonly intervalMs = 45_000,
+    private readonly policyChanged: () => void = () => {}) {}
 
   /** Effective announcements retained for the native notification center. */
   get items(): readonly ManagedAnnouncement[] { return this.current }
@@ -90,6 +98,8 @@ export class ManagedDesktopDistribution {
     if (this.stopped || (value?.token === this.session?.token && value?.endpoint === this.session?.endpoint)) return
     this.lifetime.abort(); this.lifetime = new AbortController()
     if (this.timer !== undefined) clearTimeout(this.timer)
+    this.policy = { blocking: value !== null, checking: value !== null }
+    this.policyChanged()
     this.session = value ?? undefined; this.current = []; this.notified.clear(); this.changed()
     if (value !== null) {
       void (this.pendingPoll ?? Promise.resolve()).finally(() => {
@@ -106,6 +116,7 @@ export class ManagedDesktopDistribution {
     if (this.timer !== undefined) clearTimeout(this.timer)
     this.pendingPoll = (async () => {
       try {
+        if (this.identity.platform === 'win32') await this.check(session)
         const response = await this.send(session, '/v1/desktop/announcements')
         const items = announcements(await response.json())
         if (this.session !== session) return
@@ -115,9 +126,11 @@ export class ManagedDesktopDistribution {
           if (item.deliveredAt === null && !this.notified.has(item.id)) { this.notify(item); this.notified.add(item.id) }
           if (item.deliveredAt === null) await this.receipt(item.id, 'Delivered')
         }
-        if (this.identity.platform === 'win32') await this.check(session)
       } catch (error) {
-        if (this.session === session && !this.lifetime.signal.aborted) console.warn('Desktop announcements unavailable:', String(error))
+        if (this.session === session && !this.lifetime.signal.aborted) {
+          this.policy = { ...this.policy, checking: false, error: 'unavailable' }; this.policyChanged()
+          console.warn('Desktop announcements unavailable:', String(error))
+        }
       } finally {
         this.pendingPoll = undefined
         if (this.session === session && !this.stopped) this.timer = setTimeout(() => { void this.poll() }, this.intervalMs)
@@ -176,7 +189,15 @@ export class ManagedDesktopDistribution {
     const response = await this.send(session, '/v1/desktop/check', { ...this.identity,
       updateStatus: names[state.phase], targetVersion: 'version' in state ? state.version ?? '' : '',
       error: state.phase === 'error' ? state.message?.slice(0, 2000) ?? '' : '' })
-    return response.json()
+    const body: unknown = await response.json()
+    if (this.session !== session || this.stopped) return body
+    const result = object(body)
+    if (result.mandatory !== undefined && typeof result.mandatory !== 'boolean') throw new Error('Invalid managed update policy')
+    if (result.mandatory === true && (typeof result.minimumVersion !== 'string' || valid(result.minimumVersion) === null
+      || !lt(this.identity.version, result.minimumVersion) || result.release === null || result.release === undefined)) throw new Error('Invalid managed minimum version')
+    this.policy = { blocking: result.mandatory === true, checking: false }
+    this.policyChanged()
+    return body
   }
 
   private send(session: ManagedDesktopSession, path: string, body?: object): Promise<Response> {

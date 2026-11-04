@@ -92,6 +92,7 @@ export function apply(ctx: ClientContext): void {
     async status(): Promise<ManagedAuthState> {
       return accepted(await ctx.remote.credentials.managedStatus())
     },
+    subscribeConfigUpdates(listener) { return ctx.remote.$on('llm/adapters-updated', listener) },
     async login(username, password): Promise<ManagedAuthState> {
       return accepted(await ctx.remote.credentials.managedLogin(username, password))
     },

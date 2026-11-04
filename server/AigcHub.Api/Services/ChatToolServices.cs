@@ -420,6 +420,7 @@ public sealed class CreateUserTool(
         user.PasswordHash = hasher.HashPassword(user, string.IsNullOrWhiteSpace(input.InitialPassword) ? "Bhss@123" : input.InitialPassword);
         user.Roles = roles.Select(x => new UserRole { User = user, Role = x }).ToList();
         await VirtualKeyGrantRules.AssertUserAssignmentAsync(db, user.Id, user.DepartmentId, roles.Select(x => x.Id).ToArray(), ct);
+        await UserAccessAdministration.BindDefaultLocalModelsAsync(db, user.Id, ct);
         db.Users.Add(user);
         await db.SaveChangesAsync(ct);
         await mutation.CommitAsync(ct);

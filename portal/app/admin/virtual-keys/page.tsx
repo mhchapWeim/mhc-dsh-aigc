@@ -1,13 +1,15 @@
 'use client';
 
+import { DeleteButton } from '../../components/delete-button';
+import { useDeleteConfirm } from '../../components/delete-confirm';
 import { useEffect, useState } from 'react';
-import { KeyRound, Plus, Settings2, Users, Power } from 'lucide-react';
+import { KeyRound, Plus, Settings2, Users, Power, Trash2 } from 'lucide-react';
 import { RecipientPicker } from '../components/recipient-picker';
 import { AntPagination } from '../../components/ant-pagination';
 import { usePageSize } from '../../components/use-page-size';
 import { Modal } from '../../components/modal';
 import { KeyPolicyFields, policyDraft, policyInput } from './key-policy-form';
-import { createManagedVirtualKey, getVirtualKeyGrantOptions, getManagedVirtualKeys,
+import { deleteManagedVirtualKey, createManagedVirtualKey, getVirtualKeyGrantOptions, getManagedVirtualKeys,
   getVirtualKeyPolicy, getVirtualKeyModels, updateVirtualKeyPolicy,
   getVirtualKeyGrants, getVirtualKeyOrganizations, saveVirtualKeyGrants, setManagedVirtualKeyEnabled,
   type VirtualKeyPolicyView, type GrantOptions, type ManagedVirtualKey, type VirtualKeyGrants, type VirtualKeyOrganization } from '../../lib/api-client';
@@ -15,6 +17,7 @@ import { createManagedVirtualKey, getVirtualKeyGrantOptions, getManagedVirtualKe
 const blank = (): VirtualKeyGrants => ({ userIds: [], departmentIds: [], roleIds: [], organizationIds: [] });
 
 export default function VirtualKeysPage() {
+  const { confirmDelete, deleteConfirmHolder } = useDeleteConfirm();
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = usePageSize();
   const [keys, setKeys] = useState<ManagedVirtualKey[]>([]);
@@ -87,14 +90,14 @@ export default function VirtualKeysPage() {
     catch (error) { setGrantError(error instanceof Error ? error.message : '授权保存失败'); }
     finally { setBusy(false); }
   };
-  return <div className="admin-page page-enter">
+  return <div className="admin-page page-enter">{deleteConfirmHolder}
     <div className="page-title"><div><span className="section-kicker">LITELLM ACCESS</span><h1>虚拟 Key 管理</h1><p>AIGC 负责创建和授权；共享 Key 合计用量、单人 Key 独立限额均由 LiteLLM 管控。</p></div>
       <div className="page-title-actions"><a className="secondary-action" href="/admin/departments">部门管理</a><button className="primary-action" disabled={busy} onClick={() => void openPolicy()}><Plus size={18} />创建 Key</button></div></div>
     {message && <div className="inline-notice" role="status">{message}</div>}
     <section className="admin-panel table-panel"><div className="table-meta"><span>共 {keys.length} 个虚拟 Key</span><span>密钥不会在列表中展示</span></div>
-      <div className="data-grid-wrap"><table className="data-grid"><thead><tr><th>别名</th><th>状态</th><th>创建时间</th><th>操作</th></tr></thead><tbody>{keys.slice((Math.min(page, Math.max(1, Math.ceil(keys.length / pageSize))) - 1) * pageSize, Math.min(page, Math.max(1, Math.ceil(keys.length / pageSize))) * pageSize).map((key) => <tr key={key.id}>
+      <div className="data-grid-wrap"><table className="data-grid virtual-key-table"><thead><tr><th>别名</th><th>状态</th><th>创建时间</th><th>操作</th></tr></thead><tbody>{keys.slice((Math.min(page, Math.max(1, Math.ceil(keys.length / pageSize))) - 1) * pageSize, Math.min(page, Math.max(1, Math.ceil(keys.length / pageSize))) * pageSize).map((key) => <tr key={key.id}>
         <td><strong>{key.alias}</strong></td><td>{key.isEnabled ? '已启用' : '已停用'}</td><td>{new Date(key.createdAt).toLocaleString()}</td>
-        <td><div className="table-actions"><button type="button" className="icon-button" title="套餐规则" aria-label={`套餐规则 · ${key.alias}`} disabled={busy} onClick={() => void openPolicy(key)}><Settings2 size={16} /></button><button type="button" className="icon-button" title="授权" aria-label={`授权 · ${key.alias}`} disabled={busy} onClick={() => void openGrants(key)}><Users size={16} /></button><button type="button" className="icon-button" title={key.isEnabled ? '停用' : '启用'} aria-label={`${key.isEnabled ? '停用' : '启用'} · ${key.alias}`} disabled={busy} onClick={() => void setManagedVirtualKeyEnabled(key.id, !key.isEnabled).then(refresh).catch((error) => setMessage(String(error)))}><Power size={16} /></button></div></td>
+        <td><div className="table-actions"><button type="button" className="icon-button" title="套餐规则" aria-label={`套餐规则 · ${key.alias}`} disabled={busy} onClick={() => void openPolicy(key)}><Settings2 size={16} /></button><button type="button" className="icon-button" title="授权" aria-label={`授权 · ${key.alias}`} disabled={busy} onClick={() => void openGrants(key)}><Users size={16} /></button><button type="button" className="icon-button" title={key.isEnabled ? '停用' : '启用'} aria-label={`${key.isEnabled ? '停用' : '启用'} · ${key.alias}`} disabled={busy} onClick={() => void setManagedVirtualKeyEnabled(key.id, !key.isEnabled).then(refresh).catch((error) => setMessage(String(error)))}><Power size={16} /></button><DeleteButton type="button" className="icon-button danger-icon" title="删除虚拟 Key" aria-label={`删除 · ${key.alias}`} disabled={busy} onClick={() => void confirmDelete(`删除虚拟 Key“${key.alias}”？该 Key 将在网关禁用，授权将不再生效，历史记录保留。`, async () => { setBusy(true); try { await deleteManagedVirtualKey(key.id); setKeys(items => items.filter(item => item.id !== key.id)); setMessage('虚拟 Key 已删除'); } finally { setBusy(false); } })}><Trash2 size={16} /></DeleteButton></div></td>
       </tr>)}</tbody></table>{keys.length === 0 && <div className="empty-state"><KeyRound size={28} /><strong>尚无虚拟 Key</strong><span>在此创建，并直接配置模型权限、预算和速率限制。</span></div>}</div><AntPagination ariaLabel="虚拟 Key 分页" current={page} pageSize={pageSize} total={keys.length} onChange={setPage} onPageSizeChange={setPageSize} /></section>
     {creating && <Modal title={policyKey ? `套餐规则 · ${policyKey.alias}` : '创建 LiteLLM 虚拟 Key'} className="virtual-key-policy-modal" onClose={() => { if (!busy) { setCreating(false); setPolicyKey(null); } }}>
       <form className="entity-form virtual-key-policy-form" onSubmit={(event) => { event.preventDefault(); void create(); }}>

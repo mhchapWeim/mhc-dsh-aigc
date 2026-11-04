@@ -20,6 +20,7 @@ public static class VirtualKeyEndpoints
             await db.ManagedVirtualKeys.AsNoTracking().OrderBy(x => x.Alias)
                 .Select(x => new { x.Id, x.Alias, x.IsEnabled, x.CreatedAt }).ToArrayAsync(ct)));
         group.MapPost("/", CreateAsync);
+        group.MapDelete("/{id:guid}", DeleteAsync);
         group.MapPut("/{id:guid}/enabled", SetEnabledAsync);
         group.MapGet("/{id:guid}/grants", GetGrantsAsync);
         group.MapPut("/{id:guid}/grants", SetGrantsAsync);
@@ -70,12 +71,28 @@ public static class VirtualKeyEndpoints
         app.MapPost("/v1/tool-audits", WriteToolAuditAsync).WithTags("DSH 操作审计");
     }
 
+    private static async Task<IResult> DeleteAsync(Guid id, ICurrentUser current, AigcHubDbContext db,
+        LiteLlmVirtualKeyService service, CancellationToken ct)
+    {
+        await using var mutation = await VirtualKeyGrantRules.BeginMutationAsync(db, ct);
+        var key = await db.ManagedVirtualKeys.SingleOrDefaultAsync(x => x.Id == id, ct);
+        if (key is null) return Results.NotFound();
+        // Block the real credential first; a gateway failure must leave the local record intact.
+        await service.SetBlockedAsync(key.KeyProtected, true, ct);
+        key.IsEnabled = false;
+        key.DeletedAt = DateTimeOffset.UtcNow;
+        Audit(db, current.Id, "virtual-key.delete", id.ToString(), new { key.Alias });
+        await db.SaveChangesAsync(ct);
+        await mutation.CommitAsync(ct);
+        return Results.NoContent();
+    }
+
     private static async Task<IResult> CreateAsync(CreateKeyInput input, ICurrentUser current,
         AigcHubDbContext db, LiteLlmVirtualKeyService service, CancellationToken ct)
     {
         var alias = input.Alias.Trim();
         if (alias.Length is < 2 or > 100) throw new WorkflowException("Key 别名长度须为 2–100 字符", 400);
-        if (await db.ManagedVirtualKeys.AnyAsync(x => x.Alias == alias, ct)) throw new WorkflowException("Key 别名已存在", 409);
+        if (await db.ManagedVirtualKeys.IgnoreQueryFilters().AnyAsync(x => x.Alias == alias, ct)) throw new WorkflowException("Key 别名已存在", 409);
         if (input.CustomKey is { Length: > 0 } custom && (!custom.StartsWith("sk-", StringComparison.Ordinal) || custom.Length < 16))
             throw new WorkflowException("自定义 Key 须以 sk- 开头，长度至少 16 字符", 400);
         var protectedKey = await service.CreateAsync(alias, input.CustomKey, ct, input.Policy);
@@ -251,6 +268,10 @@ public static class VirtualKeyEndpoints
         "user.password" => "修改本人密码",
         "user.password-reset" => "管理员修改用户密码",
         "virtual-key.policy" => "修改虚拟 Key 套餐规则",
+        "virtual-key.delete" => "删除虚拟 Key",
+        "user.delete" => "删除用户",
+        "desktop-release.delete" => "删除版本",
+        "billing-plan.delete" => "删除计费配方",
         "virtual-key.create" => "创建虚拟 Key",
         "virtual-key.enabled" => "切换虚拟 Key 状态",
         "virtual-key.grants" => "修改虚拟 Key 授权",

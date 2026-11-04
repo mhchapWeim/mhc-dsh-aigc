@@ -1,3 +1,4 @@
+import { selectDropdown } from '../../../test/select-dropdown';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import McpPage from './page';
@@ -74,7 +75,7 @@ it('requires https for the MCP address in assertion-exchange mode', async () => 
   await openModal(user);
   await user.type(screen.getByLabelText('名称'), '生产追溯');
   await user.type(screen.getByLabelText('MCP 地址'), 'http://192.168.1.10:8080/mcp');
-  await user.selectOptions(screen.getByLabelText('认证方式'), 'UserAssertionExchange');
+  selectDropdown(screen.getByRole('combobox', { name: '认证方式' }), 'UserAssertionExchange');
   expect(screen.getByText(/员工身份断言模式要求 HTTPS/)).toBeInTheDocument();
   expect(screen.getByRole('button', { name: '保存配置与授权' })).toBeDisabled();
 

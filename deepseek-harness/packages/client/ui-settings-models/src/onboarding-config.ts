@@ -6,11 +6,14 @@ import z from '@deepseek-ai/schemastery'
 export interface Config {
   /** Offer the browser API-key step when no native shell owns credential onboarding. */
   credentialOnboarding: boolean
+  /** Host policy controls the Models section in organization deployments. */
+  managed: boolean
 }
 
 /** Validate Host configuration and its public page-bootstrap payload. */
 export const Config: z<Partial<Config>, Config> = z.object({
   credentialOnboarding: z.boolean().default(true),
+  managed: z.boolean().default(false),
 })
 
 /** Page-global key carrying only the public onboarding options. */

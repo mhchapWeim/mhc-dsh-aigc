@@ -2,6 +2,7 @@ namespace AigcHub.Api.Domain;
 
 public sealed class Department
 {
+    public DateTimeOffset? DeletedAt { get; set; }
     public Guid Id { get; set; } = Guid.NewGuid();
     public required string Code { get; set; }
     public required string Name { get; set; }
@@ -31,6 +32,8 @@ public sealed class Permission
 
 public sealed class AppUser
 {
+    public DateTimeOffset? DeletedAt { get; set; }
+    public long SyncVersion { get; set; }
     public Guid Id { get; set; } = Guid.NewGuid();
     public required string EmployeeNo { get; set; }
     public required string Name { get; set; }
@@ -38,6 +41,7 @@ public sealed class AppUser
     public required string PasswordHash { get; set; }
     public Guid? DepartmentId { get; set; }
     public Department? Department { get; set; }
+    public bool AllowCustomModels { get; set; }
     public bool IsEnabled { get; set; } = true;
     public DateTimeOffset? LastLoginAt { get; set; }
     public ICollection<UserRole> Roles { get; set; } = [];
@@ -61,6 +65,8 @@ public sealed class RolePermission
 
 public sealed class AppCategory
 {
+    public Guid? ParentId { get; set; }
+    public AppCategory? Parent { get; set; }
     public Guid Id { get; set; } = Guid.NewGuid();
     public required string Code { get; set; }
     public required string Name { get; set; }
@@ -286,6 +292,7 @@ public sealed class OperationAudit
 
 public sealed class ManagedVirtualKey
 {
+    public DateTimeOffset? DeletedAt { get; set; }
     public Guid Id { get; set; } = Guid.NewGuid();
     public required string Alias { get; set; }
     public required string KeyProtected { get; set; }

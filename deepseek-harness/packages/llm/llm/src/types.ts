@@ -226,6 +226,8 @@ export interface LlmProviderInfo {
   id: string
   /** Human-readable provider name for selectors and diagnostics. */
   name: string
+  /** Trusted model origin, when the deployment distinguishes platform and user routes. */
+  source?: 'external' | 'internal' | 'custom'
 }
 
 /** Merge-extensible provider model modality vocabulary. */

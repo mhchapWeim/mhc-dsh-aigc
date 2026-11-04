@@ -44,10 +44,8 @@
     # once the web UI owns the choice per session.
     mode: !!js process.env.DSH_TOOLS_MODE
 
-# Organization deployments never advertise models from the local settings
-# document. The managed adapter below is the sole catalog and call route.
-- id: llm-pi-ai
-  disabled: !!js "process.env.DSH_MANAGED_BACKEND_URL !== undefined"
+# Local profiles remain dormant unless the Host's per-user model policy permits them.
+# Platform routes and local routes keep separate adapters and credentials.
 
 - id: llm-deepseek
   disabled: !!js "process.env.DSH_MANAGED_BACKEND_URL !== undefined"
@@ -316,7 +314,9 @@
 
     - id: ui-settings-models
       name: '@deepseek-ai/dsh-client-ui-settings-models'
-      disabled: !!js "process.env.DSH_MANAGED_BACKEND_URL !== undefined"
+      config:
+        managed: !!js "process.env.DSH_MANAGED_BACKEND_URL !== undefined"
+        credentialOnboarding: !!js "process.env.DSH_MANAGED_BACKEND_URL === undefined"
 
     # Organization sign-in step. It registers unconditionally and completes
     # itself unless the deployment mounted @deepseek-ai/dsh-llm-managed-backend

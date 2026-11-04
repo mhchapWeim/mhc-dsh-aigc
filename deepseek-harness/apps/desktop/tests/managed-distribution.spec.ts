@@ -54,3 +54,31 @@ it('aborts an in-flight policy request and drains it during logout and disposal'
   controllers.push(controller); controller.setSession(session); await started.promise
   controller.setSession(null); await controller.dispose(); expect(aborted).toBe(true); expect(controller.items).toEqual([])
 })
+
+it('blocks until a minimum-version check completes, retains a block on failures, and clears on a fresh decision', async () => {
+  let fail = false
+  let mandatory = true
+  const changed = vi.fn()
+  const request: typeof fetch = async input => {
+    if (fail) throw new Error('offline')
+    if (String(input).endsWith('/announcements')) return Response.json({ items: [] })
+    return Response.json({ mandatory, minimumVersion: '1.2.0', release: mandatory ? { id, feedPath: `/v1/desktop/updates/${id}/` } : null })
+  }
+  const controller = new ManagedDesktopDistribution(identity, () => ({ phase: 'idle' }), () => {}, () => {}, request, 45000, changed)
+  controllers.push(controller)
+  controller.setSession(session)
+  expect(controller.mandatoryPolicy).toEqual({ blocking: true, checking: true })
+  await controller.poll()
+  expect(controller.mandatoryPolicy).toEqual({ blocking: true, checking: false })
+  fail = true
+  const warning = vi.spyOn(console, 'warn').mockImplementation(() => {})
+  await controller.poll()
+  expect(controller.mandatoryPolicy.blocking).toBe(true)
+  fail = false; mandatory = false
+  await controller.poll()
+  expect(controller.mandatoryPolicy.blocking).toBe(false)
+  controller.setSession(null)
+  expect(controller.mandatoryPolicy.blocking).toBe(false)
+  expect(changed).toHaveBeenCalled()
+  warning.mockRestore()
+})

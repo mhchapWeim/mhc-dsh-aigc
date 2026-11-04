@@ -56,6 +56,8 @@ Every refusal renders one sentence: wrong credentials, a CAS attempt that expire
 
 The browser half reads and writes through the `credentials` Remote namespace that `@deepseek-ai/dsh-api-settings-controller` publishes; it holds no token and never sees one, because every managed method returns only the safe `ManagedAuthState` projection. The Host owns the session record, the device binding, and the workspace the signed-in user opens.
 
+The connector navigation clears on organization session changes and connection resets. Billing record updates leave the connector entry mounted so conversation activity does not move the workspace list.
+
 The card reuses the visual language of the shipped account sign-in dialog — the same card border, header geometry, body copy size, and 36px action row — so a deployment offering both surfaces presents one family. It adds the credential form, which the shipped dialog has no need for.
 
 </details>
@@ -90,6 +92,10 @@ No model request prefix changes.
 
 ### Connection state
 
+Host-applied organization configuration updates refresh the account quota immediately through the existing remote model-directory event. The 15-second polling and focus recovery remain as fallbacks; failed reads preserve the verified identity.
+
+Host-applied organization configuration updates refresh the account quota immediately through the existing remote model-directory event. The 15-second polling and focus recovery remain as fallbacks; failed reads preserve the verified identity.
+
 Temporary status failures preserve the previously verified identity and show a connection warning. A pending status response cannot replace the signed-out state after manual logout.
 
 ### Dev Note
@@ -97,3 +103,7 @@ Temporary status failures preserve the previously verified identity and show a c
 None.
 
 The Connectors panel is available in managed deployments when the organization authorizes MCP services. Cards show connection health and descriptions; AIGC controls authorization and the Client offers no activation toggle.
+
+The sidebar shows remaining weekly quota with an emerald ring beside the amount and compact `tok` amounts. Click the quota button for a floating card with the plan, remaining, used, total, reserved amounts and reset time.
+
+Displayed remaining quota subtracts settled charges only; reservations affect admission and remain visible in the usage card.

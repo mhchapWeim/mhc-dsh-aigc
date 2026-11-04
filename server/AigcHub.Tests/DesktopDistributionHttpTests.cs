@@ -20,6 +20,31 @@ namespace AigcHub.Tests;
 public sealed class DesktopDistributionHttpTests
 {
     [Fact]
+    public async Task DeletedReleaseIsHiddenAndNoLongerDistributedOrMandatory()
+    {
+        using var factory = new Factory(); using var admin = await Login(factory, "wh00028", false);
+        using var desktop = await Login(factory, "wh00412", true); using var ordinary = await Login(factory, "wh00412", false);
+        Guid userId;
+        using (var scope = factory.Services.CreateScope()) userId = (await scope.ServiceProvider.GetRequiredService<AigcHubDbContext>().Users.SingleAsync(x => x.EmployeeNo == "wh00412")).Id;
+        var created = await admin.PostAsJsonAsync("/api/desktop-releases", new { version = "9.0.0", notes = "删除测试", arch = "x64", userIds = new[] { userId } }); created.EnsureSuccessStatusCode();
+        var id = (await created.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetGuid();
+        using var upload = new MultipartFormDataContent(); upload.Add(new ByteArrayContent("MZ test installer"u8.ToArray()), "installer", "app.exe");
+        (await admin.PostAsync($"/api/desktop-releases/{id}/artifacts", upload)).EnsureSuccessStatusCode();
+        (await admin.PostAsJsonAsync($"/api/desktop-releases/{id}/status", new { status = "Published" })).EnsureSuccessStatusCode();
+        (await admin.PostAsJsonAsync($"/api/desktop-releases/{id}/mandatory", new { isMandatory = true })).EnsureSuccessStatusCode();
+        Assert.Equal(HttpStatusCode.Forbidden, (await ordinary.DeleteAsync($"/api/desktop-releases/{id}")).StatusCode);
+        (await admin.DeleteAsync($"/api/desktop-releases/{id}")).EnsureSuccessStatusCode();
+        Assert.DoesNotContain(id.ToString(), await admin.GetStringAsync("/api/desktop-releases"));
+        Assert.DoesNotContain(id.ToString(), await admin.GetStringAsync("/api/users/access-options"));
+        Assert.Equal(HttpStatusCode.NotFound, (await desktop.GetAsync($"/v1/desktop/updates/{id}/nightly.yml")).StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, (await ordinary.PostAsync($"/api/desktop-downloads/{id}/ticket", null)).StatusCode);
+        var check = await desktop.PostAsJsonAsync("/v1/desktop/check", new { deviceId = "deleted-release", computerName = "test", version = "1.0.0", platform = "win32", arch = "x64" }); check.EnsureSuccessStatusCode();
+        Assert.False((await check.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("mandatory").GetBoolean());
+        using var finalScope = factory.Services.CreateScope(); var stored = await finalScope.ServiceProvider.GetRequiredService<AigcHubDbContext>().DesktopReleases.IgnoreQueryFilters().SingleAsync(x => x.Id == id);
+        Assert.NotNull(stored.DeletedAt); Assert.False(stored.IsMandatory); Assert.True(stored.Bytes > 0);
+    }
+
+    [Fact]
     public async Task CloudBackupsEnforceOwnershipForListingDownloadAndDeletion()
     {
         using var factory = new Factory();
@@ -327,6 +352,49 @@ public sealed class DesktopDistributionHttpTests
         Assert.Equal(JsonValueKind.Null, missing.GetProperty("release").ValueKind);
         Assert.Equal(HttpStatusCode.NotFound, (await recipient.PostAsync($"/api/desktop-downloads/{id}/ticket", null)).StatusCode);
         Assert.Empty(await scope.ServiceProvider.GetRequiredService<AigcHubDbContext>().DesktopClientReports.ToArrayAsync());
+    }
+
+    [Fact]
+    public async Task MandatoryReleaseAppliesOutsideGrayAudienceAndUsesSemanticMinimumVersion()
+    {
+        using var factory = new Factory();
+        using var admin = await Login(factory, "wh00028", false);
+        using var desktop = await Login(factory, "wh00412", true);
+        using var ordinary = await Login(factory, "wh00412", false);
+        var people = await admin.GetFromJsonAsync<JsonElement>("/api/desktop-releases/recipients");
+        var userId = people.EnumerateArray().Single(x => x.GetProperty("employeeNo").GetString() == "wh00028").GetProperty("id").GetGuid();
+        var created = await admin.PostAsJsonAsync("/api/desktop-releases", new { version="1.2.0-beta.10",notes="强制升级",arch="x64",userIds=new[]{userId} });
+        created.EnsureSuccessStatusCode();
+        var id=(await created.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetGuid();
+        var path=$"/api/desktop-releases/{id}/mandatory";
+        Assert.Equal(HttpStatusCode.Conflict,(await admin.PostAsJsonAsync(path,new {isMandatory=true})).StatusCode);
+        Assert.Equal(HttpStatusCode.Forbidden,(await ordinary.PostAsJsonAsync(path,new {isMandatory=true})).StatusCode);
+        using var upload=new MultipartFormDataContent();
+        upload.Add(new ByteArrayContent("MZ mandatory installer"u8.ToArray()),"installer","app.exe");
+        (await admin.PostAsync($"/api/desktop-releases/{id}/artifacts",upload)).EnsureSuccessStatusCode();
+        (await admin.PostAsJsonAsync($"/api/desktop-releases/{id}/status",new {status="Published"})).EnsureSuccessStatusCode();
+        async Task<JsonElement> Check(string version,string arch="x64") {
+            var response=await desktop.PostAsJsonAsync("/v1/desktop/check",new {deviceId="force-test",computerName="test",version,platform="win32",arch});
+            response.EnsureSuccessStatusCode(); return await response.Content.ReadFromJsonAsync<JsonElement>();
+        }
+        Assert.Null((await Check("1.0.0")).GetProperty("release").Deserialize<object>());
+        (await admin.PostAsJsonAsync(path,new {isMandatory=true})).EnsureSuccessStatusCode();
+        var blocked=await Check("1.2.0-beta.9");
+        Assert.True(blocked.GetProperty("mandatory").GetBoolean());
+        Assert.Equal("1.2.0-beta.10",blocked.GetProperty("minimumVersion").GetString());
+        Assert.Equal(id,blocked.GetProperty("release").GetProperty("id").GetGuid());
+        (await desktop.GetAsync($"/v1/desktop/updates/{id}/nightly.yml")).EnsureSuccessStatusCode();
+        Assert.Equal(id,(await ordinary.GetFromJsonAsync<JsonElement>("/api/desktop-downloads/windows-x64")).GetProperty("release").GetProperty("id").GetGuid());
+        (await ordinary.PostAsync($"/api/desktop-downloads/{id}/ticket",null)).EnsureSuccessStatusCode();
+        Assert.False((await Check("1.2.0-beta.10")).GetProperty("mandatory").GetBoolean());
+        Assert.False((await Check("1.2.0")).GetProperty("mandatory").GetBoolean());
+        Assert.False((await Check("1.0.0","arm64")).GetProperty("mandatory").GetBoolean());
+        (await admin.PostAsJsonAsync(path,new {isMandatory=false})).EnsureSuccessStatusCode();
+        Assert.False((await Check("1.0.0")).GetProperty("mandatory").GetBoolean());
+        Assert.Equal(HttpStatusCode.NotFound,(await desktop.GetAsync($"/v1/desktop/updates/{id}/nightly.yml")).StatusCode);
+        (await admin.PostAsJsonAsync(path,new {isMandatory=true})).EnsureSuccessStatusCode();
+        (await admin.PostAsJsonAsync($"/api/desktop-releases/{id}/status",new {status="Paused"})).EnsureSuccessStatusCode();
+        Assert.False((await Check("1.0.0")).GetProperty("mandatory").GetBoolean());
     }
 
     private static async Task<HttpClient> Login(Factory factory, string user, bool desktop)

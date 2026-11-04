@@ -1,3 +1,4 @@
+import { selectDropdown } from '../../../test/select-dropdown';
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import PluginsPage from './page';
@@ -20,7 +21,7 @@ it('publishes the selected version, grants and server-only secret', async () => 
   expect(screen.queryByText('等待重启')).not.toBeInTheDocument();
   expect(api.getPluginReports).not.toHaveBeenCalled();
   await user.click(await screen.findByRole('button', { name: '配置与发布' }));
-  await user.selectOptions(screen.getByLabelText('发布版本'), 'v1');
+  selectDropdown(screen.getByRole('combobox', { name: '发布版本' }), 'v1');
   await user.click(screen.getByLabelText('启用插件'));
   await user.type(screen.getByLabelText('博查 API Key（仅服务端保存）'), 'server-key');
   await user.click(screen.getByRole('button', { name: '保存并发布' }));

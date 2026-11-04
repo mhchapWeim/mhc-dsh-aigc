@@ -1,3 +1,4 @@
+import { selectDropdown } from '../../../test/select-dropdown';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, expect, it, vi } from 'vitest';
 import Page from './page';
@@ -38,7 +39,7 @@ it('shows unauthenticated installer failures and filters by the installer catego
   render(<Page />);
   await screen.findByText('安装器（未登录）');
   expect(screen.getByText('安装前检查')).toBeInTheDocument();
-  fireEvent.change(screen.getByLabelText('错误类型'), { target: { value: 'installer' } });
+  selectDropdown(screen.getByRole('combobox', { name: '错误类型' }), 'installer');
   fireEvent.click(screen.getByRole('button', { name: '查询' }));
   await waitFor(() => expect(api.getDshFailures).toHaveBeenLastCalledWith(expect.objectContaining({ category: 'installer' }), 1, 5));
 });

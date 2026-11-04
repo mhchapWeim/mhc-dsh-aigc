@@ -51,6 +51,7 @@ export type ManagedAuthState =
     readonly enabled: true
     readonly user: { readonly id: string; readonly username: string }
     readonly models: readonly { readonly id: string; readonly name: string; readonly provider?: 'managed-internal' }[]
+    readonly billing?: { readonly assigned: boolean; readonly total: number; readonly used: number; readonly reserved: number; readonly remaining: number; readonly resetsAt: string; readonly planName: string | null }
     readonly workspaceId?: string
     readonly workspacePath: string
     /** Authentication succeeded; local data can be repaired independently. */

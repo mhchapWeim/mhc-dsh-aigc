@@ -76,7 +76,7 @@ describe('ui-settings-models apply', () => {
       await host.await()
       const rows: IndexInjection[] = []
       ctx.emit('webserver/index-inject', rows)
-      expect(rows).toEqual([{ kind: 'global', name: ONBOARDING_CONFIG_GLOBAL, value: { credentialOnboarding: false } }])
+      expect(rows).toEqual([{ kind: 'global', name: ONBOARDING_CONFIG_GLOBAL, value: { credentialOnboarding: false, managed: false } }])
       for (const row of rows) if (row.kind === 'global') vi.stubGlobal(row.name, row.value)
       const plugin = ctx.plugin({ inject: [...inject], apply })
       await plugin.await()
@@ -96,7 +96,7 @@ describe('ui-settings-models apply', () => {
   })
 
   it('defaults to browser onboarding and rejects malformed bootstrap options', async () => {
-    expect(hostPlugin.Config({})).toEqual({ credentialOnboarding: true })
+    expect(hostPlugin.Config({})).toEqual({ credentialOnboarding: true, managed: false })
     expect(hostPlugin.Config['~standard'].validate({ credentialOnboarding: 'false' })).toHaveProperty('issues')
     const { ctx } = await bench()
     try {
@@ -332,6 +332,25 @@ describe('pushed invalidations', () => {
     await vi.waitFor(() => {
       expect(injected.hooks.welcome.getSnapshot()).toMatchObject({ status: 'ready', acknowledged: true })
     })
+  })
+
+  it('adds and removes only the custom model settings entry as Host permission changes', async () => {
+    vi.stubGlobal(ONBOARDING_CONFIG_GLOBAL, {managed: true, credentialOnboarding: false})
+    let allowed = false
+    const listConfigurableProviders = vi.fn(async () => ok(allowed ? [{provider: 'personal', displayName: 'Personal', settingsNs: 'llm-pi-ai', settingsPath: ['providers', 'personal']}] : []))
+    const b = await bench(true, undefined, {listConfigurableProviders})
+    declare(b.slots)
+    const fiber = b.ctx.plugin({inject: [...inject], apply}); await fiber.await()
+    await vi.waitFor(() => expect(listConfigurableProviders).toHaveBeenCalled())
+    expect(b.slots.entries('settings.section').some(entry => entry.options.id === 'models')).toBe(false)
+    expect(b.slots.entries('settings.onboarding')).toEqual([])
+    allowed = true; b.remote.emit('llm/adapters-updated', [])
+    await vi.waitFor(() => expect(b.slots.entries('settings.section').some(entry => entry.options.id === 'models')).toBe(true))
+    const entry = b.slots.entries('settings.section').find(entry => entry.options.id === 'models')!
+    expect(resolveSlotLabel(entry.options.label)).toBe('自定义模型')
+    allowed = false; b.remote.emit('llm/adapters-updated', [])
+    await vi.waitFor(() => expect(b.slots.entries('settings.section').some(entry => entry.options.id === 'models')).toBe(false))
+    await fiber.dispose(); await b.ctx.fiber.dispose()
   })
 
   it('joins the refreshed mirror view on a settings invalidation', async () => {

@@ -1,5 +1,6 @@
 'use client';
 
+import { useDeleteConfirm } from '../../components/delete-confirm';
 import { useEffect, useMemo, useState } from 'react';
 import { CheckCircle2, Edit3, Plus, Search, ShieldAlert, Trash2 } from 'lucide-react';
 import { usePageSize } from '../../components/use-page-size';
@@ -18,6 +19,7 @@ const emptyForm = (): WordForm => ({ id: '', term: '', isEnabled: true });
 const dateFormat = new Intl.DateTimeFormat('zh-CN', { dateStyle: 'medium', timeStyle: 'short' });
 
 export default function SensitiveWordManagementPage() {
+  const { confirmDelete, deleteConfirmHolder } = useDeleteConfirm();
   const [pageSize, setPageSize] = usePageSize();
   const [items, setItems] = useState<BackendSensitiveWord[]>([]);
   const [query, setQuery] = useState('');
@@ -73,7 +75,7 @@ export default function SensitiveWordManagementPage() {
   };
 
   const remove = async (item: BackendSensitiveWord) => {
-    if (!window.confirm(`确定删除敏感词“${item.term}”吗？`)) return;
+    if (!await confirmDelete(`确定删除敏感词“${item.term}”吗？`)) return;
     setBusyId(item.id);
     try {
       await deleteSensitiveWord(item.id);
@@ -84,7 +86,7 @@ export default function SensitiveWordManagementPage() {
     } finally { setBusyId(''); }
   };
 
-  return <div className="admin-page page-enter">
+  return <div className="admin-page page-enter">{deleteConfirmHolder}
     <div className="page-title">
       <div><span className="section-kicker">CONTENT POLICY</span><h1>敏感词管理</h1><p>配置 DSH 输入阶段的拦截规则。启用后的规则会自动同步到已登录客户端。</p></div>
       <button className="primary-action" type="button" onClick={() => { setFormError(''); setEditing(emptyForm()); }}><Plus size={18} />新增敏感词</button>

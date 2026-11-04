@@ -8,6 +8,13 @@ namespace AigcHub.Api.Services;
 /// <summary>User administration changes direct grants only; inherited grants remain owned by their scope.</summary>
 public static class UserAccessAdministration
 {
+    public static async Task BindDefaultLocalModelsAsync(AigcHubDbContext db, Guid userId, CancellationToken ct)
+    {
+        var ids=await db.ModelConfigurations.Where(x=>x.IsEnabled && x.ProviderKind=="Local").Select(x=>x.Id).ToArrayAsync(ct);
+        var pending=db.UserModelGrants.Local.Where(x=>x.UserId==userId).Select(x=>x.ModelId).ToHashSet();
+        db.UserModelGrants.AddRange(ids.Where(id=>!pending.Contains(id)).Select(id=>new UserModelGrant {UserId=userId,ModelId=id}));
+    }
+
     public static async Task<IResult> OptionsAsync(Guid? userId, AigcHubDbContext db, CancellationToken ct)
     {
         var user = userId.HasValue ? await db.Users.AsNoTracking().SingleOrDefaultAsync(x => x.Id == userId, ct) : null;
@@ -20,8 +27,22 @@ public static class UserAccessAdministration
         var directModels = await db.UserModelGrants.AsNoTracking().Where(x => x.UserId == userId).Select(x => x.ModelId).ToArrayAsync(ct);
         var models = await db.ModelConfigurations.AsNoTracking().OrderBy(x => x.Name).ToArrayAsync(ct);
         var keys = await db.ManagedVirtualKeys.AsNoTracking().OrderBy(x => x.Alias).ToArrayAsync(ct);
+        object Resource(Guid id, string name, bool enabled, string prefix) => new {
+            id, name, isEnabled = enabled,
+            selected = grants.Any(g => g.ResourceKey == $"{prefix}:{id:D}" && g.SubjectType == "User" && g.SubjectId == userId),
+            inherited = grants.Any(g => g.ResourceKey == $"{prefix}:{id:D}" && Inherited(g)),
+            departmentIds = grants.Where(g => g.ResourceKey == $"{prefix}:{id:D}" && g.SubjectType == "Department").Select(g => g.SubjectId).ToArray(),
+            roleIds = grants.Where(g => g.ResourceKey == $"{prefix}:{id:D}" && g.SubjectType == "Role").Select(g => g.SubjectId).ToArray()
+        };
+        var plugins = await db.ManagedPlugins.AsNoTracking().OrderBy(x => x.Name).ToArrayAsync(ct);
+        var mcps = await db.ManagedMcpServices.AsNoTracking().OrderBy(x => x.Name).ToArrayAsync(ct);
+        var releases = await db.DesktopReleases.AsNoTracking().Include(x => x.Recipients).OrderByDescending(x => x.CreatedAt).ToArrayAsync(ct);
         return Results.Ok(new
         {
+            plugins = plugins.Select(x => Resource(x.Id, x.Name, x.IsEnabled, "plugin")),
+            mcps = mcps.Select(x => Resource(x.Id, x.Name, x.IsEnabled, "mcp")),
+            releases = releases.Select(x => new { x.Id, name = $"{x.Version} · {x.Platform}/{x.Arch} · {x.Status}", isEnabled = x.Status == "Published" && x.Bytes > 0,
+                selected = x.Recipients.Any(r => r.UserId == userId), inherited = false }),
             departments = await db.Departments.AsNoTracking().Where(x => x.IsEnabled).OrderBy(x => x.Name).Select(x => new { x.Id, x.Name }).ToArrayAsync(ct),
             roles = await db.Roles.AsNoTracking().OrderBy(x => x.Name).Select(x => new { x.Id, x.Name }).ToArrayAsync(ct),
             models = models.Select(x => new { x.Id, x.Name, x.IsEnabled,
@@ -44,7 +65,36 @@ public static class UserAccessAdministration
     {
         if (await db.Roles.CountAsync(x => input.RoleIds.Contains(x.Id), ct) != input.RoleIds.Distinct().Count())
             throw new WorkflowException("包含不存在的角色", 400);
+        var pluginIds = input.PluginIds?.Distinct().ToArray();
+        var mcpIds = input.McpIds?.Distinct().ToArray();
+        var releaseIds = input.ReleaseIds?.Distinct().ToArray();
+        if (pluginIds is not null && await db.ManagedPlugins.CountAsync(x => pluginIds.Contains(x.Id), ct) != pluginIds.Length)
+            throw new WorkflowException("插件不存在", 400);
+        if (mcpIds is not null && await db.ManagedMcpServices.CountAsync(x => mcpIds.Contains(x.Id), ct) != mcpIds.Length)
+            throw new WorkflowException("MCP 不存在", 400);
+        if (releaseIds is not null && await db.DesktopReleases.CountAsync(x => releaseIds.Contains(x.Id), ct) != releaseIds.Length)
+            throw new WorkflowException("客户端版本不存在", 400);
+        if (releaseIds is not null)
+        {
+            var recipients = await db.DesktopReleaseRecipients.Where(x => x.UserId == userId).ToArrayAsync(ct);
+            db.DesktopReleaseRecipients.RemoveRange(recipients.Where(x => !releaseIds.Contains(x.ReleaseId)));
+            db.DesktopReleaseRecipients.AddRange(releaseIds.Except(recipients.Select(x => x.ReleaseId)).Select(id => new DesktopReleaseRecipient { ReleaseId = id, UserId = userId }));
+            // Recipient rows are the authoritative distribution scope; clear stale audience snapshots.
+            var previous = recipients.Select(x => x.ReleaseId).ToArray();
+            var changed = releaseIds.Except(previous).Concat(previous.Except(releaseIds)).ToArray();
+            foreach (var release in await db.DesktopReleases.Where(x => changed.Contains(x.Id)).ToArrayAsync(ct)) release.AudienceJson = "";
+        }
         var allGrants = await db.AccessGrants.Where(x => x.SubjectType == "User" && x.SubjectId == userId).ToArrayAsync(ct);
+        void ApplyResources(string prefix, Guid[]? ids)
+        {
+            if (ids is null) return;
+            var desired = ids.Select(id => $"{prefix}:{id:D}").ToArray();
+            var existing = allGrants.Where(x => x.ResourceKey.StartsWith($"{prefix}:")).ToArray();
+            db.AccessGrants.RemoveRange(existing.Where(x => !desired.Contains(x.ResourceKey)));
+            db.AccessGrants.AddRange(desired.Except(existing.Select(x => x.ResourceKey)).Select(key => new AccessGrant { ResourceKey = key, SubjectType = "User", SubjectId = userId }));
+        }
+        ApplyResources("plugin", pluginIds);
+        ApplyResources("mcp", mcpIds);
         var directKeys = allGrants.Where(x => x.ResourceKey.StartsWith("virtual-key:")).ToArray();
         var selectedKeys = input.VirtualKeyIds?.Distinct().ToArray();
         if (selectedKeys?.Length > 1) throw new WorkflowException("用户只能选择一个虚拟 Key 组", 409);

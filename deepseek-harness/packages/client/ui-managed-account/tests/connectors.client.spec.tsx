@@ -26,6 +26,14 @@ it('only registers navigation while authorized and clears it on identity changes
  expect(slots.entries('sidebar.panellist')).toHaveLength(0);
  remote.emit('plugin-manager/connectors-updated',[[item]]);
  await vi.waitFor(()=>expect(slots.entries('sidebar.panellist')).toHaveLength(1));
+ const navigation=slots.entries('sidebar.panellist')[0];
+ const reads=read.mock.calls.length;
+ remote.emit('credentials/record-updated',['llm-managed-backend/billing-pending']);
+ expect(slots.entries('sidebar.panellist')[0]).toBe(navigation);
+ expect(read).toHaveBeenCalledTimes(reads);
+ remote.emit('credentials/record-updated',['llm-managed-backend/user-session']);
+ expect(slots.entries('sidebar.panellist')).toHaveLength(0);
+ await vi.waitFor(()=>expect(read).toHaveBeenCalledTimes(reads+1));
  remote.emit('plugin-manager/connectors-updated',[[]]);
  await vi.waitFor(()=>expect(slots.entries('sidebar.panellist')).toHaveLength(0));
 });

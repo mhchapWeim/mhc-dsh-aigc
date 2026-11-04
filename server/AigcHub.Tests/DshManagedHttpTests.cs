@@ -399,8 +399,7 @@ public sealed class DshManagedHttpTests
             Assert.Empty(initialCatalog.GetProperty("models").EnumerateArray());
             var denied = await client.PostAsJsonAsync("/v1/generate", new { model = model.Id, messages = Array.Empty<object>() });
             Assert.Equal(HttpStatusCode.Forbidden, denied.StatusCode);
-            db.UserModelGrants.Add(new UserModelGrant { UserId = userId, ModelId = model.Id });
-            await db.SaveChangesAsync();
+            Assert.False(await db.UserModelGrants.AnyAsync(x => x.UserId == userId));
             var createdKey = await admin.PostAsJsonAsync("/api/virtual-keys", new { alias = "dsh-test", customKey = (string?)null });
             Assert.Equal(HttpStatusCode.OK, createdKey.StatusCode);
             using var keyBody = JsonDocument.Parse(await createdKey.Content.ReadAsStringAsync());
@@ -434,8 +433,9 @@ public sealed class DshManagedHttpTests
             });
             Assert.Equal(HttpStatusCode.OK, generated.StatusCode);
             Assert.Contains("\"type\":\"finish\"", await generated.Content.ReadAsStringAsync());
-            db.UserModelGrants.Remove(await db.UserModelGrants.SingleAsync());
-            await db.SaveChangesAsync();
+            // Key access works without direct model grants; revoking the Key revokes generation.
+            Assert.False(await db.UserModelGrants.AnyAsync(x => x.UserId == userId));
+            Assert.Equal(HttpStatusCode.NoContent, (await admin.PutAsync($"/api/virtual-keys/{keyId}/enabled?enabled=false", null)).StatusCode);
             var revoked = await client.PostAsJsonAsync("/v1/generate", new { model = model.Id, messages = Array.Empty<object>() });
             Assert.Equal(HttpStatusCode.Forbidden, revoked.StatusCode);
             Assert.Equal(HttpStatusCode.NoContent, (await admin.DeleteAsync($"/api/models/{model.Id}")).StatusCode);
@@ -679,7 +679,9 @@ public sealed class DshManagedHttpTests
         protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken) =>
             Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
             {
-                Content = new StringContent(request.Method == HttpMethod.Get
+                Content = new StringContent(request.RequestUri!.AbsolutePath.EndsWith("/models", StringComparison.Ordinal)
+                    ? "{\"data\":[{\"id\":\"model-1\"}]}"
+                    : request.Method == HttpMethod.Get
                     ? "{\"data\":[{\"model_name\":\"model-1\",\"model_info\":{\"mode\":\"chat\",\"supports_vision\":true,\"supports_function_calling\":true,\"supports_audio_input\":false,\"max_input_tokens\":128000}}]}"
                     : "{\"key\":\"sk-user-test\",\"expires\":\"2099-01-01T00:00:00Z\"}")
             });

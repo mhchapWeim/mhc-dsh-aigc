@@ -1,0 +1,10 @@
+/* Consistent numeric steppers across Firefox and Chromium. */
+.token-amount-field{display:grid;gap:8px;min-width:0}
+.token-amount-control{position:relative;min-width:0}
+.entity-form .token-amount-control input[type=number]{appearance:textfield;-moz-appearance:textfield;padding-right:38px}
+.token-amount-control input::-webkit-inner-spin-button,.token-amount-control input::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
+.token-amount-arrows{position:absolute;right:10px;top:50%;transform:translateY(-50%);display:grid;grid-template-rows:16px 16px}
+.entity-form .token-amount-arrows button{display:flex;align-items:center;justify-content:center;width:22px;height:16px;min-height:0;padding:0;border:0;border-radius:3px;background:transparent;color:var(--muted);box-shadow:none;cursor:pointer}
+.entity-form .token-amount-arrows button:hover:not(:disabled){background:var(--page);color:var(--ink)}
+.entity-form .token-amount-arrows button:focus-visible{outline:2px solid var(--blue-600);outline-offset:1px}
+.entity-form .token-amount-arrows button:disabled{opacity:.35;cursor:default}

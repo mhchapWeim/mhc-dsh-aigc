@@ -1,0 +1,97 @@
+/* Billing console layout.
+   .admin-panel carries no padding of its own, so every panel here pads its own
+   body: chart and filter panels get .billing-panel-body, and table panels keep
+   relying on .toolbar's built-in padding like the other admin pages do. */
+
+.billing-page{display:flex;flex-direction:column;gap:16px}
+.billing-page>.page-title{margin-bottom:9px}
+.billing-page>.admin-panel{margin:0}
+
+/* --- tabs ------------------------------------------------------------- */
+
+.billing-tabs{display:flex;gap:8px;flex-wrap:wrap}
+.billing-tabs button{font:inherit;font-size:13px;padding:7px 15px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink-soft);cursor:pointer;transition:color .16s ease,border-color .16s ease,background-color .16s ease}
+.billing-tabs button:hover{color:var(--blue-600);border-color:var(--blue-600)}
+.billing-tabs button[aria-selected=true]{color:var(--blue-600);border-color:var(--blue-600);background:#f3f8ff;font-weight:600}
+
+/* --- summary cards ---------------------------------------------------- */
+
+.billing-stats{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(196px,1fr))}
+.billing-stat{display:grid;gap:5px;padding:18px 20px;border:1px solid #f0f0f0;border-radius:10px;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.03);min-width:0}
+.billing-stat__label{font-size:12.5px;color:var(--muted);letter-spacing:.02em}
+.billing-stat strong{font-size:26px;line-height:1.15;font-variant-numeric:tabular-nums;color:var(--ink)}
+.billing-stat small{font-size:12px;line-height:1.5;color:var(--muted)}
+
+/* --- filters ---------------------------------------------------------- */
+
+.billing-panel-body{padding:18px 20px}
+.billing-filters{display:flex;gap:16px;flex-wrap:wrap}
+.billing-filters label{display:grid;gap:7px;font-size:12.5px;color:var(--muted);min-width:168px}
+.billing-filters input,.billing-filters select{min-height:40px;padding:8px 11px;font:inherit;font-size:13px;border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--ink)}
+.billing-filters input:focus,.billing-filters select:focus{outline:2px solid rgba(47,111,237,.18);border-color:var(--blue-600)}
+.billing-hint{margin:12px 0 0;font-size:12.5px;line-height:1.65;color:var(--muted)}
+.billing-filters .billing-hint{margin-bottom:0}
+
+/* --- charts ----------------------------------------------------------- */
+
+.billing-chart-head{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:4px}
+.billing-chart-head h2{display:flex;align-items:center;gap:7px;margin:0;font-size:15px;color:var(--ink)}
+.billing-chart-head p{margin:0;font-size:12.5px;color:var(--muted)}
+.billing-chart{margin-top:14px}
+.billing-chart-empty{margin:14px 0 0;padding:34px 12px;text-align:center;font-size:13px;color:var(--muted);border:1px dashed var(--line);border-radius:10px;background:#fafbfc}
+.billing-chart-grid{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(380px,1fr))}
+
+/* --- reservations ----------------------------------------------------- */
+
+.billing-pending-list{margin-top:14px;display:flex;flex-direction:column}
+.billing-pending{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:13px 0;border-bottom:1px solid #f0f0f0;font-size:13px;color:var(--ink-soft)}
+.billing-pending:first-child{padding-top:0}
+.billing-pending:last-child{border-bottom:0;padding-bottom:0}
+.billing-bound{display:inline-flex;align-items:center;gap:5px;font-variant-numeric:tabular-nums;color:var(--ink-soft)}
+
+/* --- table tweaks ----------------------------------------------------- */
+
+.billing-page .table-wrap{overflow-x:auto}
+.billing-page .toolbar{min-height:64px}
+.billing-page .empty-state{margin:0;padding:30px 20px;font-size:13px;color:var(--muted);text-align:center}
+.billing-page .data-grid td:first-child{font-size:13px}
+/* A footnote under a table panel sits outside .toolbar, so it pads itself. */
+.billing-panel-foot{padding:0 20px 16px}
+.billing-panel-foot .billing-hint{margin:0}
+
+/* Recharts paints on a transparent canvas; keep its text readable in both themes. */
+.billing-chart .recharts-text{fill:var(--muted)}
+.billing-chart .recharts-legend-item-text{color:var(--muted)!important}
+.billing-chart .recharts-default-tooltip{border:1px solid var(--line)!important;border-radius:8px;background:#fff!important;box-shadow:0 8px 24px rgba(15,23,42,.12);padding:8px 12px!important}
+.billing-chart .recharts-tooltip-label{font-size:12.5px;color:var(--ink)}
+.billing-chart .recharts-tooltip-item{font-size:12.5px;font-variant-numeric:tabular-nums}
+
+@media(max-width:900px){
+  .billing-chart-grid{grid-template-columns:1fr}
+}
+@media(max-width:600px){
+  .billing-filters label{width:100%;min-width:0}
+  .billing-pending{flex-direction:column;align-items:flex-start}
+  .billing-panel-body{padding:16px}
+  .billing-stat{padding:16px}
+}
+
+/* Keep the plan toggle out of the full-width text-input layout. */
+.entity-form label.billing-plan-enabled{flex-direction:row;align-items:center;gap:8px;min-height:38px;cursor:pointer}
+.entity-form .billing-plan-enabled input[type=checkbox]{width:16px;height:16px;min-height:0;margin:0;padding:0;flex:none;accent-color:var(--blue-600)}
+.entity-form .billing-plan-enabled input[type=checkbox]:focus-visible{outline:2px solid var(--blue-600);outline-offset:3px;box-shadow:none}
+
+.billing-authorization{display:grid;gap:14px;min-width:0;margin:16px 0 0;padding:16px;border:1px solid var(--line);border-radius:8px}
+.billing-authorization legend{padding:0 6px;font-weight:600}
+.billing-authorization>div{display:grid;gap:7px}
+.billing-authorization .billing-hint{margin:0}
+
+.modal.billing-plan-modal{width:min(760px,100%);display:flex;flex-direction:column;max-height:calc(100dvh - 40px);overflow:hidden}
+.billing-plan-modal>header{flex:none}
+.billing-plan-modal>.entity-form{display:flex;flex-direction:column;min-height:0;overflow:hidden}
+/* Leave room inside the scrollport for the shared focus outline and shadow. */
+.billing-plan-body{min-height:0;overflow:auto;display:grid;gap:16px;padding:6px}
+.billing-plan-modal .modal-actions{flex:none;padding-top:16px}
+.billing-package-reason { max-width: 260px; white-space: pre-wrap; overflow-wrap: anywhere; }
+
+.billing-page .page-title > button{flex-shrink:0;white-space:nowrap}

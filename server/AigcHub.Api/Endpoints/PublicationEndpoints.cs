@@ -13,8 +13,8 @@ public static class PublicationEndpoints
         var publications = app.MapGroup("/api/publication-requests").WithTags("应用发布")
             .RequireAuthorization();
         publications.MapGet("/options", async (AigcHubDbContext db, CancellationToken ct) =>
-            Results.Ok(await db.Categories.AsNoTracking().Where(x => x.IsEnabled).OrderBy(x => x.SortOrder)
-                .Select(x => new { x.Id, x.Code, x.Name, x.Description }).ToListAsync(ct)))
+            Results.Ok(await db.Categories.AsNoTracking().Where(x => x.IsEnabled && (x.ParentId == null || x.Parent!.IsEnabled)).OrderBy(x => x.SortOrder)
+                .Select(x => new { x.Id, x.Code, x.Name, x.Description, x.ParentId }).ToListAsync(ct)))
             .RequireAuthorization("publication.create");
         publications.MapGet("/access-options", async (AigcHubDbContext db, CancellationToken ct) =>
             Results.Ok(new

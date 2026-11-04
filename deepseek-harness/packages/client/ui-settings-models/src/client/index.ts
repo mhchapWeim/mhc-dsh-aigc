@@ -88,7 +88,10 @@ export function apply(ctx: ClientContext): void {
   const controller = new ModelsSettingsStore(ctx, schema, ctx.configForms.describe())
   // Registration-time text (the nav label thunk) and the inject faces share
   // one bound translate; copy freshness rides the locale revision.
-  const t = ctx.locale.bind(NS) as ModelsSectionInjected['t']
+  const translate = ctx.locale.bind(NS) as ModelsSectionInjected['t']
+  // The section's `t` face takes the key only, so the organization rename is a
+  // pure key substitution.
+  const t: ModelsSectionInjected['t'] = key => translate(configured.managed && (key === 'nav' || key === 'title') ? 'customNav' : configured.managed && key === 'intro' ? 'customIntro' : key)
   const injected = (): ModelsSectionInjected => ({
     controller,
     hooks: { snapshot: controller.store },
@@ -132,7 +135,7 @@ export function apply(ctx: ClientContext): void {
     }
   }, 'ui-settings-models: pushed invalidations')
 
-  ctx.slots.inject('settings.section', () => ctx.slots.register({
+  const registerModels = () => ctx.slots.register({
     name: 'settings.section',
     id: 'models',
     order: 10,
@@ -142,7 +145,28 @@ export function apply(ctx: ClientContext): void {
       'settings.models.provider-card': { kind: 'keyed', scope: 'root' },
       'settings.models.footer': { kind: 'list', scope: 'root' },
     },
-  }, ModelsSection))
+  }, ModelsSection)
+  ctx.slots.inject('settings.section', () => {
+    if (!configured.managed) return registerModels()
+    return ctx.effect(() => {
+      let disposed = false
+      let version = 0
+      let unregister: (() => void) | undefined
+      const refresh = async (): Promise<void> => {
+        const current = ++version
+        const response = await ctx.remote.llm.listConfigurableProviders()
+        if (disposed || current !== version) return
+        const allowed = response.ok && response.value.some(entry => entry.settingsNs === 'llm-pi-ai')
+        if (allowed && unregister === undefined) unregister = registerModels()
+        if (!allowed) { unregister?.(); unregister = undefined }
+      }
+      const off = ctx.remote.$on('llm/adapters-updated', () => { void refresh() })
+      const offReset = ctx.on('connection/reset', () => { void refresh() })
+      void refresh()
+      return () => { disposed = true; off(); offReset(); unregister?.() }
+    }, 'ui-settings-models: organization permission')
+  })
+  if (configured.managed) return
   ctx.slots.inject('settings.onboarding', () => ctx.slots.register({
     name: 'settings.onboarding',
     id: 'welcome-notice',

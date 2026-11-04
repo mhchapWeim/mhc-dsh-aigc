@@ -1,4 +1,6 @@
 'use client';
+
+import { SearchableSelect } from '../../components/modern-select';
 import { useEffect, useState } from 'react';
 import { Network, Plus, RefreshCw } from 'lucide-react';
 import { Modal } from '../../components/modal';
@@ -89,9 +91,9 @@ export default function McpPage() {
       {editing.iconDataUrl && <img className="mcp-icon-preview" src={editing.iconDataUrl} alt="当前图标"/>}
       <label>MCP 地址<input type="text" inputMode="url" spellCheck={false} value={editing.url} placeholder="https://service.example.com/mcp" onChange={e => setEditing({...editing,url:e.target.value})}/></label>
       {urlError && <p className="model-form-error mcp-url-error">{urlError}</p>}
-      <label>认证方式<select value={editing.authenticationMode} onChange={e=>setEditing({...editing,authenticationMode:e.target.value as McpService['authenticationMode']})}>
+      <label>认证方式<SearchableSelect aria-label="认证方式" value={editing.authenticationMode} onChange={e=>setEditing({...editing,authenticationMode:e.target.value as McpService['authenticationMode']})}>
         <option value="GatewayBearer">中台网关 / 固定 Bearer Token</option><option value="UserAssertionExchange">员工身份断言 / 无感 Token Exchange</option>
-      </select></label>
+      </SearchableSelect></label>
       {editing.authenticationMode === 'GatewayBearer' ? <>
         <p>地址和服务密钥仅保留在中台，由 AIGC 网关代为调用。</p>
         <label>Bearer Token<input type="password" autoComplete="new-password" value={secret} placeholder={editing.hasServerSecret ? '已配置，留空保留' : '无认证时留空'} onChange={e => setSecret(e.target.value)}/></label>

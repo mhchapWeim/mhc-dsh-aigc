@@ -1,0 +1,6 @@
+/* The tooltip needs a focusable wrapper, but the wrapper must not add a box of
+   its own: it sits in icon rows next to bare buttons and has to line up with
+   them to the pixel. */
+.delete-action-wrapper{display:inline-flex;align-items:center;justify-content:center;flex:none;vertical-align:middle}
+.delete-action-wrapper:focus-visible{outline:2px solid var(--blue-600);outline-offset:3px;border-radius:6px}
+.admin-app .delete-action-button:disabled,.admin-app .delete-action-button:disabled:hover{cursor:not-allowed;color:var(--muted);opacity:.45;background:transparent;box-shadow:none}

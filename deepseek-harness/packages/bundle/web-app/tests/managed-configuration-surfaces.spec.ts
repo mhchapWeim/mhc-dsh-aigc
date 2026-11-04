@@ -15,14 +15,17 @@ it('uses the work assistant identity instead of the harness opener', () => {
 it('disables local model and plugin configuration only in managed mode', () => {
   const patches = loadOverlayPatches('managed-surfaces', fileURLToPath(new URL('../cordis.patch.yml', import.meta.url)))
   const rows = patches.flatMap(patch => patch.insert ?? [])
-  for (const id of ['ui-settings-models', 'ui-plugin-manager', 'ui-settings-plugins', 'ui-settings-plugin-inventory']) {
+  for (const id of ['ui-plugin-manager', 'ui-settings-plugins', 'ui-settings-plugin-inventory']) {
     const row = rows.find(candidate => candidate.id === id)
     expect(row?.disabled).toEqual({ __jsExpr: 'process.env.DSH_MANAGED_BACKEND_URL !== undefined' })
   }
-  for (const id of ['llm-pi-ai', 'llm-deepseek']) {
+  for (const id of ['llm-deepseek']) {
     const row = patches.find(candidate => candidate.id === id)
     expect(row?.disabled).toEqual({ __jsExpr: 'process.env.DSH_MANAGED_BACKEND_URL !== undefined' })
   }
+  expect(rows.find(candidate => candidate.id === 'ui-settings-models')?.disabled).toBeUndefined()
+  expect(patches.find(candidate => candidate.id === 'llm-pi-ai')).toBeUndefined()
+  expect(rows.find(candidate => candidate.id === 'ui-settings-models')?.config?.managed).toEqual({ __jsExpr: 'process.env.DSH_MANAGED_BACKEND_URL !== undefined' })
   expect(rows.find(candidate => candidate.id === 'ui-model-selection')?.disabled).toBeUndefined()
   expect(rows.find(candidate => candidate.id === 'ui-managed-account')?.disabled)
     .toEqual({ __jsExpr: 'process.env.DSH_MANAGED_BACKEND_URL === undefined' })

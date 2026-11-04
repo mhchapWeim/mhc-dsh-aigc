@@ -57,7 +57,10 @@ export function installManagedPluginSync(ctx: Context, manager: PluginManager, d
       const activated = new Map<string, string>()
       let wake = new AbortController()
       let identityChanged = false
-      scope.on('credentials/record-updated', () => { identityChanged = true; wake.abort() })
+      scope.on('credentials/record-updated', key => {
+        if (key !== credentialKey('llm-managed-backend', 'user-session')) return
+        identityChanged = true; wake.abort()
+      })
       const stateFile = join(dir, '.aigc-plugin-state.json')
       let state: z.infer<typeof stateSchema> = { deviceId: randomUUID(), packages: {} }
       const persist = async (): Promise<void> => { await writeFileAtomic(stateFile, JSON.stringify(state), { mode: 0o600 }) }

@@ -17,6 +17,7 @@ import { installOfficeEngineResolution } from './office-engine.ts'
 import { installManagedSessionPublisher } from './managed-session.ts'
 import { installFailureDiagnostics } from './failure-diagnostics.ts'
 import { prepareWorkspacePermissions } from './workspace-permissions.ts'
+import { watchShutdown } from './shutdown-diagnostics.ts'
 
 async function main(): Promise<void> {
   await prepareWorkspacePermissions(process.env.DSH_WORKSPACE_ROOT)
@@ -53,13 +54,17 @@ async function main(): Promise<void> {
     const startedAt = Date.now()
     // Startup failure is reported by main; shutdown only owns a tree that booted.
     const running = await application.catch(() => undefined)
-    await running?.shutdown.shutdown(0, {
-      timeoutMs: 30_000,
-      onFailure: failure => {
-        // Synchronous stderr survives forced exit and is captured by the supervising shell.
-        writeSync(2, `desktop shutdown: ${failure.reason}; elapsed ${Date.now() - startedAt}ms; grace 30000ms; ${inspect(failure.error, { depth: 5, maxStringLength: 16_384 })}\n`)
-      },
-    })
+    const diagnostics = running === undefined ? undefined : watchShutdown(running.ctx, line => { writeSync(2, line) })
+    try {
+      await running?.shutdown.shutdown(0, {
+        timeoutMs: 30_000,
+        onFailure: failure => {
+          diagnostics?.report(failure.reason)
+          // Synchronous stderr survives forced exit and is captured by the supervising shell.
+          writeSync(2, `desktop shutdown: ${failure.reason}; elapsed ${Date.now() - startedAt}ms; grace 30000ms; ${inspect(failure.error, { depth: 5, maxStringLength: 16_384 })}\n`)
+        },
+      })
+    } finally { diagnostics?.dispose() }
     await send({ type: 'shutdown-complete' })
     if (process.connected) process.disconnect()
   })()

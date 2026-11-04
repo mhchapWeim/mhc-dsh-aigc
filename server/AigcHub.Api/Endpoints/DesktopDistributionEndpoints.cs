@@ -17,6 +17,7 @@ public static class DesktopDistributionEndpoints
     private sealed record AnnouncementInput(string Title, string Body, bool Important, DateTimeOffset StartsAt,
         DateTimeOffset? EndsAt, Guid[] UserIds, Guid[]? RoleIds = null, Guid[]? DepartmentIds = null);
     private sealed record ReleaseInput(string Version, string Notes, string Arch, Guid[] UserIds, Guid[]? RoleIds = null, Guid[]? DepartmentIds = null);
+    private sealed record MandatoryInput(bool IsMandatory);
     private sealed record StatusInput(string Status);
     private sealed record TargetsInput(Guid[] UserIds, Guid[]? RoleIds = null, Guid[]? DepartmentIds = null);
     private sealed record ReceiptInput(string Status);
@@ -38,8 +39,10 @@ public static class DesktopDistributionEndpoints
         releases.MapGet("/recipient-options", AudienceOptionsAsync);
         releases.MapGet("/clients", ListClientsAsync);
         releases.MapPost("/", CreateReleaseAsync);
+        releases.MapDelete("/{id:guid}", DeleteReleaseAsync);
         releases.MapPut("/{id:guid}/recipients", ReleaseTargetsAsync);
         releases.MapPost("/{id:guid}/status", ReleaseStatusAsync);
+        releases.MapPost("/{id:guid}/mandatory", MandatoryAsync);
         releases.MapPost("/{id:guid}/artifacts", UploadAsync).DisableAntiforgery()
             .WithMetadata(new RequestSizeLimitAttribute(MaximumPackageBytes + 32 * 1024 * 1024),
                 new RequestFormLimitsAttribute { MultipartBodyLengthLimit = MaximumPackageBytes + 32 * 1024 * 1024 });
@@ -173,7 +176,7 @@ public static class DesktopDistributionEndpoints
         (await db.DesktopReleases.AsNoTracking().Include(x => x.Recipients).ThenInclude(x => x.User)
             .OrderByDescending(x => x.CreatedAt).ToArrayAsync(ct)).Select(x => new
         {
-            x.Id, x.Version, x.Notes, x.Platform, x.Arch, x.Status, x.FileName, x.Bytes, x.HasBlockmap, x.CreatedAt,
+            x.Id, x.Version, x.Notes, x.Platform, x.Arch, x.Status, x.IsMandatory, x.FileName, x.Bytes, x.HasBlockmap, x.CreatedAt,
             audience = Audience(x.AudienceJson, x.Recipients.Select(r => r.UserId)),
             Recipients = x.Recipients.Select(r => new { r.UserId, r.User.Name, r.User.EmployeeNo })
         }));
@@ -182,6 +185,23 @@ public static class DesktopDistributionEndpoints
         await db.DesktopClientReports.AsNoTracking().OrderByDescending(x => x.LastSeenAt).Take(1000).Select(x => new
         { x.UserId, x.User.Name, x.User.EmployeeNo, x.DeviceId, x.ComputerName, x.Version, x.Platform, x.Arch,
             x.UpdateStatus, x.TargetVersion, x.Error, x.LastSeenAt }).ToArrayAsync(ct));
+
+    private static async Task<IResult> DeleteReleaseAsync(Guid id, ICurrentUser current, AigcHubDbContext db, CancellationToken ct)
+    {
+        await ReleaseGate.WaitAsync(ct);
+        try
+        {
+            var release = await db.DesktopReleases.SingleOrDefaultAsync(x => x.Id == id, ct);
+            if (release is null) return Results.NotFound();
+            release.DeletedAt = DateTimeOffset.UtcNow;
+            release.Status = "Paused";
+            release.IsMandatory = false;
+            db.OperationAudits.Add(new OperationAudit { UserId = current.Id, Action = "desktop-release.delete", EntityType = "DesktopRelease", EntityId = id.ToString(), Succeeded = true });
+            await db.SaveChangesAsync(ct);
+            return Results.NoContent();
+        }
+        finally { ReleaseGate.Release(); }
+    }
 
     private static async Task<IResult> CreateReleaseAsync(ReleaseInput input, AigcHubDbContext db, CancellationToken ct)
     {
@@ -193,7 +213,7 @@ public static class DesktopDistributionEndpoints
         await ReleaseGate.WaitAsync(ct);
         try
         {
-            if (await db.DesktopReleases.AnyAsync(x => x.Version == input.Version && x.Arch == input.Arch, ct))
+            if (await db.DesktopReleases.IgnoreQueryFilters().AnyAsync(x => x.Version == input.Version && x.Arch == input.Arch, ct))
                 return Results.Conflict(new { error = "该版本和架构已存在" });
             var item = new DesktopRelease { Version = input.Version, Notes = input.Notes, Arch = input.Arch,
                 AudienceJson = JsonSerializer.Serialize(audience),
@@ -232,7 +252,28 @@ public static class DesktopDistributionEndpoints
             if (!((item.Status is "Draft" or "Paused" && input.Status == "Published") || (item.Status == "Published" && input.Status == "Paused")))
                 return Results.BadRequest(new { error = "发布状态转换无效" });
             if (input.Status == "Published" && item.Bytes == 0) return Results.BadRequest(new { error = "请先上传安装包" });
-            item.Status = input.Status; await db.SaveChangesAsync(ct); return Results.NoContent();
+            item.Status = input.Status;
+            if (input.Status == "Paused") item.IsMandatory = false;
+            await db.SaveChangesAsync(ct); return Results.NoContent();
+        }
+        finally { ReleaseGate.Release(); }
+    }
+
+    private static async Task<IResult> MandatoryAsync(Guid id, MandatoryInput input, ICurrentUser current, AigcHubDbContext db, IConfiguration config, IWebHostEnvironment env, CancellationToken ct)
+    {
+        await ReleaseGate.WaitAsync(ct);
+        try
+        {
+            var item = await db.DesktopReleases.SingleOrDefaultAsync(x => x.Id == id, ct);
+            if (item is null) return Results.NotFound();
+            if (input.IsMandatory && (item.Status != "Published" || item.Bytes <= 0
+                || !File.Exists(Path.Combine(Root(config, env), id.ToString("N"), "installer.exe"))))
+                return Results.Conflict(new { error = "只有已上传安装包且正在发布的版本才能设为强制更新" });
+            item.IsMandatory = input.IsMandatory;
+            db.OperationAudits.Add(new OperationAudit { UserId = current.Id, Action = input.IsMandatory ? "desktop-release.mandatory-enable" : "desktop-release.mandatory-disable",
+                EntityType = "DesktopRelease", EntityId = id.ToString(), Succeeded = true });
+            await db.SaveChangesAsync(ct);
+            return Results.NoContent();
         }
         finally { ReleaseGate.Release(); }
     }
@@ -299,10 +340,13 @@ public static class DesktopDistributionEndpoints
         }
         finally { ReportGate.Release(); }
         var candidates = await db.DesktopReleases.AsNoTracking().Where(x => x.Status == "Published" && x.Bytes > 0
-            && x.Platform == input.Platform && x.Arch == input.Arch && x.Recipients.Any(r => r.UserId == user.Id)).ToListAsync(ct);
+            && x.Platform == input.Platform && x.Arch == input.Arch && (x.IsMandatory || x.Recipients.Any(r => r.UserId == user.Id))).ToListAsync(ct);
         var release = candidates.Where(x => DesktopVersion.Compare(x.Version, input.Version) > 0)
             .OrderByDescending(x => x.Version, Comparer<string>.Create(DesktopVersion.Compare)).FirstOrDefault();
-        return Results.Ok(new { release = release is null ? null : new { release.Id, release.Version, release.Notes,
+        var minimumVersion = candidates.Where(x => x.IsMandatory)
+            .OrderByDescending(x => x.Version, Comparer<string>.Create(DesktopVersion.Compare)).FirstOrDefault()?.Version;
+        var mandatory = minimumVersion is not null && DesktopVersion.Compare(input.Version, minimumVersion) < 0;
+        return Results.Ok(new { mandatory, minimumVersion, release = release is null ? null : new { release.Id, release.Version, release.Notes,
             feedPath = $"/v1/desktop/updates/{release.Id}/" } });
     }
 
@@ -312,7 +356,7 @@ public static class DesktopDistributionEndpoints
         var user = await DshManagedEndpoints.UserAsync(request, db, ct);
         if (user is null) return Results.Unauthorized();
         var item = await db.DesktopReleases.AsNoTracking().SingleOrDefaultAsync(x => x.Id == id && x.Status == "Published"
-            && x.Bytes > 0 && x.Recipients.Any(r => r.UserId == user.Id), ct);
+            && x.Bytes > 0 && (x.IsMandatory || x.Recipients.Any(r => r.UserId == user.Id)), ct);
         if (item is null) return Results.NotFound();
         request.HttpContext.Response.Headers.CacheControl = "no-store";
         if (file is "nightly.yml" or "latest.yml" or "alpha.yml" or "beta.yml")

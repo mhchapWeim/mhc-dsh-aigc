@@ -91,7 +91,7 @@ export type DesignerOption = { value: string; label: string; employeeNo?: string
 export type DesignerOptions = {
   users: DesignerOption[]; departments: DesignerOption[]; roles: DesignerOption[];
 };
-export type PublicationOption = { id: string; code: string; name: string; description: string };
+export type PublicationOption = { parentId?: string | null; id: string; code: string; name: string; description: string };
 export type PublicationAccessOptions = {
   users: Array<{ id: string; name: string; employeeNo: string; department: string }>;
   departments: Array<{ id: string; name: string }>;
@@ -104,12 +104,14 @@ export type BackendPublication = {
   reviewComment?: string; taskId?: string; availableActions: Array<{ code: string; name: string }>;
   correlationId?: string;
 };
-export type BackendDepartment = { id: string; code: string; name: string; description: string; managerId?: string; isEnabled: boolean };
+export type BackendDepartment = { id: string; code: string; name: string; description: string; managerId?: string; isEnabled: boolean; billingPlanId?: string | null };
 export type BackendRole = { id: string; code: string; name: string; description: string; isBuiltIn: boolean; userCount: number; permissions: string[] };
 export type BackendPermission = { id: string; code: string; name: string; pagePath: string };
-export type BackendUser = { id: string; employeeNo: string; name: string; email: string; departmentId: string | null; department: string; isEnabled: boolean; lastLoginAt?: string; roles: Array<{ roleId: string; name: string }> };
-export type BackendCategory = { id: string; code: string; name: string; description: string; color: string; sortOrder: number; isEnabled: boolean };
+export type BackendUser = { allowCustomModels?: boolean; sync?: { status: 'Pending' | 'Sent' | 'Failed'; sentAt: string | null; createdAt: string; lastError: string } | null; id: string; employeeNo: string; name: string; email: string; departmentId: string | null; department: string; isEnabled: boolean; lastLoginAt?: string; billingPlanId?: string | null; roles: Array<{ roleId: string; name: string }> };
+export type BackendCategory = { parentId?: string | null; id: string; code: string; name: string; description: string; color: string; sortOrder: number; isEnabled: boolean };
 export type BackendCatalogApp = {
+  subcategory?: string; subcategoryId?: string | null; clicks?: import('./application-registry').ClickCounts; totalClicks?: number;
+  nameEn?: string; descriptionEn?: string; ownerEn?: string; categoryEn?: string; registered?: boolean;
   id: string; name: string; description: string; category: string; categoryColor: string;
   owner: string; accessUrl: string; publishedAt: string;
 };
@@ -272,7 +274,7 @@ export const completeWorkflowTask = (taskId: string, action: "approve" | "reject
   });
 
 export type UserAccessOption = { id: string; name: string; isEnabled: boolean; selected: boolean; inherited: boolean; departmentIds?: string[]; roleIds?: string[]; organizationInherited?: boolean };
-export type UserAccessOptions = { departments?: Array<{ id: string; name: string }>; roles?: Array<{ id: string; name: string }>; models: UserAccessOption[]; virtualKeys: UserAccessOption[] };
+export type UserAccessOptions = { departments?: Array<{ id: string; name: string }>; roles?: Array<{ id: string; name: string }>; plugins?: UserAccessOption[]; releases?: UserAccessOption[]; mcps?: UserAccessOption[]; models: UserAccessOption[]; virtualKeys: UserAccessOption[] };
 export const getUserAccessOptions = (userId?: string) => apiRequest<UserAccessOptions>(`/api/users/access-options${userId ? `?userId=${encodeURIComponent(userId)}` : ''}`);
 async function allPages<T>(path: string): Promise<BackendPage<T>> {
   const separator = path.includes('?') ? '&' : '?';
@@ -286,10 +288,14 @@ async function allPages<T>(path: string): Promise<BackendPage<T>> {
   return { ...first, items };
 }
 
+export type BillingPlanOption = { id: string; name: string; weeklyTokens: number; isEnabled: boolean };
+/** Plan catalog for the user and department forms; readable by organization editors. */
+export const getBillingPlanOptions = () => apiRequest<BillingPlanOption[]>("/api/billing/plan-options");
+
 export const getUsers = () => allPages<BackendUser>("/api/users");
 export const resetUserPassword = (id: string, newPassword: string) => apiRequest<void>(`/api/users/${encodeURIComponent(id)}/password`, { method: "PUT", body: JSON.stringify({ newPassword }) });
 export const changeMyPassword = (currentPassword: string, newPassword: string) => apiRequest<void>("/api/auth/password", { method: "PUT", body: JSON.stringify({ currentPassword, newPassword }) });
-export const saveUser = (id: string | null, input: { employeeNo: string; name: string; email: string; password?: string; departmentId: string | null; roleIds: string[]; isEnabled: boolean; modelIds?: string[]; virtualKeyIds?: string[] }) =>
+export const saveUser = (id: string | null, input: { employeeNo: string; name: string; email: string; password?: string; departmentId: string | null; roleIds: string[]; isEnabled: boolean; pluginIds?: string[]; releaseIds?: string[]; mcpIds?: string[]; modelIds?: string[]; virtualKeyIds?: string[]; billingPlanId?: string | null; allowCustomModels?: boolean }) =>
   apiRequest<void>(id ? `/api/users/${id}` : "/api/users", { method: id ? "PUT" : "POST", body: JSON.stringify(input) });
 
 export const getDepartments = () => allPages<BackendDepartment>("/api/departments");
@@ -307,6 +313,19 @@ export const saveCategory = (id: string | null, input: Omit<BackendCategory, "id
   apiRequest<void>(id ? `/api/categories/${id}` : "/api/categories", { method: id ? "PUT" : "POST", body: JSON.stringify(input) });
 export const deleteCategory = (id: string) => apiRequest<void>(`/api/categories/${id}`, { method: "DELETE" });
 export const getCatalogApps = () => apiRequest<BackendCatalogApp[]>("/api/catalog/apps");
+/** Applications this account actually launched, newest first; the Host filters to those still reachable. */
+export type RecentCatalogApp = { id: string; name: string; registered: boolean; lastUsedAt: string };
+export const getRecentCatalogApps = (limit?: number) => apiRequest<RecentCatalogApp[]>(`/api/catalog/recent-apps${limit === undefined ? '' : `?limit=${limit}`}`);
+function clickVisitId(): string {
+  // Internal HTTP deployments do not expose randomUUID, but do expose getRandomValues.
+  if (typeof crypto.randomUUID === 'function') return crypto.randomUUID();
+  const bytes = crypto.getRandomValues(new Uint8Array(16));
+  bytes[6] = (bytes[6] & 15) | 64;
+  bytes[8] = (bytes[8] & 63) | 128;
+  const hex = Array.from(bytes, byte => byte.toString(16).padStart(2, '0')).join('');
+  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
+}
+export const getRegisteredAppAccess = (id: string) => apiRequest<{accessUrl: string; counted?: boolean; clicks?: import('./application-registry').ClickCounts; totalClicks?: number}>(`/api/catalog/registered-apps/${encodeURIComponent(id)}/access`, {method: 'POST', body: JSON.stringify({visitId: clickVisitId()})});
 export const getChatTools = () => apiRequest<BackendChatTool[]>("/api/chat/tools");
 export const getChatModels = () => apiRequest<BackendChatModel[]>("/api/chat/models");
 export const getChatToolOptions = () => apiRequest<BackendChatToolOptions>("/api/chat/tool-options");
@@ -441,7 +460,7 @@ export type DesktopAudienceOptions = { users: Array<DesktopRecipientOption & { d
 export type DesktopAnnouncementRecipient = { userId: string; name: string; employeeNo: string; deliveredAt: string | null; readAt: string | null; confirmedAt: string | null };
 export type DesktopAnnouncement = { id: string; title: string; body: string; important: boolean; status: string; startsAt: string; endsAt: string | null; createdAt: string; audience: GrantSelection; recipients: DesktopAnnouncementRecipient[] };
 export type DesktopAnnouncementInput = { title: string; body: string; important: boolean; startsAt: string; endsAt: string | null } & GrantSelection;
-export type DesktopRelease = { id: string; version: string; notes: string; platform: string; arch: string; status: string; fileName: string; bytes: number; hasBlockmap: boolean; createdAt: string; audience: GrantSelection; recipients: Array<{ userId: string; name: string; employeeNo: string }> };
+export type DesktopRelease = { isMandatory: boolean; id: string; version: string; notes: string; platform: string; arch: string; status: string; fileName: string; bytes: number; hasBlockmap: boolean; createdAt: string; audience: GrantSelection; recipients: Array<{ userId: string; name: string; employeeNo: string }> };
 export type DesktopClientReport = { userId: string; name: string; employeeNo: string; deviceId: string; computerName: string; version: string; updateStatus: string; targetVersion: string; error: string; lastSeenAt: string };
 export const getDesktopAnnouncements = () => apiRequest<DesktopAnnouncement[]>('/api/desktop-announcements');
 export const getDesktopRecipients = (kind: 'announcements' | 'releases') => apiRequest<DesktopRecipientOption[]>(`/api/desktop-${kind}/recipients`);
@@ -469,3 +488,14 @@ export function uploadDesktopRelease(id: string, installer: File, blockmap: File
     xhr.send(form);
   });
 }
+
+export const setDesktopReleaseMandatory = (id: string, isMandatory: boolean) => apiRequest<void>(`/api/desktop-releases/${id}/mandatory`, { method: 'POST', body: JSON.stringify({ isMandatory }) });
+
+export type UserTokenQuota = { assigned: boolean; planName: string | null; source: string; weekStart: string; resetsAt: string; total: number; used: number; remaining: number };
+export const getUserTokenQuotas = (userIds: string[]) => apiRequest<Record<string, UserTokenQuota>>('/api/billing/user-quotas', { method: 'POST', body: JSON.stringify(userIds) });
+
+export const deleteUser = (id: string) => apiRequest<void>(`/api/users/${encodeURIComponent(id)}`, { method: 'DELETE' });
+export const deleteManagedVirtualKey = (id: string) => apiRequest<void>(`/api/virtual-keys/${encodeURIComponent(id)}`, { method: 'DELETE' });
+export const deleteDesktopRelease = (id: string) => apiRequest<void>(`/api/desktop-releases/${encodeURIComponent(id)}`, { method: 'DELETE' });
+
+export const deleteDepartment = (id: string) => apiRequest<void>(`/api/departments/${encodeURIComponent(id)}`, { method: 'DELETE' });

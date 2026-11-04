@@ -7,6 +7,7 @@ import { join, resolve } from 'node:path'
 import { parseArgs } from 'node:util'
 import { DESKTOP_HOST_PROTOCOL_VERSION } from '../src/host-protocol.ts'
 import type { DesktopRelease } from '../src/release.ts'
+import { developmentDebugPorts } from './development-debug-ports.ts'
 import { prepareDevelopmentProject } from './development-project.ts'
 import { prepareDevelopmentApp } from './development-app.ts'
 import { preparePrimaryRuntime } from './prepare-primary-runtime.ts'
@@ -24,16 +25,6 @@ function packageVersion(path: string, subject: string): string {
   const manifest = JSON.parse(readFileSync(path, 'utf8')) as PackageManifest
   if (typeof manifest.version !== 'string') throw new Error(`desktop development: ${subject} has no version`)
   return manifest.version
-}
-
-function debugPort(name: string, fallback: number): number {
-  const value = process.env[name]
-  if (value === undefined || value === '') return fallback
-  const port = Number(value)
-  if (!Number.isSafeInteger(port) || port < 1 || port > 65_535) {
-    throw new Error(`desktop development: ${name} must be an integer from 1 through 65535`)
-  }
-  return port
 }
 
 async function run(command: string, args: readonly string[], cwd: string, environment = process.env): Promise<void> {
@@ -59,9 +50,7 @@ async function launchElectron(): Promise<void> {
   const require = createRequire(import.meta.url)
   const electron: unknown = require('electron')
   if (typeof electron !== 'string') throw new Error('desktop development: electron executable is unavailable')
-  const mainPort = debugPort('DSH_DESKTOP_MAIN_INSPECT_PORT', 9229)
-  const rendererPort = debugPort('DSH_DESKTOP_RENDERER_DEBUG_PORT', 9222)
-  const hostPort = debugPort('DSH_DESKTOP_HOST_INSPECT_PORT', 9230)
+  const { mainPort, rendererPort, hostPort } = await developmentDebugPorts(process.env)
   const home = resolve(process.env.DSH_HOME ?? join(DEVELOPMENT_ROOT, 'home'))
   const userData = join(DEVELOPMENT_ROOT, 'electron-user-data')
   const environment: NodeJS.ProcessEnv = {

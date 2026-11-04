@@ -75,8 +75,12 @@ describe('admin pages', () => {
   it('explains why a category with applications cannot be deleted', async () => {
     const user = userEvent.setup();
     renderWithPlatform(<CategoryManagementPage />);
-    await user.click(screen.getByRole('button', { name: '删除智慧服务' }));
-    expect(screen.getByRole('status')).toHaveTextContent('仍有关联应用');
+    const button = screen.getByRole('button', { name: '删除智慧服务' });
+    expect(button).toBeDisabled();
+    expect(button).toHaveAccessibleDescription(/仍有关联应用/);
+    await user.hover(button.parentElement!);
+    expect(await screen.findByRole('tooltip')).toHaveTextContent('仍有关联应用');
+    expect(screen.queryByRole('button', { name: '确认删除' })).not.toBeInTheDocument();
   });
 
   it('renders category and department management as compact data grids', () => {
@@ -267,6 +271,21 @@ describe('admin pages', () => {
     expect(screen.getByRole('link', { name: /发布申请/ })).toHaveAttribute('href', '/admin/publications');
     expect(screen.getByRole('link', { name: /发布审核/ })).toHaveAttribute('href', '/admin/reviews');
     expect(screen.getByText('1')).toBeInTheDocument();
+  });
+
+  it('groups billing and click reports under report management', async () => {
+    localStorage.removeItem('aigc-admin-sidebar');
+    const user = userEvent.setup();
+    renderWithPlatform(<AdminShell><div>content</div></AdminShell>);
+    await user.click(screen.getByRole('button', {name: '报表管理'}));
+    const billing = screen.getByRole('link', {name: '计费报表'});
+    const clicks = screen.getByRole('link', {name: '点击率报表'});
+    expect(billing).toHaveAttribute('href', '/admin/billing/users');
+    expect(clicks).toHaveAttribute('href', '/admin/click-reports');
+    expect(billing.closest('.admin-nav-group')).toBe(clicks.closest('.admin-nav-group'));
+    expect(clicks.closest('.admin-nav-group')).toHaveTextContent('报表管理');
+    await user.click(screen.getByRole('button', {name: '协作与发布'}));
+    expect(screen.queryByRole('link', {name: '点击率报表'})).not.toBeInTheDocument();
   });
 
   it('opens clickable child destinations when hovering a collapsed group', async () => {

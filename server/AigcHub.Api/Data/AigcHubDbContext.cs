@@ -3,16 +3,24 @@ using Microsoft.EntityFrameworkCore;
 
 namespace AigcHub.Api.Data;
 
-public sealed class AigcHubDbContext(DbContextOptions<AigcHubDbContext> options) : DbContext(options)
+public sealed partial class AigcHubDbContext(DbContextOptions<AigcHubDbContext> options) : DbContext(options)
 {
     public DbSet<DshBackup> DshBackups => Set<DshBackup>();
+    public DbSet<TokenIncrementPackage> TokenIncrementPackages => Set<TokenIncrementPackage>();
+    public DbSet<TokenBillingPlan> TokenBillingPlans => Set<TokenBillingPlan>();
+    public DbSet<TokenBillingAssignment> TokenBillingAssignments => Set<TokenBillingAssignment>();
+    public DbSet<TokenBillingEntry> TokenBillingEntries => Set<TokenBillingEntry>();
     public DbSet<AppUser> Users => Set<AppUser>();
     public DbSet<Role> Roles => Set<Role>();
     public DbSet<Permission> Permissions => Set<Permission>();
     public DbSet<UserRole> UserRoles => Set<UserRole>();
     public DbSet<RolePermission> RolePermissions => Set<RolePermission>();
     public DbSet<Department> Departments => Set<Department>();
+    public DbSet<ApplicationClick> ApplicationClicks => Set<ApplicationClick>();
+    public DbSet<ApplicationClickAdjustment> ApplicationClickAdjustments => Set<ApplicationClickAdjustment>();
     public DbSet<AppCategory> Categories => Set<AppCategory>();
+    public DbSet<RegisteredApplication> RegisteredApplications => Set<RegisteredApplication>();
+    public DbSet<RegisteredApplicationGrant> RegisteredApplicationGrants => Set<RegisteredApplicationGrant>();
     public DbSet<ProcessDefinition> ProcessDefinitions => Set<ProcessDefinition>();
     public DbSet<PublicationRequest> PublicationRequests => Set<PublicationRequest>();
     public DbSet<PublicationAccessGrant> PublicationAccessGrants => Set<PublicationAccessGrant>();
@@ -53,6 +61,32 @@ public sealed class AigcHubDbContext(DbContextOptions<AigcHubDbContext> options)
     protected override void OnModelCreating(ModelBuilder builder)
     {
         builder.HasDefaultSchema("aigc_hub");
+        builder.Entity<AppCategory>().HasOne(x => x.Parent).WithMany().HasForeignKey(x => x.ParentId).OnDelete(DeleteBehavior.Restrict);
+        builder.Entity<ApplicationClick>().HasIndex(x => new { x.ApplicationId, x.UserId, x.VisitId }).IsUnique();
+        builder.Entity<ApplicationClick>().HasIndex(x => new { x.ApplicationId, x.CreatedAt });
+        builder.Entity<ApplicationClick>().HasIndex(x => new { x.ApplicationId, x.UserId, x.CreatedAt });
+        builder.Entity<ApplicationClickAdjustment>().HasKey(x => new { x.ApplicationId, x.Period, x.PeriodStart });
+        builder.Entity<ConfigSyncDevice>().HasKey(x => new { x.UserId, x.DeviceId });
+        builder.Entity<ConfigSyncEvent>().HasIndex(x => new { x.Status, x.NextAttemptAt });
+        builder.Entity<ConfigSyncDevice>().HasIndex(x => x.LastSeenAt);
+        builder.Entity<RegisteredApplicationGrant>().HasOne(x => x.Application).WithMany(x => x.Grants)
+            .HasForeignKey(x => x.RegisteredApplicationId).OnDelete(DeleteBehavior.Cascade);
+        builder.Entity<RegisteredApplicationGrant>().HasIndex(x => new { x.RegisteredApplicationId, x.SubjectType, x.SubjectId }).IsUnique().HasDatabaseName("IX_RegisteredApplicationGrant_Subject");
+        builder.Entity<Department>().HasQueryFilter(x => x.DeletedAt == null);
+        builder.Entity<AppUser>().HasQueryFilter(x => x.DeletedAt == null);
+        builder.Entity<ManagedVirtualKey>().HasQueryFilter(x => x.DeletedAt == null);
+        builder.Entity<DesktopRelease>().HasQueryFilter(x => x.DeletedAt == null);
+        builder.Entity<TokenBillingPlan>().HasQueryFilter(x => x.DeletedAt == null);
+        builder.Entity<AppUser>().Property(x => x.SyncVersion).IsConcurrencyToken();
+        builder.Entity<UserSyncMessage>().HasIndex(x => new { x.Status, x.NextAttemptAt });
+        builder.Entity<UserSyncMessage>().HasIndex(x => new { x.UserId, x.CreatedAt });
+        builder.Entity<UserSyncMessage>().HasIndex(x => x.BatchId);
+        builder.Entity<TokenIncrementPackage>().HasIndex(x=>new{x.UserId,x.WeekStart});
+        builder.Entity<TokenBillingPlan>().HasIndex(x=>x.Name).IsUnique();
+        builder.Entity<TokenBillingAssignment>().HasKey(x=>new{x.SubjectType,x.SubjectId});
+        builder.Entity<TokenBillingEntry>().HasIndex(x=>new{x.UserId,x.WeekStart});
+        builder.Entity<TokenBillingEntry>().HasIndex(x=>x.CreatedAt);
+        builder.Entity<TokenBillingEntry>().Property(x=>x.Multiplier).HasPrecision(18,6);
         builder.Entity<ManagedPlugin>().HasIndex(x => x.PackageName).IsUnique();
         builder.Entity<ManagedPluginVersion>().HasIndex(x => new { x.PluginId, x.Version }).IsUnique();
         builder.Entity<ManagedPluginVersion>().HasOne(x => x.Plugin).WithMany(x => x.Versions).HasForeignKey(x => x.PluginId);

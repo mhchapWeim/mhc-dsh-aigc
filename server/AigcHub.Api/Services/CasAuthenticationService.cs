@@ -47,11 +47,12 @@ public sealed class CasAuthenticationService(IHttpClientFactory clients, IOption
 
     public async Task<AppUser> FindOrCreateUserAsync(CasIdentity identity, CancellationToken ct)
     {
-        var user = await db.Users.Include(x => x.Department).Include(x => x.Roles)
+        var user = await db.Users.IgnoreQueryFilters().Include(x => x.Department).Include(x => x.Roles)
             .ThenInclude(x => x.Role).ThenInclude(x => x.Permissions).ThenInclude(x => x.Permission)
             .SingleOrDefaultAsync(x => x.EmployeeNo.ToLower() == identity.EmployeeNo, ct);
+        if (user?.DeletedAt != null) throw new WorkflowException("账号已删除，请联系管理员", 403);
         if (user is not null) return user;
-        if (await db.Users.AnyAsync(x => x.Email.ToLower() == identity.Email.ToLower(), ct))
+        if (await db.Users.IgnoreQueryFilters().AnyAsync(x => x.Email.ToLower() == identity.Email.ToLower(), ct))
             throw new InvalidOperationException("SSO 邮箱已由其他工号使用，请联系管理员核对账号。");
         var role = await db.Roles.Include(x => x.Permissions).ThenInclude(x => x.Permission)
             .SingleAsync(x => x.Code == "normal-user", ct);
@@ -59,6 +60,7 @@ public sealed class CasAuthenticationService(IHttpClientFactory clients, IOption
         // CAS-created accounts have no shared, guessable local password. Administrators may reset it explicitly.
         user.PasswordHash = hasher.HashPassword(user, Convert.ToHexString(RandomNumberGenerator.GetBytes(32)));
         user.Roles.Add(new UserRole { User = user, Role = role });
+        await UserAccessAdministration.BindDefaultLocalModelsAsync(db, user.Id, ct);
         db.Users.Add(user);
         return user;
     }

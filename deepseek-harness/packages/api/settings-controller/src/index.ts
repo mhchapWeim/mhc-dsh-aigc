@@ -197,6 +197,7 @@ export class SettingsController extends TypertRemoteService {
     const settings = this.provider()
     const namespace = parsed.data.ns
     try {
+      this.ctx.get('llm')?.assertConfigurationAccess(namespace)
       if (mode === 'update') await settings.update(namespace, input, expectedRevision)
       else if (mode === 'replace') await settings.replace(namespace, input, expectedRevision)
       else await settings.mutate(namespace, input as SettingsPathOp[], expectedRevision)

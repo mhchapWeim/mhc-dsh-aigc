@@ -1,5 +1,7 @@
 'use client';
 
+import { DeleteButton } from '../../components/delete-button';
+import { useDeleteConfirm } from '../../components/delete-confirm';
 import { useMemo, useState } from 'react';
 import { Check, Edit3, Filter, KeyRound, Plus, Search, ShieldCheck, Trash2, UsersRound } from 'lucide-react';
 import { usePageSize } from '../../components/use-page-size';
@@ -35,6 +37,7 @@ const typeOptions: SelectOption[] = [
 const emptyRole = (): PlatformRole => ({ id: `role-${Date.now()}`, name: '', description: '', permissions: ['/admin'], builtIn: false });
 
 export default function RoleManagementPage() {
+  const { confirmDelete, deleteConfirmHolder } = useDeleteConfirm();
   const [pageSize, setPageSize] = usePageSize();
   const { roles, users, dispatch, notice } = usePlatform();
   const [query, setQuery] = useState('');
@@ -69,7 +72,7 @@ export default function RoleManagementPage() {
   const updateRoleType = (value: string) => { setRoleType(value); setPage(1); };
 
   return (
-    <div className="admin-page page-enter">
+    <div className="admin-page page-enter">{deleteConfirmHolder}
       <div className="page-title">
         <div><span className="section-kicker">ROLE BASED ACCESS</span><h1>角色管理</h1><p>创建角色，并配置登录后台后可以查看的功能页面。</p></div>
         <button className="primary-action" type="button" onClick={() => setEditing(emptyRole())}><Plus size={18} />新增角色</button>
@@ -95,7 +98,7 @@ export default function RoleManagementPage() {
                     <td><span className="role-user-count"><UsersRound size={15} />{userCount} 人</span></td>
                     <td><button className="permission-count-button" type="button" aria-label={`配置${role.name}权限`} onClick={() => setPermissionRoleId(role.id)}><KeyRound size={15} /><strong>{role.permissions.length}</strong> / {adminPageOptions.length} 个页面</button></td>
                     <td><span className="role-table-description" title={role.description}>{role.description || '暂无角色说明'}</span></td>
-                    <td><div className="row-actions"><button type="button" aria-label={`编辑${role.name}`} title="编辑角色" onClick={() => setEditing({ ...role })}><Edit3 size={16} /></button><button className="danger-icon" type="button" aria-label={`删除${role.name}`} title={cannotDelete ? (role.builtIn ? '系统角色不可删除' : '该角色仍有关联用户') : '删除角色'} disabled={cannotDelete} onClick={() => dispatch({ type: 'delete-role', id: role.id })}><Trash2 size={16} /></button></div></td>
+                    <td><div className="row-actions"><button type="button" aria-label={`编辑${role.name}`} title="编辑角色" onClick={() => setEditing({ ...role })}><Edit3 size={16} /></button><DeleteButton className="danger-icon" type="button" aria-label={`删除${role.name}`} title={cannotDelete ? (role.builtIn ? '系统角色不可删除' : '该角色仍有关联用户') : '删除角色'} blockedReason={cannotDelete ? (role.builtIn ? '系统角色不可删除' : `该角色仍关联 ${userCount} 位用户，请先解除关联`) : undefined} onClick={() => void confirmDelete(`删除角色“${role.name}”？`, () => dispatch({ type: 'delete-role', id: role.id }))}><Trash2 size={16} /></DeleteButton></div></td>
                   </tr>
                 );
               })}

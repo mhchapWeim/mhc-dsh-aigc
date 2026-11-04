@@ -1,5 +1,7 @@
 'use client';
 
+import { SearchableSelect } from '../../components/modern-select';
+
 import { useState } from 'react';
 import type { VirtualKeyPolicy, VirtualKeyPolicyView } from '../../lib/api-client';
 
@@ -43,9 +45,9 @@ export function KeyPolicyFields({ value, onChange, models, current }: {
       <label>预算重置周期<input value={value.budgetDuration} pattern="([1-9][0-9]{0,6}(mo|[smhdw])|hourly|daily|weekly|monthly)" onChange={event => onChange({ ...value, budgetDuration: event.target.value })} placeholder="例如 30d、monthly；留空不定期重置" /></label>
       <label>每分钟请求数（RPM）<input type="number" min="1" step="1" value={value.rpmLimit} onChange={event => onChange({ ...value, rpmLimit: event.target.value })} placeholder="留空：不设置 Key 级限制" /></label>
       <label>每分钟 Token 数（TPM）<input type="number" min="1" step="1" value={value.tpmLimit} onChange={event => onChange({ ...value, tpmLimit: event.target.value })} placeholder="留空：不设置 Key 级限制" /></label>
-      <label>有效期<select value={value.expiryMode} onChange={event => onChange({ ...value, expiryMode: event.target.value as PolicyDraft['expiryMode'] })}>
+      <label>有效期<SearchableSelect aria-label="有效期" value={value.expiryMode} onChange={event => onChange({ ...value, expiryMode: event.target.value as PolicyDraft['expiryMode'] })}>
         {current && <option value="keep">保持当前到期时间</option>}<option value="duration">从本次保存起设置时长</option><option value="never">永久有效</option>
-      </select></label>
+      </SearchableSelect></label>
       {value.expiryMode === 'duration' && <label>有效时长<input required pattern="([1-9][0-9]{0,6}(mo|[smhdw])|hourly|daily|weekly|monthly)" value={value.duration} onChange={event => onChange({ ...value, duration: event.target.value })} placeholder="例如 30d、720h" /></label>}
     </div>
     {current && <p className="recipient-hint">当前到期时间：{current.expires ? new Date(current.expires).toLocaleString() : '永久有效'}。保持当前到期时间不会续期。</p>}

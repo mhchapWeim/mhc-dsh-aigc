@@ -135,7 +135,16 @@
 .admin-app .modern-select__trigger svg,
 .admin-app .modern-select__empty { color: var(--muted); }
 .admin-app .modern-select__search { background: var(--surface); border-color: var(--line); color: var(--muted); }
-.admin-app .modern-select__search input { color: var(--ink); }
+/* The search label owns the border, background and focus indicator. */
+.admin-app .modern-select__search input,
+.admin-app .modern-select__search input:focus,
+.admin-app .modern-select__search input:focus-visible {
+  color: var(--ink);
+  background: transparent;
+  border: 0;
+  outline: none;
+  box-shadow: none;
+}
 .admin-app .modern-select__options > button { background: var(--surface); color: var(--ink-soft); }
 .admin-app .modern-select__options > button:hover { background: var(--admin-hover); color: var(--ink); }
 .admin-app .modern-select__options > button.is-selected { background: var(--blue-100); color: var(--blue-700); }
@@ -220,3 +229,7 @@
 @media (prefers-reduced-motion: reduce) {
   .admin-app, .admin-app *, .admin-app *::before, .admin-app *::after { scroll-behavior: auto; transition: none; animation: none; }
 }
+
+.admin-app .user-custom-model-toggle { display: flex; flex-direction: row; align-items: flex-start; gap: 10px; grid-column: 1 / -1; }
+.admin-app .user-custom-model-toggle input[type=checkbox] { width: 16px; height: 16px; min-height: 0; flex: none; margin: 3px 0 0; }
+.admin-app .user-custom-model-toggle small { display: block; margin-top: 5px; color: var(--muted); }

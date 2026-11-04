@@ -1,0 +1,14 @@
+.config-update-summary { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; margin-bottom: 16px; }
+.config-update-summary section { display: grid; gap: 8px; padding: 20px; }
+.config-update-summary span, .config-update-transport { color: var(--muted); font-size: 13px; }
+.config-update-summary strong { color: var(--ink); font-size: 24px; }
+.config-update-filters { display: flex; flex-wrap: wrap; gap: 16px; align-items: end; padding: 20px; }
+.config-update-filters label, .config-update-filters .form-field { display: grid; gap: 8px; min-width: 200px; }
+.config-update-filters input { min-height: 38px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); color: var(--ink); padding: 8px 10px; }
+.config-update-table { overflow-x: auto; }
+.config-update-table table { min-width: 1050px; }
+.config-update-table td small { display: block; color: var(--muted); margin-top: 4px; }
+.config-update-state { color: var(--muted); white-space: nowrap; }
+.config-update-state.is-applied { color: var(--blue-600); }
+.config-update-state.is-failed { color: var(--red-600, #d92d20); }
+@media(max-width: 700px) { .config-update-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); } .config-update-filters > * { width: 100%; } }

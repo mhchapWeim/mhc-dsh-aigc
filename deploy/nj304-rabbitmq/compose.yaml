@@ -1,0 +1,19 @@
+services:
+  rabbitmq:
+    image: ${RABBITMQ_IMAGE:-rabbitmq:4.2-management}
+    hostname: nj304-aigc-mq
+    restart: unless-stopped
+    ports:
+      - "${MQ_BIND_ADDRESS:-127.0.0.1}:${MQ_PORT:-5672}:5672"
+      - "127.0.0.1:${MQ_MANAGEMENT_PORT:-15672}:15672"
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+      - ./rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf:ro
+      - ./generated/definitions.json:/etc/rabbitmq/definitions.json:ro
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+volumes:
+  rabbitmq-data:

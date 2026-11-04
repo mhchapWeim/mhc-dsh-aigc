@@ -1,10 +1,7 @@
 /**
  * ModelSelect: the composer's named model seat (`conversation.input.model`).
- * Two-level selection per figma 496:26454's MenuDropdown: the root menu is
- * the Model / Effort row pair (label + current value + a right chevron),
- * each drilling into its own list — the provider-grouped model list over
- * the shared directory, and the effort levels. The trigger (313:14108's
- * ToggleButton) shows both: model name + effort in the caption tone.
+ * Opens directly on the provider-grouped model list. The same panel keeps
+ * an effort entry for models that advertise reasoning levels.
  * While open, ↑/↓ move focus across the rows of the shown pane (wrapping; a
  * step taken while the trigger still holds focus enters at the near end), Tab
  * settles like Enter, and Escape and Shift+Tab leave a drilled pane first and
@@ -32,8 +29,8 @@ import type { PropsLocale } from '@deepseek-ai/dsh-client-ui-slots'
 import type { ModelSelectInjected } from './slots.ts'
 import css from './ModelSelect.module.css'
 
-/** Which pane the dropdown shows: the two-row root or one drilled-in list. */
-type Pane = 'root' | 'model' | 'effort'
+/** Which pane the dropdown shows: the model list or the reasoning-effort list. */
+type Pane = 'root' | 'effort'
 
 /** One dynamic effort row; undefined means preserve the provider default. */
 interface EffortChoice {
@@ -134,7 +131,7 @@ export function ModelSelect(
   // sees a keystroke. Every switch therefore names where the keyboard lands:
   // drilling on the pane's current value, coming back on the cell that opened
   // the pane left.
-  const paneFocus = useRef<'drill' | 'model' | 'effort' | null>(null)
+  const paneFocus = useRef<'drill' | 'effort' | null>(null)
   useEffect(() => {
     const intent = paneFocus.current
     paneFocus.current = null
@@ -149,7 +146,7 @@ export function ModelSelect(
       ;(target ?? triggerRef.current)?.focus()
       return
     }
-    const cell = itemRefs.current[intent === 'effort' ? 1 : 0]
+    const cell = itemRefs.current[0]
     ;(cell !== null && cell !== undefined && !cell.disabled ? cell : triggerRef.current)?.focus()
   }, [open, pane])
 
@@ -190,6 +187,7 @@ export function ModelSelect(
   if (!available) return null
 
   const show = (): void => {
+    paneFocus.current = 'drill'
     setPane('root')
     setOpen(true)
     reload()
@@ -320,7 +318,9 @@ export function ModelSelect(
     ? t('trigger.loading')
     : currentChoice?.model.name
       ?? (state.current === null ? t('trigger.fallback') : `${state.current.provider}/${state.current.model}`)
-  const triggerLabel = effortLabel === undefined ? modelLabel : `${modelLabel} · ${effortLabel}`
+  const custom = currentChoice?.group.source === 'custom'
+  const triggerLabel = (effortLabel === undefined ? modelLabel : `${modelLabel} · ${effortLabel}`)
+    + (custom === true ? ` · ${t('provider.custom')}` : '')
   const triggerAria = waiting
     ? t('trigger.loading')
     : state.current === null
@@ -357,6 +357,9 @@ export function ModelSelect(
       >
         <IconDataOutlineRegular className={css.triggerIcon} size={16} />
         <span className={css.triggerLabel}>{modelLabel}</span>
+        {/* A same-named platform model and a locally configured one must stay
+            distinguishable on the chip itself, not only in the tooltip. */}
+        {custom === true && <span className={css.triggerSource}>{t('provider.custom')}</span>}
         {effortLabel !== undefined && <span className={css.triggerEffort}>{effortLabel}</span>}
         <IconChevronDownOutlineRegular className={clsx(css.chevron, open && css.chevronOpen)} />
       </button>
@@ -376,11 +379,6 @@ export function ModelSelect(
         >
           {pane === 'root' && (
             <>
-              <button ref={itemRef()} type="button" role="menuitem" className={css.cell} onClick={() => { drill('model') }}>
-                <span className={css.cellLabel}>{t('menu.model')}</span>
-                <span className={css.cellValue}>{modelLabel}</span>
-                <IconChevronRightOutlineRegular className={css.cellChevron} />
-              </button>
               {reasoning !== undefined && (
                 <button ref={itemRef()} type="button" role="menuitem" className={css.cell} onClick={() => { drill('effort') }}>
                   <span className={css.cellLabel}>{t('menu.effort')}</span>
@@ -391,7 +389,7 @@ export function ModelSelect(
             </>
           )}
 
-          {pane === 'model' && (
+          {pane === 'root' && (
             <>
               {state.status === 'loading' && (
                 <div className={css.status}>{t('status.loading')}</div>
@@ -404,7 +402,7 @@ export function ModelSelect(
               )}
               {state.failures.map(failure => (
                 <div className={css.warning} key={failure.id}>
-                  <span>{t('warning.groupLoad', { name: failure.id === 'managed-internal' ? t('provider.internal') : failure.name, message: failure.message })}</span>
+                  <span>{t('warning.groupLoad', { name: failure.id === 'managed-internal' ? t('provider.internal') : failure.id === 'managed' ? t('provider.external') : failure.name, message: failure.message })}</span>
                   <button type="button" className={css.retry} onClick={reload}>{t('retry')}</button>
                 </div>
               ))}
@@ -413,7 +411,7 @@ export function ModelSelect(
                   const headingId = `${id}-${group.id}`
                   return (
                     <section role="group" aria-labelledby={headingId} className={css.group} key={group.id}>
-                      <div className={css.groupTitle} id={headingId}>{group.id === 'managed-internal' ? t('provider.internal') : group.name}</div>
+                      <div className={css.groupTitle} id={headingId}>{group.id === 'managed-internal' ? t('provider.internal') : group.id === 'managed' ? t('provider.external') : group.source === 'custom' ? `${t('provider.custom')} · ${group.name}` : group.name}</div>
                       {group.models.map((model) => {
                         const selected = state.current?.provider === group.id && state.current.model === model.id
                         return (

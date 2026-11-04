@@ -1,5 +1,7 @@
 'use client';
 
+import { SearchableSelect } from '../../components/modern-select';
+
 import { useEffect, useRef, useState } from 'react';
 import { Boxes, RefreshCw, Upload } from 'lucide-react';
 import { usePageSize } from '../../components/use-page-size';
@@ -69,7 +71,7 @@ export default function PluginsPage() {
       <div className="plugin-form-scroll">
       {error && <p role="alert" className="model-form-error">{error}</p>}
       <label>名称<input value={editing.name} maxLength={120} onChange={e => setEditing({ ...editing, name: e.target.value })} /></label>
-      <label>发布版本<select value={editing.publishedVersionId ?? ''} onChange={e => setEditing({ ...editing, publishedVersionId: e.target.value || null })}><option value="">请选择版本</option>{editing.versions.map(v => <option key={v.id} value={v.id}>{v.version} · DSH {v.dshVersion}</option>)}</select></label>
+      <label>发布版本<SearchableSelect aria-label="发布版本" value={editing.publishedVersionId ?? ''} onChange={e => setEditing({ ...editing, publishedVersionId: e.target.value || null })}><option value="">请选择版本</option>{editing.versions.map(v => <option key={v.id} value={v.id}>{v.version} · DSH {v.dshVersion}</option>)}</SearchableSelect></label>
       <label className="plugin-enabled"><input type="checkbox" checked={editing.isEnabled} onChange={e => setEditing({ ...editing, isEnabled: e.target.checked })} />启用插件</label>
       <label>插件配置（JSON）<textarea rows={7} spellCheck={false} value={configuration} onChange={e => setConfiguration(e.target.value)} /></label>
       <small>格式：{`{"插件行 ID": {"参数名": "值"}}`}。密钥请使用下方服务端字段。</small>

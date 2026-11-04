@@ -1,5 +1,7 @@
 'use client';
 
+import { SearchableSelect } from '../../../components/modern-select';
+
 import { useEffect, useState } from 'react';
 import { RefreshCw } from 'lucide-react';
 import { AntPagination } from '../../../components/ant-pagination';
@@ -41,8 +43,8 @@ export default function ClientVersionStatusPage() {
     <div className="page-title"><div><span className="section-kicker">DESKTOP VERSION STATUS</span><h1>版本状态</h1><p>按用户和设备 ID 展示最后一次上报。电脑名相同的不同设备 ID 会分别保留；版本与状态以上报时间为准。</p></div><button type="button" className="secondary-action" disabled={busy} onClick={() => void refresh()}><RefreshCw size={16} />刷新</button></div>
     <div className="admin-panel feedback-filters">
       <label>搜索客户端<input type="search" placeholder="姓名、工号、电脑名或设备 ID" value={search} onChange={event => { setSearch(event.target.value); setClientPage(1); }} /></label>
-      <label>当前版本<select value={version} onChange={event => { setVersion(event.target.value); setClientPage(1); }}><option value="">全部版本</option>{[...new Set([...versions, ...(version ? [version] : [])])].map(value => <option key={value} value={value}>{value}</option>)}</select></label>
-      <label>更新状态<select value={status} onChange={event => { setStatus(event.target.value); setClientPage(1); }}><option value="">全部状态</option>{[...new Set([...Object.keys(statuses), ...clients.map(client => client.updateStatus)])].map(value => <option key={value} value={value}>{statuses[value] || value}</option>)}</select></label>
+      <label>当前版本<SearchableSelect aria-label="当前版本" value={version} onChange={event => { setVersion(event.target.value); setClientPage(1); }}><option value="">全部版本</option>{[...new Set([...versions, ...(version ? [version] : [])])].map(value => <option key={value} value={value}>{value}</option>)}</SearchableSelect></label>
+      <label>更新状态<SearchableSelect aria-label="更新状态" value={status} onChange={event => { setStatus(event.target.value); setClientPage(1); }}><option value="">全部状态</option>{[...new Set([...Object.keys(statuses), ...clients.map(client => client.updateStatus)])].map(value => <option key={value} value={value}>{statuses[value] || value}</option>)}</SearchableSelect></label>
       <button type="button" className="secondary-action" onClick={() => { setSearch(''); setVersion(''); setStatus(''); setClientPage(1); }}>重置</button>
     </div>
     {error && <div className="model-form-error" role="alert">{error}</div>}

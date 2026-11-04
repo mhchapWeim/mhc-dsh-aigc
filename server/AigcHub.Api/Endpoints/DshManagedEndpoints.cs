@@ -205,10 +205,10 @@ public static class DshManagedEndpoints
         return Results.Ok(await IssueAccessAsync(user, session.Id, token, db, ct));
     }
 
-    private static async Task<IResult> MeAsync(HttpRequest request, AigcHubDbContext db, CancellationToken ct)
+    private static async Task<IResult> MeAsync(HttpRequest request, AigcHubDbContext db, TokenBillingService billing, CancellationToken ct)
     {
         var user = await UserAsync(request, db, ct);
-        return user is null ? Results.Unauthorized() : Results.Ok(new { user = new { id = user.Id, username = user.EmployeeNo } });
+        return user is null ? Results.Unauthorized() : Results.Ok(new { user = new { id = user.Id, username = user.EmployeeNo }, capabilities = new { allowCustomModels = user.AllowCustomModels }, billing = await billing.QuotaAsync(user.Id, ct) });
     }
 
     private static async Task<IResult> LogoutAsync(HttpRequest request, AigcHubDbContext db, CancellationToken ct)

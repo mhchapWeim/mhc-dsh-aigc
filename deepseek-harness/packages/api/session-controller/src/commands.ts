@@ -337,7 +337,7 @@ export class SessionCommandController {
     if (hasPromptRequest(agent, request.requestId)) return { accepted: true }
     const policy = await this.ctx.waterfall(
       'api-session/prompt-admit',
-      { sessionId: request.sessionId, content: request.content, signal },
+      { sessionId: request.sessionId, content: request.content, signal, provider: this.agents.selectionFor(agent).current.provider },
       (): Promise<SessionPromptAdmissionDecision> => Promise.resolve({ kind: 'allow' }),
     )
     if (policy.kind === 'reject') {

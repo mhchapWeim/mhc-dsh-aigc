@@ -1,5 +1,6 @@
 "use client";
 
+import { useDeleteConfirm } from '../../components/delete-confirm';
 import { useEffect, useMemo, useReducer, useRef, useState } from "react";
 import {
   Bot,
@@ -96,6 +97,7 @@ const nodeCenter = (node: ProcessNode) => ({
 });
 
 export default function ProcessDesignerPage() {
+  const { confirmDelete, deleteConfirmHolder } = useDeleteConfirm();
   const [history, dispatch] = useReducer(
     processHistoryReducer,
     sampleProcess,
@@ -195,8 +197,8 @@ export default function ProcessDesignerPage() {
     commit([...definition.nodes, node]);
     setSelectedId(node.id);
   };
-  const deleteSelected = () => {
-    if (!selected) return;
+  const deleteSelected = async () => {
+    if (!selected || !await confirmDelete("删除当前流程节点及其连线？")) return;
     dispatch({
       type: "commit",
       definition: {
@@ -257,7 +259,7 @@ export default function ProcessDesignerPage() {
   };
 
   return (
-    <div className="process-page page-enter">
+    <div className="process-page page-enter">{deleteConfirmHolder}
       <div className="process-toolbar">
         <div className="process-title">
           <span className="process-status-dot" />

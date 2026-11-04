@@ -27,6 +27,8 @@ public sealed class DesktopAnnouncementRecipient
 
 public sealed class DesktopRelease
 {
+    public DateTimeOffset? DeletedAt { get; set; }
+    public bool IsMandatory { get; set; }
     public string AudienceJson { get; set; } = "";
     public Guid Id { get; set; } = Guid.NewGuid();
     public string Version { get; set; } = "";

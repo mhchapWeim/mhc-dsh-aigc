@@ -132,3 +132,27 @@ it('does not start authentication on mount, focus refresh, or remount', async ()
   expect(injected.casStart).not.toHaveBeenCalled()
   expect(injected.login).not.toHaveBeenCalled()
 })
+
+it('keeps the remaining ring stable during reservation and deducts only settled usage', async () => {
+  const identity = { enabled: true as const, user: { id: 'user-1', username: 'wh00028' }, models: [], workspacePath: 'C:/workspace',
+    billing: { assigned: true, total: 1000000, used: 200000, reserved: 0, remaining: 800000, resetsAt: '2026-11-02T00:00:00+08:00', planName: 'Weekly' } }
+  const status = vi.fn().mockResolvedValueOnce(identity)
+    .mockResolvedValueOnce({ ...identity, billing: { ...identity.billing, reserved: 400000, remaining: 400000 } })
+    .mockResolvedValue({ ...identity, billing: { ...identity.billing, used: 290000, remaining: 710000 } })
+  const injected: ManagedSignInInjected = { status, login: vi.fn(), casStart: vi.fn(), casPoll: vi.fn(), logout: vi.fn(), t: key => zh[key] }
+  render(<ManagedAccountMenu {...({} as GlobalStandardProps)} wide openSettings={vi.fn()} openOnboarding={vi.fn()} {...injected} />)
+  await screen.findByRole('meter')
+  expect(screen.getByRole('meter').getAttribute('aria-valuenow')).toBe('80')
+  expect(screen.queryByRole('region', { name: zh.quotaDetails })).toBeNull()
+  fireEvent.click(screen.getByRole('button', { name: zh.quotaDetails }))
+  expect(screen.getByText('额度来源 · Weekly')).toBeTruthy()
+  expect(screen.getByText('800,000 tok')).toBeTruthy()
+  expect(screen.queryByRole('menuitem', { name: zh.settings })).toBeNull()
+  fireEvent.keyDown(document, { key: 'Escape' })
+  await waitFor(() => expect(screen.queryByText('额度来源 · Weekly')).toBeNull())
+  fireEvent(window, new Event('focus'))
+  await waitFor(() => expect(status).toHaveBeenCalledTimes(2))
+  expect(screen.getByRole('meter').getAttribute('aria-valuenow')).toBe('80')
+  fireEvent(window, new Event('focus'))
+  await waitFor(() => expect(screen.getByRole('meter').getAttribute('aria-valuenow')).toBe('71'))
+})

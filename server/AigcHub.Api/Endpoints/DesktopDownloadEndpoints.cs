@@ -27,7 +27,7 @@ public static class DesktopDownloadEndpoints
     private static async Task<DesktopRelease?> EligibleAsync(Guid id, Guid userId, AigcHubDbContext db, CancellationToken ct) =>
         await db.DesktopReleases.AsNoTracking().SingleOrDefaultAsync(x => x.Id == id && x.Status == "Published"
             && x.Platform == "win32" && x.Arch == "x64" && x.Bytes > 0
-            && x.Recipients.Any(r => r.UserId == userId && r.User.IsEnabled), ct);
+            && (x.IsMandatory && db.Users.Any(u => u.Id == userId && u.IsEnabled) || x.Recipients.Any(r => r.UserId == userId && r.User.IsEnabled)), ct);
 
     private static string FilePath(Guid id, IConfiguration config, IWebHostEnvironment env) =>
         Path.Combine(Path.GetFullPath(config["DesktopReleases:Root"] ?? Path.Combine(env.ContentRootPath, "data", "desktop-releases")), id.ToString("N"), "installer.exe");
@@ -38,7 +38,7 @@ public static class DesktopDownloadEndpoints
         context.Response.Headers.CacheControl = "no-store";
         if (!Guid.TryParse(context.User.FindFirstValue(ClaimTypes.NameIdentifier), out var userId)) return Results.Unauthorized();
         var releases = await db.DesktopReleases.AsNoTracking().Where(x => x.Status == "Published" && x.Platform == "win32"
-            && x.Arch == "x64" && x.Bytes > 0 && x.Recipients.Any(r => r.UserId == userId && r.User.IsEnabled)).ToArrayAsync(ct);
+            && x.Arch == "x64" && x.Bytes > 0 && (x.IsMandatory && db.Users.Any(u => u.Id == userId && u.IsEnabled) || x.Recipients.Any(r => r.UserId == userId && r.User.IsEnabled))).ToArrayAsync(ct);
         var release = releases.Where(x => DesktopVersion.Valid(x.Version) && File.Exists(FilePath(x.Id, config, env)))
             .OrderByDescending(x => x.Version, Comparer<string>.Create(DesktopVersion.Compare)).ThenByDescending(x => x.CreatedAt).FirstOrDefault();
         return Results.Ok(new { release = release is null ? null : new { release.Id, release.Version, release.Notes, release.Bytes,

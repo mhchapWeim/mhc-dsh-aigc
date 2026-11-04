@@ -107,6 +107,12 @@ class SensitiveWordCatalog {
     return rules.some(item => candidate.includes(item.literal) || item.separated?.test(candidate)) ? 'match' : 'clear'
   }
 
+  /** Check already-loaded rules without requiring the organization service for a direct call. */
+  inspectLocal(text: string): Verdict {
+    const candidate = normalize(text)
+    return this.rules?.some(item => candidate.includes(item.literal) || item.separated?.test(candidate)) ? 'match' : 'clear'
+  }
+
   private refresh(): Promise<readonly SensitiveWordRule[]> {
     this.pending ??= this.fetch().finally(() => { this.pending = undefined })
     return this.pending
@@ -143,17 +149,19 @@ export function apply(ctx: Context, config: Config): void {
     positiveInteger('requestTimeoutMs', config.requestTimeoutMs ?? 10_000))
   const decide = (text: string, signal: AbortSignal): Promise<Verdict> => rules.inspect(text, signal)
 
+  const isCustom = (provider: string | undefined): boolean => provider !== undefined && ctx.get('llm')?.listProviders().some(item => item.id === provider && item.source === 'custom') === true
+
   ctx.on('api-session/prompt-admit', async (admission, next): Promise<SessionPromptAdmissionDecision> => {
-    const verdict = await rules.inspect(promptText(admission.content), admission.signal, true)
+    const verdict = isCustom(admission.provider) ? rules.inspectLocal(promptText(admission.content)) : await rules.inspect(promptText(admission.content), admission.signal, true)
     if (verdict === 'match') return { kind: 'reject', code: 'SENSITIVE_CONTENT', message: '输入内容包含不允许的词语，请修改后重试。' }
     if (verdict === 'unavailable' && failureMode === 'closed') return { kind: 'reject', code: 'POLICY_UNAVAILABLE', message: '内容安全策略暂不可用，请稍后重试。' }
     return next()
   })
 
-  ctx.on('agent/pre-step', async ({ messages, signal }, next): Promise<PreStepDecision> => {
+  ctx.on('agent/pre-step', async ({ messages, signal, provider }, next): Promise<PreStepDecision> => {
     const text = messages.filter(message => message.source.kind === 'user').flatMap(message => message.content)
       .flatMap(block => block.type === 'text' ? [block.text] : []).join('\n')
-    const verdict = await decide(text, signal)
+    const verdict = isCustom(provider) ? rules.inspectLocal(text) : await decide(text, signal)
     if (verdict === 'match' || (verdict === 'unavailable' && failureMode === 'closed')) return { kind: 'reject' }
     return next()
   })

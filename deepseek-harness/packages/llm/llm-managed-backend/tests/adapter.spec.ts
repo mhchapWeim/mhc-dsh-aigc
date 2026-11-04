@@ -10,6 +10,23 @@ const CATALOG = {
   models: [{ id: 'team-small', name: 'Team Small', input: ['text', 'image'] }],
 }
 
+const QUOTA = {
+  assigned: true, total: 1_000_000, used: 0, reserved: 0, remaining: 1_000_000,
+  resetsAt: '2026-11-02T00:00:00Z', planName: 'Standard',
+}
+
+/** Answer the catalog plus the quota admission and reservation requests billing issues per stream. */
+function backendRoutes(catalog: unknown = CATALOG): (url: string | URL | Request) => Response {
+  return url => {
+    const target = String(url)
+    if (target.endsWith('/v1/billing/quota')) return Response.json(QUOTA)
+    if (target.includes('/v1/billing/reservations')) {
+      return Response.json({ id: '9f1d0e6c-0000-4000-8000-000000000000', status: 'Pending', reservedTokens: 1, multiplier: 1 })
+    }
+    return Response.json(catalog)
+  }
+}
+
 function adapter(request: typeof fetch): ManagedBackendAdapter {
   return new ManagedBackendAdapter(new Context(), 'https://models.example.test', async () => 'user-token', request)
 }
@@ -60,9 +77,9 @@ describe('managed backend adapter', () => {
     await credentials.modifyRecord(credentialKey('llm-managed-backend', 'device-user'), async () => ({
       kind: 'grant', payload: { id: 'user-1', username: 'wh00028' },
     }))
-    const request = vi.fn<typeof fetch>(async (_url, init) => {
+    const request = vi.fn<typeof fetch>(async (url, init) => {
       expect(new Headers(init?.headers).get('authorization')).toBe('Bearer user-token')
-      return Response.json(CATALOG)
+      return backendRoutes()(url)
     })
     let expectedUsername = 'wh00028'
     const upstream = vi.spyOn(globalThis, 'fetch').mockImplementation(async (url, init) => {
@@ -85,7 +102,11 @@ describe('managed backend adapter', () => {
       expect.objectContaining({ type: 'text-delta', text: 'hello' }),
       expect.objectContaining({ type: 'finish', reason: { kind: 'stop' } }),
     ]))
-    expect(request).toHaveBeenCalledTimes(1)
+    const paths = request.mock.calls.map(call => new URL(String(call[0])).pathname)
+    // Admission uses the backend token for the catalog, quota read, reservation and settlement.
+    expect(paths.slice(0, 3)).toEqual(['/v1/models', '/v1/billing/quota', '/v1/billing/reservations'])
+    expect(paths[3]).toMatch(/^\/v1\/billing\/reservations\/[0-9a-f-]{36}$/u)
+    expect(paths[3]?.slice('/v1/billing/reservations'.length + 1)).toBe(paths[2] === undefined ? '' : JSON.parse(String(request.mock.calls[2]?.[1]?.body)).requestId)
     const prepared = await managed.prepareCall('managed', 'team-small')
     await credentials.modifyRecord(credentialKey('llm-managed-backend', 'device-user'), async () => ({
       kind: 'grant', payload: { id: 'user-2', username: 'wa00038' },
@@ -110,7 +131,7 @@ describe('managed backend adapter', () => {
         bytes: 3, width: 1, height: 1, depth: 'uchar', space: 'srgb', hasAlpha: false,
       }),
     } as never)
-    const request = vi.fn<typeof fetch>(async () => Response.json(CATALOG))
+    const request = vi.fn<typeof fetch>(async url => backendRoutes()(url))
     const upstream = vi.spyOn(globalThis, 'fetch').mockImplementation(async (_url, init) => {
       const body = String(init?.body)
       expect(body).toContain('data:image/png;base64,AQID')

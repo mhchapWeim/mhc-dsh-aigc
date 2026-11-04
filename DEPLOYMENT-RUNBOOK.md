@@ -1,5 +1,162 @@
 # DSH、AIGC 和 Portal 部署记录
 
+## 2026-11-04-main.2 应用集合真实最近使用与卡片累计点击 API/Portal 构建
+
+已基于 `main` 当前工作区构建 `2026-11-04-main.2-app-only` 离线包，包含门户应用集合「最近使用」接入真实数据、应用卡片改为累计点击、注册中心可单独调整累计点击。
+
+- 交付目录：`deploy/k8s/bosch-aigc-dsh/update-2026-11-04-main.2-app-only`
+- 离线包：`output/aigc-update-2026-11-04-main.2-app-only.zip`（191,310,236 字节）
+- ZIP SHA-256：`52d41327bc185549a86867e25328845c2794d9c3e498ab12c7955edf1bbe0e82`
+- 镜像：`aigc-api:2026-11-04-main.2`（ID `sha256:d68a542c975d...`）、`aigc-portal:2026-11-04-main.2`（ID `sha256:34d69ccd4349...`），linux/amd64，tar 192,525,824 字节
+
+功能要点：新增 `GET /api/catalog/recent-apps?limit=`，按当前用户查询真实点击历史；此前该区域是两个硬编码假按钮。可见性复用 `ApplicationRegistryEndpoints.CanAccess`，撤权即消失；无记录不渲染、失败不阻塞目录。卡片由日/周/月/年四段改为单个「累计点击」（底部靠右放大），**点击报表保持四窗口不变**。注册中心新增「累计点击」输入，通过独立的 `Period="total"` 调整行与四个周期解耦，改周期不再影响累计值。同期包含 11-04-main.1 的自定义模型授权及更早全部内容。
+
+修通过程中发现并修复两个真实缺陷：一是最近使用最初只判 `IsEnabled` 未判授权，撤权后仍留在列表（已用同一 `CanAccess` 修正）；二是注册中心最初把累计值发到顶层 `totalClicks`，而后端只读 `clicks.total`，导致保存后卡片数字不变（已改为 `clicks.total`，并补原始 JSON 端到端测试锁定契约）。
+
+本包只更新两个镜像及 imagePullPolicy；不更新 DSH、MinIO、PostgreSQL、RabbitMQ、ConfigMap、Secret、PV/PVC。**数据库 dump 默认强制（BACKUP_DATABASE=1）**。回退只恢复镜像与拉取策略，数据不回退。
+
+本地验证：脱敏快照 API 147 文件/Portal 169 文件（appsettings 6 处 REDACTED，无 .env/.data-protection/App_Data/sk- 明文）；Portal bundle 新域名 2 处、旧域名 0 处；隔离冒烟（真实 PostgreSQL 17）`/health` 200、五个受保护端点含新路由 `recent-apps` 均 401、`Users.AllowCustomModels` 与 `ApplicationClicks`/`ApplicationClickAdjustments` 表正确、Portal 八页 200 且 `/chat` 无 client reference 报错；源码测试后端 200 通过/4 跳过、门户 46 文件 213 通过；tar 重载仍 amd64、prepare.py 20/20、`bash -n` ×3、ZIP 完整性全通过。
+
+已知非阻塞项：门户 `app/admin/plugins/status/page.test.tsx` 有 1 个既存失败（期望 3 次调用、实际 4 次），已通过临时回退本轮改动复验确认与本功能无关，本次未修复。
+
+DSH 安装包本次不构建（用户自行打包）。本次仅完成本地构建和离线交付，**尚未执行生产 CHECK_ONLY、镜像导入、Deployment 更新或业务验收**。命令以[本次交付说明](deploy/k8s/bosch-aigc-dsh/update-2026-11-04-main.2-app-only/README.md)为准。
+
+## 2026-11-04 DSH 自定义模型授权 API/Portal app-only 构建
+
+已基于 `main` 当前工作区构建 `2026-11-04-main.1-app-only` 离线包，包含按用户在 AIGC 中台开启「允许 DSH 自定义模型」的完整后端与门户改动，以及三项 Portal 交互修复。
+
+- 交付目录：`deploy/k8s/bosch-aigc-dsh/update-2026-11-04-main.1-app-only`
+- 离线包：`output/aigc-update-2026-11-04-main.1-app-only.zip`（191,312,161 字节）
+- ZIP SHA-256：`d0e21dd2bbeb9a2c42b409d9d875698e0dd6c5128e2f6e64e494c79eaffc3d4c`
+- 镜像：`aigc-api:2026-11-04-main.1`（ID `sha256:52263b555b82...`，100MB）、`aigc-portal:2026-11-04-main.1`（ID `sha256:d762e32932a7...`，92MB），linux/amd64，tar 192,522,240 字节
+
+功能要点：`Users.AllowCustomModels`（默认 false）与 `SaveUserRequest.AllowCustomModels`；`/api/users` 回传、`/v1/auth/me` 与 `/v1/config/snapshot` 的 `capabilities.allowCustomModels`；该字段已进入配置同步 revision 触发条件，改动经既有热更新与回执链路下发；权限变更写 `OperationAudit`。Portal 用户弹窗新增开关，保存提示统一为「保存成功」且 4 秒自动消失（原 `clear-notice` 从未被调用导致浮层常驻），流量包改为图标按钮，虚拟 Key 列表表头/内容居中并修复删除图标与相邻图标不对齐（`DeleteButton` 的 tooltip 包裹层未参与 flex 居中）。同期包含 11-03 应用注册中心/逻辑删除与 11-02 用户同步 MQ/周令牌计费全部内容。
+
+本包只更新 `aigc-api` 与 `aigc-portal` 镜像及 imagePullPolicy；不更新 DSH、MinIO、PostgreSQL、RabbitMQ、ConfigMap、Secret、PV/PVC。**因新增 `Users.AllowCustomModels` 列，update.sh 数据库 dump 默认强制（BACKUP_DATABASE=1）**；列由 API 启动幂等 `ADD COLUMN IF NOT EXISTS` 创建。回退只恢复镜像与拉取策略，列保留（默认 false，无害）。
+
+本地验证：新建脱敏快照（API 147 文件/Portal 167 文件，appsettings 6 处 REDACTED），修正了此前快照误将 `.data-protection`、`App_Data/logs`、`.env*` 打入镜像的问题；镜像内确认无 `appsettings.Development.json`、`.data-protection`、`App_Data`、无 `sk-` 明文；Portal bundle 新域名 2 处、旧域名 `aigcbackend` 0 处；隔离冒烟（真实 PostgreSQL 17）API `/health` 200、四个受保护端点未登录 401、`MQ.UserSync.*` 与 `ConfigSync.MqDisabled` 日志、`ConfigSync*`/`TokenBilling*` 表与 `Users.AllowCustomModels` 列均正确；Portal 六页 200 且 `/chat` 无 client reference 报错；tar `docker load` 重载仍为 amd64、prepare.py 单测 20/20、`bash -n` ×3、ZIP 完整性与内层 SHA-256 全通过。BUILD-INFO.json 记录 314 源文件哈希。
+
+Portal 构建参数按本文件 10-15 记录取 `https://aigcplatform.boschhuayu-steering.com`；`deploy/k8s/bosch-aigc-dsh/build-images.ps1` 与 `package-offline-images.ps1` 里仍写旧的 `aigcbackend` 域名，**下次复用这两个脚本前必须改新域名**。
+
+DSH 安装包本次不构建（用户自行打包）。**自定义模型调用由 DSH 直连，仅部署 API/Portal 不会让旧客户端获得该能力，需同时发布新版 DSH。**
+
+本次仅完成本地构建和离线交付，**尚未执行生产 CHECK_ONLY、镜像导入、Deployment 更新或自定义模型端到端联调**。导入、预检、更新和回退命令以[本次交付说明](deploy/k8s/bosch-aigc-dsh/update-2026-11-04-main.1-app-only/README.md)为准。
+
+## 2026-11-03 Portal /chat 页面热修复 portal-only 构建
+
+已基于 `main` 当前工作区构建 `2026-11-03-main.2-portal-only` 单镜像热修复包。修复 `/chat` 页面运行时错误 `Unexpectedly client reference export 'useDeleteConfirm' is called on server`：`portal/app/components/chat-shell.tsx` 的 `'use client'` 指令原先位于 import 语句之后而失效，整个文件被当作服务端组件，服务端渲染调用客户端 hook 报错；修复为指令移至文件首行。
+
+- 交付目录：`deploy/k8s/bosch-aigc-dsh/update-2026-11-03-main.2-portal-only`
+- 离线包：`output/aigc-update-2026-11-03-main.2-portal-only.zip`（91,926,766 字节）
+- ZIP SHA-256：`b5298630c8db31cf205aeb914c252a45054938bf7d107f30fc47ef1f2f4bcca9`
+- 镜像：`aigc-portal:2026-11-03-main.2`（ID `sha256:1d52239f5320...`，397MB），linux/amd64，tar 92,426,752 字节；API 镜像不变，沿用 `aigc-api:2026-11-03-main.1`
+
+本包只更新 `aigc-portal` 容器镜像及 imagePullPolicy；不更新 API、DSH、MinIO、PostgreSQL、RabbitMQ、ConfigMap、Secret、PV/PVC。无数据库结构变化，update.sh 默认不 dump（可 BACKUP_DATABASE=1）。回退恢复原 Portal 镜像及拉取策略。
+
+本地验证：脱敏快照 `.verification/release-20261103-portal-only`（portal 154 文件，沿用 11-02 排除规则）；容器冒烟 `/`、`/login/local`、`/desktop`、`/chat` 均 200 且 `/chat` SSR 无 useDeleteConfirm 错误；镜像内编译期 API 地址为新域名（SSR+client 两份 api-client）、旧域名 0 处、无开发凭据；tar `docker load` 重载、ZIP 完整性、prepare.py 单测 6/6、bash -n ×3 均通过。构建期间 D 盘曾满（100%），清理 Docker 构建缓存并由用户释放空间后完成打包。
+
+本次仅完成本地构建和离线交付，**尚未执行生产 CHECK_ONLY、镜像导入、Deployment 更新或 /chat 浏览器验收**。导入、预检、更新和回退命令以[本次交付说明](deploy/k8s/bosch-aigc-dsh/update-2026-11-03-main.2-portal-only/README.md)为准。业务验收需登录后打开 `/chat` 确认报错消失、对话/删除/工具功能正常，其余页面抽查无回归。
+
+## 2026-11-03 配置热更新与 DSH 设备回执（源码实现，待发布）
+
+新增模型/授权/倍率/计费配方变更版本与事务 Outbox、服务端 RabbitMQ 分发、DSH HTTPS SSE 与版本补偿、应用成功回执，以及 Portal“客户端运维 → 配置更新状态”。管理端可按用户和设备查看目标/已应用版本、最后应答、失败码、离线与未上报状态。首次使用需要同时更新 API、Portal 和 DSH，已有 app-only 离线包不自动包含本次后续源码改动。
+
+复用现有 nj304 MQ 和 `/aigc`；新增 `aigc.config.events` 及最小权限运行账号 `aigc_config_runtime`，保留原三账号。增量拓扑生成器：`deploy/nj304-rabbitmq/prepare-config-sync.py`；运行连接使用 `ConfigSync__*` 配置，密码沿用既有 `aigc-secrets` 的受保护 merge patch 注入方式，不使用管理账号作为运行凭据。默认 MQ 未启用时使用版本补偿，管理页明确显示连接状态。[完整配置、回执语义、代理与验收步骤](docs/DSH-CONFIG-HOT-UPDATE-DEPLOYMENT.md)。尚未修改线上 MQ、Secret 或部署任何新镜像/客户端。
+
+## 2026-11-03 应用注册中心 + 逻辑删除 API/Portal app-only 构建
+
+已基于 `main` 当前工作区（含应用注册中心、中台逻辑删除全部改动）构建 `2026-11-03-main.1-app-only` 离线包。包含：应用注册中心（`RegisteredApplications`/`RegisteredApplicationGrants` 表 + `/api/application-registry` 端点 + Portal `/admin/registry` 注册中心页与 `/admin/usage` 使用统计页，部门/个人授权并集，普通目录不暴露注册应用 URL）；中台逻辑删除（用户/部门/虚拟 Key/客户端版本/计费配方 `DeletedAt` 软删除，EF 全局查询过滤，删除用户撤销桌面会话并产生 `user.deleted` 同步消息，部门有用户拒绝删除，配方有绑定 409）；Portal 删除交互统一为 Ant Design Modal.confirm。同时包含 2026-11-02 with-mq 全部内容（用户同步 Outbox/RabbitMQ、周令牌计费等）。
+
+- 交付目录：`deploy/k8s/bosch-aigc-dsh/update-2026-11-03-main.1-app-only`
+- 离线包：`output/aigc-update-2026-11-03-main.1-app-only.zip`（191,287,737 字节）
+- ZIP SHA-256：`53d753f16b55edc8250f6ad1315e4353e957a84b5b3a5db9ce412523bbdb1529`
+- 镜像：`aigc-api:2026-11-03-main.1`（ID `6ae275c2fde8`，351MB）、`aigc-portal:2026-11-03-main.1`（ID `f87ceed81172`，397MB），linux/amd64，tar 192,415,744 字节
+
+本包只更新 `aigc-api` 与 `aigc-portal` 容器镜像及 imagePullPolicy；不更新 DSH、MinIO、PostgreSQL、RabbitMQ、ConfigMap、Secret、PV/PVC。**因新增注册中心两表及多表 `DeletedAt` 可空列（启动幂等创建），update.sh 数据库 dump 默认强制（BACKUP_DATABASE=1）**。回退只恢复两个镜像及拉取策略，软删除列与注册中心表保留（无害），数据不回退。脚本沿用 10-30 app-only 框架（prepare.py 单测 20/20）。
+
+本地验证：脱敏快照（API 193 文件/Portal 178 文件，appsettings 6 处 REDACTED）；API 冒烟 `/health` 200 + application-registry/users-sync/billing 端点未登录 401 + `MQ.UserSync.WorkerStarted/Disabled` 日志 + RegisteredApplications/UserSync/TokenBilling 表与 6 表 DeletedAt 列、Users.SyncVersion；Portal 六页（`/`、`/login/local`、`/desktop`、`/admin/registry`、`/admin/usage`、`/admin/users/sync`）200、旧域名 0 处、新域名已入 api-client bundle；tar 重载、ZIP 完整性与内层 SHA-256、bash -n ×3 均通过；BUILD-INFO.json 371 源文件哈希。DSH 安装包本次不构建（用户自行打包）。
+
+本次仅完成本地构建和离线交付，**尚未执行生产 CHECK_ONLY、镜像导入、Deployment 更新或注册中心/逻辑删除业务联调**。导入、预检、更新和回退命令以[本次交付说明](deploy/k8s/bosch-aigc-dsh/update-2026-11-03-main.1-app-only/README.md)为准。业务验收需确认注册中心登记/翻译/授权/门户可见、使用统计页、各管理页删除确认弹窗及软删除后列表隐藏，以及 2026-11-02 with-mq 尚未完成的验收项。
+
+## 2026-11-02 用户同步 RabbitMQ + API/Portal with-mq 构建
+
+已基于 `main` 当前工作区（含用户同步 MQ、周令牌计费全部改动）构建 `2026-11-02-main.1-with-mq` 离线包。这是首个含 RabbitMQ Kubernetes 资源的交付：除 API/Portal 镜像外，新增 nj304 固定的 MQ Deployment/Service/ConfigMap/Secret/PV/PVC。包含：后端 UserSync Outbox（`UserSyncMessages`/`UserSyncBatches` 表 + `Users.SyncVersion`）、`RabbitUserSyncPublisher`（RabbitMQ.Client 7.2.2、publisher confirms、`MQ.UserSync.` 6200-6231 日志）、Portal `/admin/users/sync` 页面；版本强制更新、Token 增量包、新用户本地模型绑定；周令牌计费（10-30 全部内容）。
+
+- 交付目录：`deploy/k8s/bosch-aigc-dsh/update-2026-11-02-main.1-with-mq`
+- 离线包：`output/aigc-update-2026-11-02-main.1-with-mq.zip`（309,238,800 字节，v3 含完整 UserSync 启用命令与 MQ 密码生成模式）
+- ZIP SHA-256：`13870c6fd5a2069e3448921c62e2bb2ee4d8117f200494a486145f7f396be9dd`
+- 镜像：`aigc-api:2026-11-02-main.1`（ID `07ef7c630761`，351MB）、`aigc-portal:2026-11-02-main.1`（ID `95ba29cd52de`，397MB）、`rabbitmq:4.2-management`（ID `d1fb8b38bd08`，391MB，复用已验证拉取），linux/amd64，tar 313,122,816 字节
+
+MQ 部署要点：nodeSelector `kubernetes.io/hostname=bosch-k8s-node-nj304` + 标签 `aigc.bosch/node: nj304`；local PV（`Retain`）+ 同节点 nodeAffinity；密码两种方式——手动 export `MQ_ADMIN_PASSWORD`/`MQ_PRODUCER_PASSWORD`/`MQ_CONSUMER_PASSWORD`（默认），或 `MQ_PASSWORD_MODE=generate` 让 prepare.py 为缺省变量生成 24 位随机密码（一次性打印在输出中，当场存档，之后不可找回；manifest 只存带盐哈希，umask 077）；数据库 dump 默认强制。回退删 MQ Deployment/Service 但保留 PVC/PV/Secret/ConfigMap 与数据。**`UserSync.Enabled` 默认 false（采集但不连接 MQ）**；业务验收前用 `UserSync__*` 键 merge patch `aigc-secrets`（HostName 用 Service 名 `aigc-mq`）并重启 API。
+
+本地验证：脱敏快照（API 132 文件/Portal 136 文件，appsettings 6 处 REDACTED，UserSync 无密码）；API 冒烟 `/health` 200 + sync 端点未登录 401 + `MQ.UserSync.WorkerStarted/Disabled` 日志 + UserSync/TokenIncrement/TokenBilling 表与 SyncVersion/IsMandatory 列；Portal 四页 200、旧域名 0 处；RabbitMQ 以 K8s 同构挂载冒烟（ping/vhost/exchange/quorum 队列/绑定/三账号最小权限）；prepare.py 单测 26/26；bash -n ×3；tar 重载、ZIP 完整性与 SHA-256 均通过；BUILD-INFO.json 227 源文件哈希。DSH 安装包本次不构建（用户自行打包）。
+
+本次仅完成本地构建和离线交付，**尚未执行生产 CHECK_ONLY、镜像导入、Deployment/资源更新或用户同步业务联调**。导入、预检、更新和回退命令以[本次交付说明](deploy/k8s/bosch-aigc-dsh/update-2026-11-02-main.1-with-mq/README.md)为准。
+
+### 启用用户同步：merge patch 既有 aigc-secrets
+
+MQ 部署完成后（且业务验收准备好时），在 Kubernetes 控制节点执行。API 的连接配置通过既有 `aigc-secrets` 注入，**不创建新 Secret、不替换整个 Secret**——与 2026-10-28 注入 `McpIdentityAssertion__*` 相同方式，merge patch 仅新增/更新 `UserSync__*` 键并保留全部既有键。`UserSync__Password` 填部署 MQ 时 `MQ_PRODUCER_PASSWORD` 的同一个明文密码。命令依赖 `jq`，先准备好密码（放在临时文件，避免进 shell 历史）：
+
+```bash
+set -euo pipefail
+# 1) producer 明文密码放入临时文件（替换为部署 MQ 时使用的同一密码）
+read -s -p "MQ producer password: " MQ_PRODUCER_PASSWORD; echo
+printf '%s' "$MQ_PRODUCER_PASSWORD" > /tmp/aigc-mq-producer-password
+chmod 600 /tmp/aigc-mq-producer-password
+
+# 2) 生成 merge patch（stringData 由 K8s 完成 base64，保留既有键）
+jq -n --rawfile password /tmp/aigc-mq-producer-password '{
+  stringData: {
+    "UserSync__Enabled": "true",
+    "UserSync__HostName": "aigc-mq",
+    "UserSync__Port": "5672",
+    "UserSync__VirtualHost": "/aigc",
+    "UserSync__Exchange": "aigc.identity.users",
+    "UserSync__UserName": "aigc_user_producer",
+    "UserSync__Password": $password
+  }
+}' > /tmp/aigc-usersync-secret-patch.json
+chmod 600 /tmp/aigc-usersync-secret-patch.json
+
+# 3) 应用并重启 API
+kubectl -n bosch-aigc-dsh patch secret aigc-secrets \
+  --type merge \
+  --patch-file /tmp/aigc-usersync-secret-patch.json
+
+kubectl -n bosch-aigc-dsh rollout restart deployment/aigc-api
+kubectl -n bosch-aigc-dsh rollout status deployment/aigc-api --timeout=300s
+
+# 4) 清理临时文件
+rm -f /tmp/aigc-mq-producer-password /tmp/aigc-usersync-secret-patch.json
+```
+
+不回显值的存在性检查：
+
+```bash
+for key in UserSync__Enabled UserSync__HostName UserSync__UserName UserSync__Password; do
+  value="$(kubectl -n bosch-aigc-dsh get secret aigc-secrets -o "jsonpath={.data.$key}")"
+  test -n "$value" || { echo "$key: 未设置"; exit 1; }
+  echo "$key: 已设置"
+done
+```
+
+启用验证：`kubectl -n bosch-aigc-dsh logs deployment/aigc-api -c api --since 5m | grep "MQ.UserSync."` 应出现 `Connected`（若 MQ 未就绪则 `Connecting`/`ConnectionFailed` 重试日志）。随后在「用户管理 → 用户同步」执行一次全量快照并观察发送状态；Outbox 在启用前积累的消息会随后续轮询发出。停用同步改回 `UserSync__Enabled=false` 同法 patch；修改密码轮换时先换 MQ 侧哈希（重跑 prepare.py + apply）再同步更新此 Secret 并重启 API。
+
+## 2026-10-30 周令牌计费 API/Portal app-only 构建
+
+已基于 `main` 当前工作区（含周令牌计费全量改动）构建 `2026-10-30-main.1` app-only 离线包。包含：后端 TokenBilling 配方/分配/预占/结算四表（启动幂等建表）、`/api/billing/plan-options` 端点、用户/部门保存写入计费配方分配（User 优先于 Department 继承）；Portal 独立「计费管理」栏目（计费配方 + 用户报表，recharts 按日趋势/部门/模型 Top 图表）、用户管理与部门管理弹窗内嵌配方选择。
+
+- 交付目录：`deploy/k8s/bosch-aigc-dsh/update-2026-10-30-main.1-app-only`
+- 离线包：`output/aigc-update-2026-10-30-main.1-app-only.zip`（190,828,043 字节）
+- ZIP SHA-256：`c9e72d8626217d28ee5d949300c8dd69c38d3d57309b578412ea724d1cb119da`
+- 镜像：`aigc-api:2026-10-30-main.1`（ID `78eaf7f0fbc0`，350MB）、`aigc-portal:2026-10-30-main.1`（ID `d3e03633ff02`，396MB），linux/amd64，tar 192,053,248 字节
+
+本包只更新 `aigc-api` 与 `aigc-portal` 容器镜像及 imagePullPolicy；不更新 DSH、MinIO、PostgreSQL、ConfigMap、Secret、PV/PVC。**因新增 token_billing_* 四张表，update.sh 将数据库 dump 从可选改为默认强制（BACKUP_DATABASE=1）**；表由 API 启动时幂等创建，无需手动迁移。回退只恢复两个镜像及拉取策略，数据不回退。
+
+本地验证：镜像脱敏（appsettings.json 6 处 REDACTED，无开发凭据）；API DLL 含 `api/billing/plan-options` 路由；Portal 旧域名 0 处、billing 路由与 recharts 已打包；隔离冒烟 API `/health` 200（真实 PostgreSQL）+ plan-options 未登录 401，Portal `/`、`/login/local`、`/desktop` 均 200；prepare.py 单测 20/20；BUILD-INFO.json 201 源文件哈希与工作区一致；tar 重新加载与 ZIP 完整性通过。
+
+本次仅完成本地构建和离线交付，**尚未执行生产 CHECK_ONLY、镜像导入、Deployment 更新或计费业务联调**。导入、预检、更新、验证和回退命令以[本次交付说明](deploy/k8s/bosch-aigc-dsh/update-2026-10-30-main.1-app-only/README.md)为准。业务验收需确认计费管理栏目、配方 CRUD、报表图表渲染，以及 DSH 新客户端（含 2026-10-30 源码）的配额/预占/结算端到端一致性。
+
 ## 2026-10-29 KnowEngine assertion `iat` API 热修复交付
 
 已基于 `main` 当前工作区构建 API-only 热修复 `2026-10-29-main.1`。生产已部署的 `2026-10-28-main.1` 构建早于 `iat` 修复；本版本在 RS256 assertion Payload 中显式写入整数型 Unix 秒 `iat`，并保留原有 `nbf`、`exp`、`iss`、`aud`、`sub`、`jti`、`kid` 和员工声明语义。

@@ -1,0 +1,56 @@
+.user-page-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.user-sync-cell{min-width:140px;font-size:12px}
+.user-sync-cell small{display:block;color:var(--muted);margin-top:4px}
+.user-sync-page{display:grid;gap:20px}
+.user-sync-page .page-title{margin-bottom:0}
+.user-sync-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
+.user-sync-stats article{padding:18px;min-width:0}
+.user-sync-stats span{display:block;font-size:12px;color:var(--muted)}
+.user-sync-stats strong{display:block;margin-top:8px;font-size:24px;font-variant-numeric:tabular-nums}
+.user-sync-stats p{font-size:13px;overflow-wrap:anywhere}
+.user-sync-connection,.user-sync-batches{padding:20px;min-width:0}
+.user-sync-connection h2,.user-sync-batches h2{margin:0 0 12px;font-size:16px}
+.user-sync-connection p,.user-sync-batches p{color:var(--muted);font-size:13px;line-height:1.7}
+.user-sync-controls{display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap}
+.user-sync-controls label{display:grid;gap:6px;font-size:13px;color:var(--ink)}
+.user-sync-controls select{min-height:38px;padding:8px 10px;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:var(--ink);font:inherit;max-width:100%}
+.user-sync-connection details{margin-top:16px}
+.user-sync-connection summary{cursor:pointer;color:var(--ink);font-size:13px}
+.user-sync-connection pre{max-height:340px;overflow:auto;background:var(--page);color:var(--ink);padding:14px;border:1px solid var(--line);border-radius:6px;font-size:12px;white-space:pre-wrap;overflow-wrap:anywhere}
+.user-sync-batches ul{list-style:none;padding:0;margin:0;display:grid;gap:10px}
+.user-sync-batches li{display:flex;align-items:center;gap:12px;flex-wrap:wrap;font-size:13px}
+.user-sync-page .table-wrap{overflow-x:auto}
+.user-sync-page .data-grid{min-width:800px}
+.user-sync-page .table-meta{overflow-wrap:anywhere;flex-wrap:wrap}
+.modal.user-sync-detail-modal{width:min(760px,calc(100vw - 40px));max-height:calc(100dvh - 40px);display:flex;flex-direction:column;overflow:hidden}
+.user-sync-detail-modal>header,.user-sync-detail-modal>.modal-actions{flex:none}
+.user-sync-detail-body{flex:1 1 auto;min-height:0;overflow:auto;padding:16px 20px}
+.user-sync-detail-body dl{display:grid;grid-template-columns:120px minmax(0,1fr);gap:12px}
+.user-sync-detail-body dt{color:var(--muted)}
+.user-sync-detail-body dd{margin:0;white-space:pre-wrap;overflow-wrap:anywhere}
+@media(max-width:900px){.user-sync-stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:600px){.user-sync-stats{grid-template-columns:1fr}.user-sync-controls{width:100%}.user-sync-controls label{width:100%;min-width:0}.user-sync-detail-body dl{grid-template-columns:1fr;gap:8px}.user-sync-detail-body dd{margin-bottom:12px}}
+
+.user-sync-detail-modal>.modal-actions{margin:0;padding:16px 20px}
+
+/* Keep the wide user list readable, with actions pinned inside its scrollport. */
+.admin-app .user-management-page{min-width:0}
+.admin-app .user-management-table{min-width:1810px;border-collapse:separate;border-spacing:0;table-layout:auto}
+.admin-app .user-management-table :is(th,td){padding:14px 18px;vertical-align:middle;white-space:nowrap}
+.admin-app .user-management-table :is(th,td):first-child{min-width:230px}
+.admin-app .user-management-table :is(th,td):nth-child(3){min-width:140px}
+.admin-app .user-management-table :is(th,td):nth-child(6){min-width:180px}
+.admin-app .user-management-table :is(th,td):nth-child(9){min-width:200px}
+.admin-app .user-management-table :is(th,td):nth-child(10){min-width:170px}
+.admin-app .user-management-table :is(th,td):nth-child(11){min-width:150px}
+.admin-app .user-management-table td small{display:block;margin-top:5px;color:var(--muted);font-size:12px}
+.admin-app .user-management-table .table-avatar{flex:none}
+.admin-app .user-management-table .user-actions-column{position:sticky;right:0;z-index:2;width:280px;min-width:280px;box-sizing:border-box;background:var(--surface);box-shadow:-1px 0 0 var(--line),-6px 0 10px -9px var(--ink)}
+.admin-app .user-management-table thead .user-actions-column{z-index:3;background:var(--admin-chrome)}
+.admin-app .user-management-table tbody tr:hover .user-actions-column{background:var(--admin-hover)}
+.admin-app .user-management-table .row-actions{align-items:center;justify-content:flex-start;gap:10px;flex-wrap:nowrap;min-height:36px}
+.admin-app .user-management-table .row-actions button{flex:0 0 34px;border-radius:6px}
+/* The billing entry is a link, not a button, so it borrows the same 34px
+   icon cell the sibling actions use instead of its own framed label. */
+.admin-app .user-management-table .row-actions a{display:grid;place-items:center;flex:0 0 34px;height:34px;border:0;border-radius:6px;background:transparent;color:#718096;text-decoration:none}
+.admin-app .user-management-table .row-actions a:hover{background:var(--blue-50);color:var(--blue-600)}

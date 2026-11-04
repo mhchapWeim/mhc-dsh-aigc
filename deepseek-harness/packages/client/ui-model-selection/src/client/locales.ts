@@ -10,7 +10,9 @@
 
 /** Simplified Chinese dictionary (the key-set source of truth). */
 export const zh = {
-  'provider.internal': 'AIGC 内网模型',
+  'provider.internal': '内网模型',
+  'provider.external': '外网模型',
+  'provider.custom': '自定义模型',
   'command.label': '模型',
   'command.description': '选择本会话使用的模型',
   'option.loadError': '目录加载失败：{message}',
@@ -40,7 +42,9 @@ export type ModelKey = keyof typeof zh
 
 /** English dictionary, checked complete against the zh key set. */
 export const en = {
-  'provider.internal': 'AIGC Internal Models',
+  'provider.internal': 'Internal Models',
+  'provider.external': 'External Models',
+  'provider.custom': 'Custom Models',
   'command.label': 'Model',
   'command.description': 'Select the model for this conversation',
   'option.loadError': 'Catalog failed to load: {message}',

@@ -62,6 +62,18 @@
   color: var(--dsw-alias-label-caption);
 }
 
+/* Origin tag for a locally configured route. It shrinks ahead of the model
+   name but keeps its own words: the chip must never show a custom model as if
+   it were a platform one. */
+.triggerSource {
+  flex-shrink: 100;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--dsw-alias-label-caption);
+}
+
 /* The Models glyph replaces the text when the composer row cannot fit it. */
 .triggerIcon {
   display: var(--dsh-composer-model-icon-display, none);
@@ -71,6 +83,7 @@
 /* The composer measures expanded row demand and owns these display variables.
    Outside a composer, the trigger retains its text. */
 .triggerLabel,
+.triggerSource,
 .triggerEffort {
   display: var(--dsh-composer-model-text-display, block);
 }

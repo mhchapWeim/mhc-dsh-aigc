@@ -150,7 +150,7 @@ it('mounts and withdraws the managed provider through a Loader composition', asy
       }
     }())
     expect(() => llm.stream({ provider: 'ordinary', model: 'local', messages: [] }))
-      .toThrow('organization mode permits only backend-granted models')
+      .toThrow('当前账号无权使用该模型')
     expect(directCalls).toBe(0)
     await [...ctx.loader.entries()].find(entry => entry.options.id === 'managed')!.fiber!.dispose()
     expect(ctx.get('managedBackend')).toBeUndefined()

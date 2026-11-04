@@ -1,7 +1,9 @@
-/* eslint-disable @next/next/no-img-element */
 'use client';
 
+import { SearchableSelect } from './modern-select';
+/* eslint-disable @next/next/no-img-element */
 import Link from 'next/link';
+import { useDeleteConfirm } from './delete-confirm';
 import {
   Archive, ArchiveRestore, ArrowLeft, Check, ChevronRight, Copy, Grid2X2, LoaderCircle, Menu, MessageSquarePlus,
   MoreHorizontal, PanelLeftClose, Pencil, Send, Settings2, Sparkles, Trash2, UserRound, Wrench, X,
@@ -65,6 +67,7 @@ export function ConfirmationCard({ execution, options, loading, onDecision }: {
 }
 
 export function ChatShell() {
+  const { confirmDelete, deleteConfirmHolder } = useDeleteConfirm();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [sidebarReady, setSidebarReady] = useState(false);
   const [draft, setDraft] = useState('');
@@ -371,7 +374,7 @@ export function ChatShell() {
   };
 
   const removeConversation = async (item: BackendChatConversation) => {
-    if (!window.confirm(`确定永久删除对话“${item.title}”吗？此操作无法撤销。`)) return;
+    if (!await confirmDelete(`确定永久删除对话“${item.title}”吗？此操作无法撤销。`)) return;
     try {
       await deleteChatConversation(item.id);
       if (activeConversationId === item.id) { setActiveConversationId(null); setMessages([]); setExecutions([]); }
@@ -384,7 +387,7 @@ export function ChatShell() {
   const pendingExecution = [...executions].reverse().find((execution) => execution.status === 'AwaitingConfirmation');
   const selectedDefinition = tools.find((tool) => tool.name === selectedTool);
   return (
-    <div className={`chat-page${sidebarOpen ? '' : ' chat-sidebar-collapsed'}${sidebarReady ? ' is-ready' : ''}`}>
+    <div className={`chat-page${sidebarOpen ? '' : ' chat-sidebar-collapsed'}${sidebarReady ? ' is-ready' : ''}`}>{deleteConfirmHolder}
       <aside className="chat-sidebar" aria-label="对话历史" aria-hidden={!sidebarOpen}>
         <header>
           <Link href="/" className="chat-mini-brand" tabIndex={sidebarOpen ? 0 : -1}><img src="/bhss-logo.png" alt="博世华域转向系统有限公司" /></Link>
@@ -456,7 +459,7 @@ function ToolForm({ tool, values, setValues, options, apps, onBack, onSubmit, lo
   onSubmit: (event: FormEvent) => void; loading: boolean;
 }) {
   const field = (name: string, label: string, type = 'text') => <label><span>{label}</span><input type={type} required={!['code', 'description', 'initialPassword', 'managerId'].includes(name)} value={values[name] ?? ''} onChange={(event) => setValues({ ...values, [name]: event.target.value })} /></label>;
-  const select = (name: string, label: string, options: Array<{ value: string; label: string }>, required = true) => <label><span>{label}</span><select required={required} value={values[name] ?? ''} onChange={(event) => setValues({ ...values, [name]: event.target.value })}><option value="">{required ? '请选择' : '暂不指定'}</option>{options.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}</select></label>;
+  const select = (name: string, label: string, options: Array<{ value: string; label: string }>, required = true) => <label><span>{label}</span><SearchableSelect aria-label={label} required={required} value={values[name] ?? ''} onChange={(event) => setValues({ ...values, [name]: event.target.value })}><option value="">{required ? '请选择' : '暂不指定'}</option>{options.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}</SearchableSelect></label>;
   return <form className="chat-tool-form" onSubmit={onSubmit}><button className="chat-tool-back" type="button" onClick={onBack}><ArrowLeft size={15} />返回工具列表</button><h2>{tool.displayName}</h2><p>{tool.description}</p><div className="chat-tool-fields">
     {tool.name === 'open_application' && select('applicationName', '应用', apps.map((app) => ({ value: app.name, label: app.name })))}
     {tool.name === 'create_publication_request' && <>{field('appName', '应用名称')}{select('category', '应用分类', options.categories.map((item) => ({ value: item.id, label: item.name })))}{field('summary', '应用简介')}{field('repositoryUrl', '仓库地址', 'url')}{field('branch', '分支')}{field('commitSha', 'Commit SHA')}{field('version', '版本')}{select('environment', '部署环境', ['Test', 'Staging', 'Production'].map((item) => ({ value: item, label: item })))}{select('accessMode', '可访问范围', [{ value: 'All', label: '所有已登录用户' }, { value: 'Subjects', label: '指定用户' }])}{values.accessMode === 'Subjects' && <label className="chat-tool-directory"><span>可访问用户</span><DirectoryUserPicker users={options.users} selectedIds={values.accessibleUserIds?.split(',').filter(Boolean) ?? []} onChange={(ids) => setValues({ ...values, accessibleUserIds: ids.join(',') })} /></label>}</>}

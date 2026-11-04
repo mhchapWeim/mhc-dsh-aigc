@@ -1,3 +1,4 @@
+import { selectDropdown } from '../../test/select-dropdown';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
@@ -12,10 +13,12 @@ vi.mock('../lib/api-client', () => ({
     roles: [{ id: 'role-1', name: '研发角色', code: 'rd' }], departments: [{ id: 'dept-1', name: '研发部', code: 'rd' }] })),
   saveDesktopAnnouncement: vi.fn(async () => ({ id: 'announcement-1' })),
   setDesktopAnnouncementStatus: vi.fn(async () => {}),
+  deleteDesktopRelease: vi.fn(async () => {}),
   getDesktopReleases: vi.fn(async () => []),
   getDesktopClients: vi.fn(async () => []),
   createDesktopRelease: vi.fn(async () => ({ id: 'release-1' })),
   setDesktopReleaseRecipients: vi.fn(async () => {}),
+  setDesktopReleaseMandatory: vi.fn(async () => {}),
   setDesktopReleaseStatus: vi.fn(async () => {}),
   uploadDesktopRelease: vi.fn(async () => {}),
 }));
@@ -32,10 +35,10 @@ describe('desktop distribution administration', () => {
     await user.type(screen.getByRole('searchbox', { name: '搜索客户端' }), ' pc-10 ');
     expect(screen.getByText('设备 ID：device-10')).toBeVisible();
     expect(screen.queryByText('设备 ID：device-5')).not.toBeInTheDocument();
-    await user.selectOptions(screen.getByRole('combobox', { name: '当前版本' }), '2.0.0');
-    await user.selectOptions(screen.getByRole('combobox', { name: '更新状态' }), 'Failed');
+    selectDropdown(screen.getByRole('combobox', { name: '当前版本' }), '2.0.0');
+    selectDropdown(screen.getByRole('combobox', { name: '更新状态' }), 'Failed');
     expect(screen.getByText('设备 ID：device-10')).toBeVisible();
-    await user.selectOptions(screen.getByRole('combobox', { name: '更新状态' }), 'Current');
+    selectDropdown(screen.getByRole('combobox', { name: '更新状态' }), 'Current');
     expect(screen.getByText('没有符合筛选条件的客户端。')).toBeVisible();
     await user.click(screen.getByRole('button', { name: '重置' }));
     expect(screen.getByText('设备 ID：device-0')).toBeVisible();
@@ -63,7 +66,7 @@ describe('desktop distribution administration', () => {
 
   it('paginates releases and client reports independently', async () => {
     vi.mocked(api.getDesktopReleases).mockResolvedValueOnce(Array.from({ length: 11 }, (_, index) => ({
-      id: `release-${index}`, version: `1.0.${index}`, notes: '', platform: 'win32', arch: 'x64', status: 'Draft', fileName: '', bytes: 0, hasBlockmap: false,
+      isMandatory: false, id: `release-${index}`, version: `1.0.${index}`, notes: '', platform: 'win32', arch: 'x64', status: 'Draft', fileName: '', bytes: 0, hasBlockmap: false,
       createdAt: '2026-10-08T00:00:00Z', audience: { userIds: [], roleIds: [], departmentIds: [] }, recipients: [],
     })));
     vi.mocked(api.getDesktopClients).mockResolvedValueOnce(Array.from({ length: 11 }, (_, index) => ({
@@ -117,4 +120,30 @@ describe('desktop distribution administration', () => {
     await user.click(screen.getByRole('button', { name: '保存草稿' }));
     await waitFor(() => expect(api.saveDesktopAnnouncement).toHaveBeenLastCalledWith(null, expect.objectContaining({ userIds: [], roleIds: ['role-1'], departmentIds: ['dept-1'] })));
   });
+});
+
+it('requires confirmation before enabling a mandatory release and disables drafts', async () => {
+  vi.mocked(api.getDesktopReleases).mockResolvedValueOnce([
+    { id:'ready',version:'2.0.0',notes:'',platform:'win32',arch:'x64',status:'Published',fileName:'app.exe',bytes:100,hasBlockmap:false,createdAt:'',isMandatory:false,audience:{userIds:[],roleIds:[],departmentIds:[]},recipients:[] },
+    { id:'draft',version:'3.0.0',notes:'',platform:'win32',arch:'x64',status:'Draft',fileName:'',bytes:0,hasBlockmap:false,createdAt:'',isMandatory:false,audience:{userIds:[],roleIds:[],departmentIds:[]},recipients:[] },
+  ]);
+  render(<ClientReleasesPage />);
+  await screen.findByText('2.0.0');
+  const buttons=screen.getAllByRole('button',{name:'强制更新'});
+  expect(buttons[1]).toBeDisabled();
+  fireEvent.click(buttons[0]);
+  expect(api.setDesktopReleaseMandatory).not.toHaveBeenCalled();
+  expect(screen.getByRole('dialog')).toHaveTextContent('不限灰度名单');
+  fireEvent.click(within(screen.getByRole('dialog')).getByRole('button',{name:'确认'}));
+  await waitFor(()=>expect(api.setDesktopReleaseMandatory).toHaveBeenCalledWith('ready',true));
+});
+
+it('confirms deletion of a published release and hides the row after success', async () => {
+  vi.mocked(api.getDesktopReleases).mockResolvedValue([{ id: 'delete-release', version: '9.0.0', arch: 'x64', platform: 'win32', status: 'Published', notes: '', bytes: 100, recipients: [], isMandatory: true, fileName: 'app.exe', hasBlockmap: false, createdAt: '2026-11-02T00:00:00Z', audience: { userIds: [], roleIds: [], departmentIds: [] } }]);
+  const user = userEvent.setup(); render(<ClientReleasesPage />);
+  await user.click(await screen.findByRole('button', { name: '删除版本 9.0.0' }));
+  expect(api.deleteDesktopRelease).not.toHaveBeenCalled();
+  await user.click(await screen.findByRole('button', { name: '确认删除' }));
+  await waitFor(() => expect(api.deleteDesktopRelease).toHaveBeenCalledWith('delete-release'));
+  await waitFor(() => expect(screen.queryByText('9.0.0')).not.toBeInTheDocument());
 });

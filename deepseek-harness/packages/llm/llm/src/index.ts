@@ -46,6 +46,16 @@ export * from './api-key.ts'
 export * from './types.ts'
 export * from './content.ts'
 export * from './assistant-stream.ts'
+
+/** Host deployment policy; absent policies leave ordinary local installations unchanged. */
+export interface LlmAccessPolicy {
+  /** Decide access using the route and its registered configuration owner, never its display name. */
+  provider(provider: string, settingsNamespace: string | undefined): boolean
+  /** Decide whether configuration writes and endpoint discovery may use a namespace. */
+  configuration(settingsNamespace: string): boolean
+  /** Optional origin assigned by a deployment policy for selectors. */
+  source?(provider: string, settingsNamespace: string | undefined): 'external' | 'internal' | 'custom' | undefined
+}
 export * from './message.ts'
 export * from './retry-policy.ts'
 export { BlockAssembler } from './assembler.ts'
@@ -335,6 +345,27 @@ export interface DirectoryRegistrationHandle {
  * API, interceptable via the `llm/stream` waterfall.
  */
 export class LlmRuntime extends TypertRemoteService {
+  private readonly accessPolicies = new Set<LlmAccessPolicy>()
+
+  /** Install a Host-owned access policy, withdrawn with its owning fiber. */
+  registerAccessPolicy(policy: LlmAccessPolicy): () => void {
+    return this.ctx.effect(() => {
+      this.accessPolicies.add(policy)
+      this.emitAdaptersUpdated()
+      return () => { this.accessPolicies.delete(policy); this.emitAdaptersUpdated() }
+    }, 'llm.registerAccessPolicy()')
+  }
+
+  private providerAllowed(provider: string): boolean {
+    const namespace = this.directory.get(provider)?.settingsNs
+    return [...this.accessPolicies].every(policy => policy.provider(provider, namespace))
+  }
+
+  /** Reject configuration writes or discovery before a provider can make an outbound request. */
+  assertConfigurationAccess(namespace: string): void {
+    if (![...this.accessPolicies].every(policy => policy.configuration(namespace)))
+      throw new LlmError('当前账号未获准配置自定义模型', 'MODEL_UNAUTHORIZED')
+  }
   private adapters = new Map<string, AdapterRegistration>()
   private directory = new Map<string, LlmConfigurableProvider>()
   private discoveries = new Map<
@@ -471,7 +502,10 @@ export class LlmRuntime extends TypertRemoteService {
    */
   @Remote
   listProviders(): LlmProviderInfo[] {
-    return [...this.adapters.values()].map(({ provider }) => ({ ...provider }))
+    return [...this.adapters.values()].filter(({provider}) => this.providerAllowed(provider.id)).map(({provider}) => {
+      const source = [...this.accessPolicies].reduce((value, policy) => policy.source?.(provider.id, this.directory.get(provider.id)?.settingsNs) ?? value, provider.source)
+      return {...provider, ...source === undefined ? {} : {source}}
+    })
   }
 
   /**
@@ -543,7 +577,9 @@ export class LlmRuntime extends TypertRemoteService {
    */
   @Remote
   listConfigurableProviders(): LlmConfigurableProvider[] {
-    return [...this.directory.values()].map(entry => ({ ...entry, settingsPath: [...entry.settingsPath] }))
+    return [...this.directory.values()].filter(entry => this.providerAllowed(entry.provider)
+      && [...this.accessPolicies].every(policy => policy.configuration(entry.settingsNs)))
+      .map(entry => ({ ...entry, settingsPath: [...entry.settingsPath] }))
   }
 
   /**
@@ -593,6 +629,7 @@ export class LlmRuntime extends TypertRemoteService {
     request: LlmModelDiscoveryRequest,
     signal?: AbortSignal,
   ): Promise<LlmDiscoveredModel[]> {
+    this.assertConfigurationAccess(settingsNs)
     const discover = this.discoveries.get(settingsNs)
     if (discover === undefined) {
       throw new LlmError(`no model discovery is registered for "${settingsNs}"`, 'NO_DISCOVERY')
@@ -973,6 +1010,7 @@ export class LlmRuntime extends TypertRemoteService {
   }
 
   private registration(provider: string): AdapterRegistration {
+    if (!this.providerAllowed(provider)) throw new LlmError('当前账号无权使用该模型', 'MODEL_UNAUTHORIZED')
     const registration = this.adapters.get(provider)
     if (!registration) throw new LlmError(`no adapter registered for provider "${provider}"`, 'NO_ADAPTER')
     return registration
@@ -1128,6 +1166,7 @@ export class LlmRuntime extends TypertRemoteService {
     options: GenerateOptions,
     prepared?: PreparedDispatch,
   ): AsyncIterable<StreamChunk> {
+    if (!this.providerAllowed(options.provider)) throw new LlmError('当前账号无权使用该模型', 'MODEL_UNAUTHORIZED')
     return this.ctx.waterfall(
       this,
       'llm/stream',

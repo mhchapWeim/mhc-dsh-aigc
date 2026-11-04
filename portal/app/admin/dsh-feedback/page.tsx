@@ -1,5 +1,8 @@
 "use client";
 
+import { Search } from 'lucide-react';
+import { SearchableSelect } from '../../components/modern-select';
+
 import { useEffect, useState } from "react";
 import { getDshFeedback, getDshFeedbackDetail, type DshFeedbackRow } from "../../lib/api-client";
 
@@ -42,8 +45,8 @@ export default function DshFeedbackPage() {
   return <div className="admin-page page-enter">
     <div className="page-title"><div><span className="section-kicker">DSH FEEDBACK</span><h1>用户反馈</h1><p>查看 DSH 用户提交的反馈内容及会话日志。</p></div><button className="secondary-action" disabled={loading} onClick={() => setRefresh(value => value + 1)}>刷新</button></div>
     <div className="admin-panel feedback-filters">
-      <label>搜索反馈<input aria-label="搜索反馈" placeholder="搜索内容、姓名或工号" value={search} onChange={event => { setSearch(event.target.value); setPage(1); }} /></label>
-      <label>反馈分类<select aria-label="反馈分类" value={category} onChange={event => { setCategory(event.target.value); setPage(1); }}><option value="">全部分类</option>{Object.entries(categories).map(([id, label]) => <option key={id} value={id}>{label}</option>)}</select></label>
+      <label><span>搜索反馈</span><span className="table-search"><Search size={18} aria-hidden="true" /><input aria-label="搜索反馈" placeholder="搜索内容、姓名或工号" value={search} onChange={event => { setSearch(event.target.value); setPage(1); }} /></span></label>
+      <label>反馈分类<SearchableSelect aria-label="反馈分类" value={category} onChange={event => { setCategory(event.target.value); setPage(1); }}><option value="">全部分类</option>{Object.entries(categories).map(([id, label]) => <option key={id} value={id}>{label}</option>)}</SearchableSelect></label>
       <button type="button" className="secondary-action" onClick={() => { setSearch(''); setCategory(''); setPage(1); }}>重置</button>
     </div>
     {error && <div className="model-form-error" role="alert">{error}</div>}

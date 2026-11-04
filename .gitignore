@@ -8,7 +8,10 @@ node_modules/
 .verification/
 .config/
 output/
-/deploy/
+/deploy/*
+!/deploy/nj304-rabbitmq/
+__pycache__/
+*.pyc
 tmp/
 *-evidence/
 **/bin/
@@ -50,3 +53,5 @@ tmp/
 
 # Build output backups
 **/dist.bak-*/
+
+.npm-cache/

@@ -38,6 +38,8 @@ export interface ManagedSignInInjected {
   mode?: 'aigc' | 'sso'
   /** Read the managed backend's sign-in state. */
   status: () => Promise<ManagedAuthState>
+  /** Subscribe to Host-applied organization configuration invalidations. */
+  subscribeConfigUpdates?: (listener: () => void) => () => void
   /** Sign in with organization credentials. */
   login: (username: string, password: string) => Promise<ManagedAuthState>
   /** Begin the CAS browser flow. */

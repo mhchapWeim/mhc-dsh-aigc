@@ -1,3 +1,4 @@
+import { selectDropdown } from '../../../test/select-dropdown';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, expect, it, vi } from 'vitest';
 import Page from './page';
@@ -12,7 +13,7 @@ beforeEach(() => {
 it('shows feedback, filters by category and opens its session log', async () => {
   render(<Page />);
   await screen.findByText('反馈内容');
-  fireEvent.change(screen.getByLabelText('反馈分类'), { target: { value: 'other' } });
+  selectDropdown(screen.getByRole('combobox', { name: '反馈分类' }), 'other');
   await waitFor(() => expect(api.getDshFeedback).toHaveBeenLastCalledWith('', 'other', 1, 5));
   fireEvent.click(screen.getByRole('button', { name: '查看详情' }));
   await screen.findByText('conversation log');
@@ -36,7 +37,7 @@ it('uses shared pagination and resets the page when searching or resetting filte
   await waitFor(() => expect(api.getDshFeedback).toHaveBeenLastCalledWith('', '', 2, 5));
   fireEvent.change(screen.getByLabelText('搜索反馈'), { target: { value: '工号' } });
   await waitFor(() => expect(api.getDshFeedback).toHaveBeenLastCalledWith('工号', '', 1, 5));
-  fireEvent.change(screen.getByLabelText('反馈分类'), { target: { value: 'other' } });
+  selectDropdown(screen.getByRole('combobox', { name: '反馈分类' }), 'other');
   await waitFor(() => expect(api.getDshFeedback).toHaveBeenLastCalledWith('工号', 'other', 1, 5));
   fireEvent.click(screen.getByRole('button', { name: '重置' }));
   await waitFor(() => expect(api.getDshFeedback).toHaveBeenLastCalledWith('', '', 1, 5));

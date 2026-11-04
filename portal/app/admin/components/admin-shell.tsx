@@ -28,6 +28,10 @@ import {
   Tags,
   Users,
   X,
+  ChartColumn,
+  ChartLine,
+  BroomSparkles,
+  BadgeJapaneseYen,
 } from "lucide-react";
 import { usePlatform } from "../../components/platform-provider";
 import {
@@ -36,6 +40,7 @@ import {
 } from "../../lib/platform-state";
 
 const sections = [
+  { label: "我的账户", icon: BroomSparkles, items: [{ href: "/admin/usage", label: "我的用量", icon: BroomSparkles }] },
   {
     label: "协作与发布",
     icon: Grid2X2,
@@ -45,6 +50,7 @@ const sections = [
       { href: "/admin/reviews", label: "发布审核", icon: ClipboardCheck },
       { href: "/admin/processes", label: "流程设计", icon: Network },
       { href: "/admin/categories", label: "分类管理", icon: Tags },
+      { href: "/admin/registry", label: "注册中心", icon: Boxes },
     ],
   },
   {
@@ -63,7 +69,7 @@ const sections = [
     icon: ShieldCheck,
     items: [
       { href: "/admin/models", label: "模型管理", icon: Bot },
-      { href: "/admin/virtual-keys", label: "虚拟 Key", icon: KeyRound },
+      { href: "/admin/virtual-keys", label: "虚拟密钥", icon: KeyRound },
       { href: "/admin/audits", label: "操作审计", icon: ScrollText },
       { href: "/admin/sensitive-words", label: "敏感词管理", icon: ShieldAlert },
     ],
@@ -78,6 +84,7 @@ const sections = [
       { href: "/admin/dsh-feedback", label: "用户反馈", icon: ScrollText },
       { href: "/admin/dsh-backups", label: "客户端备份", icon: Files },
       { href: "/admin/dsh-failures", label: "失败日志", icon: ScrollText },
+      { href: "/admin/config-updates", label: "配置更新状态", icon: MonitorCog },
     ],
   },
   {
@@ -89,14 +96,30 @@ const sections = [
     ],
   },
 
-  { label: "MCP 市场", icon: Network, items: [{ href: "/admin/mcp", label: "MCP 管理", icon: Network }] }
+  { label: "MCP 市场", icon: Network, items: [{ href: "/admin/mcp", label: "MCP 管理", icon: Network }] },
+  {
+    label: "报表管理",
+    icon: ChartLine,
+    items: [
+      { href: "/admin/billing/users", label: "计费报表", icon: ChartLine },
+      { href: "/admin/click-reports", label: "点击率报表", icon: ChartLine },
+    ],
+  },
+  {
+    label: "计费管理",
+    icon: ChartColumn,
+    items: [
+      { href: "/admin/billing/plans", label: "计费配方", icon: BadgeJapaneseYen },
+      { href: "/admin/billing/packages", label: "增量包管理", icon: BadgeJapaneseYen },
+    ],
+  }
 ];
 const versionPages = [
   { href: '/admin/client-releases', label: '版本发布', icon: Download },
   { href: '/admin/client-releases/status', label: '版本状态', icon: ScrollText },
 ];
 const items = [...sections.flatMap((section) => section.items).filter(item => item.href !== '/admin/client-releases'), ...versionPages];
-const matchesPath = (href: string, path: string) => href === path || (href === '/admin/client-releases' && path.startsWith(href + '/'));
+const matchesPath = (href: string, path: string) => href === path || ((href === '/admin/client-releases' || href === '/admin/users') && path.startsWith(href + '/'));
 type StoredAdminUser = { id: string; name: string; employeeNo: string; roles: string[]; permissions: string[] };
 
 export function AdminShell({ children }: { children: React.ReactNode }) {
@@ -135,20 +158,24 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
     canReviewPublication(currentUser, request),
   ).length;
   const permissionByPath: Record<string, string> = {
+    '/admin/registry': 'category.manage',
+    '/admin/click-reports': 'category.manage',
+    '/admin/config-updates': 'model.manage',
     '/admin': 'admin.view', '/admin/publications': 'publication.create', '/admin/reviews': 'publication.review',
-    '/admin/processes': 'process.design', '/admin/users': 'user.manage', '/admin/departments': 'department.manage',
+    '/admin/processes': 'process.design', '/admin/users/sync': 'user.manage', '/admin/users': 'user.manage', '/admin/departments': 'department.manage',
     '/admin/categories': 'category.manage', '/admin/roles': 'role.manage', '/admin/models': 'model.manage', '/admin/virtual-keys': 'model.manage', '/admin/audits': 'model.manage',
     '/admin/sensitive-words': 'model.manage', '/admin/uploads': 'model.manage',
     '/admin/announcements': 'announcement.manage', '/admin/client-releases': 'client-release.manage', '/admin/client-releases/status': 'client-release.manage',
     '/admin/dsh-failures': 'diagnostic.manage', '/admin/dsh-feedback': 'diagnostic.manage',
     '/admin/plugins': 'plugin.manage', '/admin/plugins/status': 'plugin.manage',
+    '/admin/billing/packages': 'model.manage', '/admin/billing/plans': 'model.manage', '/admin/billing/users': 'model.manage',
   };
-  const canAccess = (target: string) => target === '/admin/dsh-backups' ? Boolean(storedUser || currentUser) : storedUser
+  const canAccess = (target: string) => (target === '/admin/dsh-backups' || target === '/admin/usage') ? Boolean(storedUser || currentUser) : storedUser
     ? storedUser.permissions.includes(permissionByPath[target] ?? 'admin.view')
     : canAccessAdminPath(platform, currentUser, target);
   const canOpenReviews = canAccess('/admin/reviews');
   const hasAccess = canAccess(path);
-  const active = items.find((item) => item.href === path) ?? items[0];
+  const active = path === '/admin/users/sync' ? { label: '用户同步' } : items.find((item) => item.href === path) ?? items[0];
   return (
     <div className={`admin-app${collapsed ? " is-collapsed" : ""}`}>
       <a className="skip-link" href="#admin-main">

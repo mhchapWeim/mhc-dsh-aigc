@@ -95,7 +95,7 @@ it('refuses local and remote mutations in organization mode', async () => {
   expect(await manager.removeBundle('extra')).toMatchObject({ application: 'failed', error: { code: 'management-required' } })
 })
 
-it.each(['0.1.7-alpha.2', '0.1.7-alpha.2.20261010.1'])('downloads an authenticated policy package on %s, activates its config, and unloads it on logout', async version => {
+it.each(['0.1.7-alpha.2', '0.1.7-alpha.2.20261010.1', '0.1.7-alpha.2.20261102.1', '0.1.7-alpha.2.20261102.2'])('downloads an authenticated policy package on %s, recovers after policy network failure, and unloads it on logout', async version => {
   const { ctx, dir, manager, bundle } = await fixture('live', false, undefined, { managedPollMs: 1000 }, undefined, dir => {
     writeFileSync(join(dir, '..', '..', 'package.json'), JSON.stringify({ name: 'installation', version, dependencies: {} }))
   })
@@ -105,10 +105,12 @@ it.each(['0.1.7-alpha.2', '0.1.7-alpha.2.20261010.1'])('downloads an authenticat
   const archive = Buffer.from('externally-built-package')
   const sha256 = createHash('sha256').update(archive).digest('hex')
   const calls: string[] = []
+  let policyOffline = false
   const fetcher = vi.spyOn(globalThis, 'fetch').mockImplementation(async (url, options) => {
     calls.push(String(url))
     expect(options?.headers).toMatchObject({ authorization: 'Bearer organization-token' })
     expect(options?.redirect).toBe('error')
+    if (String(url).endsWith('/policy') && policyOffline) throw new TypeError('fetch failed')
     if (String(url).endsWith('/policy')) return Response.json({ userId: '00000000-0000-4000-8000-000000000001', plugins: [{
       id: '00000000-0000-4000-8000-000000000002', packageName: 'market-addon', revision: 1, enabled: true,
       version: '1.0.0', dshVersion: '0.1.7-alpha.2', sha256, size: archive.length,
@@ -130,6 +132,15 @@ it.each(['0.1.7-alpha.2', '0.1.7-alpha.2.20261010.1'])('downloads an authenticat
   await vi.waitFor(() => expect(ctx.get('marketProbe')).toBe(true), { timeout: 5000 })
   await vi.waitFor(() => expect(calls.some(url => url.endsWith('/reports'))).toBe(true), { timeout: 5000 })
   expect((await manager.listBundles()).find(item => item.name === 'market-addon')?.enabled).toBe(true)
+  // A policy outage withdraws the independently installed bundle, even though
+  // chat can remain online. Recovery must reactivate the cached package.
+  policyOffline = true
+  ctx.emit('credentials/record-updated', key)
+  await vi.waitFor(() => expect(ctx.get('marketProbe')).toBeUndefined(), { timeout: 5000 })
+  expect((await manager.listBundles()).find(item => item.name === 'market-addon')?.enabled).toBe(false)
+  policyOffline = false
+  ctx.emit('credentials/record-updated', key)
+  await vi.waitFor(() => expect(ctx.get('marketProbe')).toBe(true), { timeout: 5000 })
   await ctx.credentials.deleteRecord(key)
   await vi.waitFor(() => expect(ctx.get('marketProbe')).toBeUndefined(), { timeout: 5000 })
   await ctx.credentials.modifyRecord(key, async () => ({ kind: 'api-key', key: 'organization-token' }))

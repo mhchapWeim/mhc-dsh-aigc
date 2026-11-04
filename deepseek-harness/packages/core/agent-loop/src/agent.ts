@@ -273,7 +273,7 @@ export class ReactLoopAgent implements Agent {
     const sections = renderContextSections(assembly)
     const context = this.runtimeContext.project(joinContextSections(sections), sections)
     const decision = await this.dispatch.waterfall(
-      'agent/pre-step', { messages: claimed, ...position, signal },
+      'agent/pre-step', { messages: claimed, ...position, signal, provider: typeof assembly.variables?.provider === 'string' ? assembly.variables.provider : this.options.provider },
       (): Promise<PreStepDecision> => Promise.resolve<PreStepDecision>({
         kind: 'enter',
         messages: context === undefined ? claimed : [...claimed, context],

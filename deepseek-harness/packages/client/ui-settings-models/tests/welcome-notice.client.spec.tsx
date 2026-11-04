@@ -120,7 +120,9 @@ describe('WelcomeNotice', () => {
     for (const paragraph of WELCOME_NOTICE_COPY.zh.body.split('\n\n')) {
       expect(screen.getByText(paragraph, { exact: true })).toBeTruthy()
     }
-    expect(dialog.querySelectorAll('p')).toHaveLength(2)
+    // The body renders one <p> per blank-line-separated paragraph, so the count
+    // follows the copy rather than a fixed shape of it.
+    expect(dialog.querySelectorAll('p')).toHaveLength(WELCOME_NOTICE_COPY.zh.body.split('\n\n').length)
     expect(dialog.querySelectorAll('button')).toHaveLength(1)
     expect(screen.getByRole('button', { name: WELCOME_NOTICE_COPY.zh.continueLabel })).toBeTruthy()
     expect(document.activeElement).toBe(screen.getByRole('heading', { name: WELCOME_NOTICE_COPY.zh.title }))

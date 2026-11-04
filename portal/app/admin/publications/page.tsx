@@ -114,7 +114,7 @@ export default function PublicationRequestsPage() {
   );
   const currentUser = users.find((user) => user.id === currentUserId);
   const categoryOptions = backendRequests
-    ? backendCategories.map((category) => ({ value: category.id, label: category.name, description: category.description }))
+    ? backendCategories.map((category) => ({ value: category.id, label: category.parentId ? `${backendCategories.find(x => x.id === category.parentId)?.name || ""} / ${category.name}` : category.name, description: category.description }))
     : categories.filter((category) => category.enabled).map((category) => ({
         value: category.name, label: category.name, description: category.description,
       }));
@@ -277,7 +277,7 @@ export default function PublicationRequestsPage() {
       )}
       {form && (
         <Modal title="新建发布申请" onClose={() => setForm(null)}>
-          <form className="entity-form publication-form" onSubmit={submit}>
+          <form className="entity-form publication-form" aria-label="发布申请表单" tabIndex={0} onSubmit={submit}>
             <div className="form-grid">
               <label>
                 <span>应用名称 *</span>

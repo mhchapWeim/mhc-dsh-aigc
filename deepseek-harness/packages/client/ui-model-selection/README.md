@@ -104,3 +104,5 @@ None.
 **Runtime invariant:** No companion is published. The plugin registers a single command contribution, and the HMR-safety spec proves that the registration is disposed correctly. The plugin emits no Cordis events and owns no cross-plugin mutable state.
 
 The model list renders an optional administrator-provided `multiplier` to the right of the model name. This label never changes the provider/model route or billing.
+
+Clicking the composer model trigger opens all provider-grouped models directly. Reasoning effort remains available in the same panel; Escape returns from effort settings to models, then closes the panel.

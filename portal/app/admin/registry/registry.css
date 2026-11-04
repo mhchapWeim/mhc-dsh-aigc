@@ -1,0 +1,19 @@
+.registry-filters { display: flex; gap: 16px; align-items: end; flex-wrap: wrap; padding: 20px; }
+.registry-filters label { display: grid; gap: 8px; }
+.registry-filters input { border: 1px solid var(--line); background: var(--surface); color: var(--ink); padding: 8px 10px; border-radius: 6px; min-height: 38px; }
+.registry-table-scroll { overflow-x: auto; }
+.registry-table-scroll table { min-width: 760px; }
+.registry-secondary { display: block; color: var(--muted); overflow-wrap: anywhere; }
+.modal.registry-modal { width: min(820px, 100%); max-height: calc(100dvh - 40px); display: flex; flex-direction: column; overflow: hidden; }
+.registry-modal > header { flex: none; }
+.registry-form { display: flex; flex-direction: column; min-height: 0; flex: 1 1 auto; }
+.registry-form-body { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; scrollbar-gutter: stable; }
+.registry-form .modal-actions { flex: none; padding: 16px 21px; margin: 0; background: var(--surface); border-top: 1px solid var(--line); }
+.registry-form label, .registry-form .form-field { min-width: 0; }
+.registry-form small { color: var(--muted); font-size: 12px; line-height: 1.6; }
+.registry-translate { border: 0; background: transparent; color: var(--blue-600); cursor: pointer; padding: 4px 6px; }
+@media (max-width: 600px) { .registry-form .form-grid { grid-template-columns: minmax(0, 1fr); } .registry-form-body { padding: 16px; } .registry-filters label { width: 100%; } }
+
+.registry-click-fields { min-width: 0; border: 1px solid var(--line); border-radius: 6px; padding: 16px; }
+.registry-click-fields legend { padding: 0 6px; font-size: 13px; font-weight: 600; }
+.registry-click-fields small { display: block; margin-top: 10px; color: var(--muted); }

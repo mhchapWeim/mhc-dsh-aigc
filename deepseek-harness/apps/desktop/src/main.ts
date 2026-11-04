@@ -334,6 +334,7 @@ async function main(): Promise<void> {
   const managedDeployment = app.isPackaged ? 'dshManagedBackend' in manifest
     : Boolean(hostEnvironment.DSH_MANAGED_BACKEND_URL?.trim())
   let managedDistribution: ManagedDesktopDistribution | undefined
+  let managedUpdateRequired = false
   const failureUploader = new FailureUploader(join(app.getPath('logs'), 'diagnostics'), (input, init) => net.fetch(input instanceof URL ? input.toString() : input, init))
   let refreshManagedTray = (): void => {}
   void pruneCrashReportsByAge(app.getPath('logs'))
@@ -366,7 +367,11 @@ async function main(): Promise<void> {
   const ordinaryDialogs = new Set<AbortController>()
   const currentDialogWindow = (): BrowserWindow | undefined => welcomeWindow ?? mainWindow
   const updateDialog = new DesktopUpdateDialog(fileURLToPath(new URL('./preload-update-dialog.cjs', import.meta.url)), () => locale)
-  const isMandatory = (): boolean => mandatoryPolicy?.state.blocking === true
+  const effectivePolicy = (): DesktopPolicyState => {
+    const managed = managedDistribution?.mandatoryPolicy
+    return managed?.blocking === true ? managed : mandatoryPolicy?.state ?? { blocking: false, checking: false }
+  }
+  const isMandatory = (): boolean => effectivePolicy().blocking
   const ordinaryMessageBox = async (options: UpdateDialogOptions): Promise<Electron.MessageBoxReturnValue> => {
     const controller = new AbortController()
     ordinaryDialogs.add(controller)
@@ -1199,7 +1204,17 @@ async function main(): Promise<void> {
     managedDistribution = new ManagedDesktopDistribution({ deviceId, computerName: hostname(), version: app.getVersion(),
       platform: process.platform, arch: process.arch }, () => updates.state, item => {
       if (item.important && mainWindow?.isVisible()) void openManagedAnnouncement(item).catch((error: unknown) => { diagnosticError(error) })
-    }, () => { refreshManagedTray(); installMenu() }, (input, init) => net.fetch(input instanceof URL ? input.href : input, init))
+    }, () => { refreshManagedTray(); installMenu() }, (input, init) => net.fetch(input instanceof URL ? input.href : input, init), 45_000, () => {
+      if (isMandatory()) {
+        for (const controller of ordinaryDialogs) controller.abort()
+        updateDialog.cancel()
+      }
+      mandatoryUI?.sync()
+      const required = managedDistribution?.mandatoryPolicy.blocking === true && managedDistribution.mandatoryPolicy.checking === false
+      const newlyRequired = required && !managedUpdateRequired
+      managedUpdateRequired = required
+      if (newlyRequired) void updateSchedule.check(false, true).catch((error: unknown) => { diagnosticError(error) })
+    })
     updates.setManagedSource(() => managedDistribution?.updateSource() ?? Promise.resolve(null))
   }
   refreshManagedTray()
@@ -1236,17 +1251,25 @@ async function main(): Promise<void> {
       if (state.blocking && !wasBlocking) void updateSchedule.check(false, true).catch((error: unknown) => { diagnosticError(error) })
       wasBlocking = state.blocking
     }, policyAuth?.request)
-    const policy = mandatoryPolicy
     mandatoryUI = new DesktopMandatoryUpdateWindow({
       preload: fileURLToPath(new URL('./preload-mandatory.cjs', import.meta.url)), locale,
       allowedPageOrigins: policyConfig.allowedPageOrigins, parent: () => mainWindow,
-      policy: () => policy.state, update: () => updates.state,
+      policy: effectivePolicy, update: () => updates.state,
       refresh: async () => { await Promise.all([checkPolicyManually(), updateSchedule.check(true)]) },
       download: downloadUpdate, install: version => updates.install(version),
     })
     void mandatoryPolicy.check('launch').then((state) => {
       if (app.isPackaged && state.error === 'authentication-required' && !isQuitting()) queuePolicyAuthentication()
     }).catch((error: unknown) => { diagnosticError(error) })
+  }
+  if (managedDistribution !== undefined && mandatoryUI === undefined) {
+    mandatoryUI = new DesktopMandatoryUpdateWindow({
+      preload: fileURLToPath(new URL('./preload-mandatory.cjs', import.meta.url)), locale,
+      allowedPageOrigins: [], parent: () => mainWindow,
+      policy: effectivePolicy, update: () => updates.state,
+      refresh: async () => { await managedDistribution?.poll(); await updateSchedule.check(true) },
+      download: downloadUpdate, install: version => updates.install(version),
+    })
   }
   automaticCheck()
   // Extract the bundled dsh-ops bash payload (if any) into the plugin's

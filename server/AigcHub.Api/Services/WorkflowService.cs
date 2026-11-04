@@ -68,7 +68,7 @@ public sealed class WorkflowService(
             await db.Users.SingleOrDefaultAsync(x => x.Id == actorId && x.IsEnabled, ct)
             ?? throw new WorkflowException("当前用户不可提交申请", 403);
         var categoryExists = await db.Categories.AnyAsync(
-            x => x.Id == input.CategoryId && x.IsEnabled,
+            x => x.Id == input.CategoryId && x.IsEnabled && (x.ParentId == null || x.Parent!.IsEnabled),
             ct
         );
         if (!categoryExists)

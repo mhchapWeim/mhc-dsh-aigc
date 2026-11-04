@@ -14,9 +14,10 @@ it('shows login time and backup metadata while hiding downloads for other owners
   fireEvent.click(screen.getByRole('button', { name: '查看' }));
   expect(screen.getByRole('dialog')).toHaveTextContent(row.sha256);
   fireEvent.click(screen.getByRole('button', { name: '关闭' }));
-  vi.spyOn(window, 'confirm').mockReturnValue(true);
   vi.mocked(deleteDshBackup).mockResolvedValue();
   fireEvent.click(screen.getByRole('button', { name: '删除' }));
+  expect(deleteDshBackup).not.toHaveBeenCalled();
+  fireEvent.click(await screen.findByRole('button', { name: '确认删除' }));
   await waitFor(() => expect(deleteDshBackup).toHaveBeenCalledWith(row.id));
 });
 it('clears stale data and reports list failure', async () => {

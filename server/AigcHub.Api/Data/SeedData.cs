@@ -11,7 +11,9 @@ public static class SeedData
     {
         await db.Database.EnsureCreatedAsync(ct);
         await DatabaseSchemaInitializer.ApplyAdditiveChangesAsync(db, ct);
-        if (await db.Users.AnyAsync(ct))
+        await TokenBillingSchema.ApplyAsync(db, ct);
+        await UserSyncSchema.ApplyAsync(db, ct);
+        if (await db.Users.IgnoreQueryFilters().AnyAsync(ct))
         {
             await EnsureModelPermissionAsync(db, ct);
             await EnsureDistributionPermissionsAsync(db, ct);

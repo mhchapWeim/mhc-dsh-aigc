@@ -150,4 +150,6 @@ None.
 
 Managed policy reconciliation resolves the organization access token before reading its credential record, so persistent logins can resume synchronization after access expiry.
 
+Only changes to `llm-managed-backend/user-session` invalidate organization identity. Billing records and other plugins' credential records leave managed tools and package activation intact.
+
 Organization MCP services are reconciled independently of package installation. AIGC owns service configuration and grants; authorized tools connect automatically, and sign-out, account changes, policy failure, or revocation removes them. The display-only `connectors()` Remote exposes no upstream credentials. See [deployment integration](../../../../docs/AIGC-DSH-MCP-INTEGRATION.md).

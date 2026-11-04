@@ -17,6 +17,115 @@ namespace AigcHub.Tests;
 public class VirtualKeyGrantHttpTests
 {
     [Fact]
+    public async Task SoftDeletingUserRevokesLoginHidesOptionsAndEmitsDeletedEvent()
+    {
+        using var factory = new Factory(); using var admin = await Login(factory);
+        var input = new { employeeNo = "delete-test", name = "删除测试", email = "delete@test.local", password = "Delete-test-123", departmentId = (Guid?)null, roleIds = Array.Empty<Guid>(), isEnabled = true };
+        var created = await admin.PostAsJsonAsync("/api/users", input);
+        created.EnsureSuccessStatusCode();
+        var id = (await created.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetGuid();
+        using var user = factory.CreateClient();
+        var login = await user.PostAsJsonAsync("/api/auth/login", new { input.employeeNo, input.password });
+        login.EnsureSuccessStatusCode();
+        user.DefaultRequestHeaders.Authorization = new("Bearer", (await login.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("accessToken").GetString());
+        Assert.Equal(HttpStatusCode.Forbidden, (await user.DeleteAsync($"/api/users/{id}")).StatusCode);
+        (await admin.DeleteAsync($"/api/users/{id}")).EnsureSuccessStatusCode();
+        Assert.Equal(HttpStatusCode.Unauthorized, (await user.GetAsync("/api/auth/me")).StatusCode);
+        Assert.Equal(HttpStatusCode.Unauthorized, (await user.PostAsJsonAsync("/api/auth/login", new { input.employeeNo, input.password })).StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, (await admin.PutAsJsonAsync($"/api/users/{id}", input)).StatusCode);
+        Assert.Equal(HttpStatusCode.Conflict, (await admin.PostAsJsonAsync("/api/users", input)).StatusCode);
+        Assert.DoesNotContain(id.ToString(), await admin.GetStringAsync("/api/users?page=1&pageSize=100"));
+        Assert.DoesNotContain(id.ToString(), await admin.GetStringAsync("/api/virtual-keys/grant-options"));
+        using var scope = factory.Services.CreateScope(); var db = scope.ServiceProvider.GetRequiredService<AigcHubDbContext>();
+        Assert.NotNull((await db.Users.IgnoreQueryFilters().SingleAsync(x => x.Id == id)).DeletedAt);
+        Assert.Contains(await db.UserSyncMessages.Where(x => x.UserId == id).ToArrayAsync(), x => x.EventType == "user.deleted" && x.Payload.Contains("\"isDeleted\":true"));
+        var actor = await db.Users.SingleAsync(x => x.EmployeeNo == "wh00028");
+        Assert.Equal(HttpStatusCode.Conflict, (await admin.DeleteAsync($"/api/users/{actor.Id}")).StatusCode);
+    }
+
+    [Fact]
+    public async Task SoftDeletingDepartmentRequiresEmptyMembershipAndClearsPlanBinding()
+    {
+        using var factory = new Factory(); using var admin = await Login(factory);
+        var input = new { code = "delete-dept", name = "删除部门", description = "", isEnabled = true };
+        var created = await admin.PostAsJsonAsync("/api/departments", input); created.EnsureSuccessStatusCode();
+        var id = (await created.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetGuid();
+        var userResponse = await admin.PostAsJsonAsync("/api/users", new { employeeNo = "dept-member", name = "部门成员", email = "dept-member@test.local", departmentId = id, roleIds = Array.Empty<Guid>(), isEnabled = false });
+        userResponse.EnsureSuccessStatusCode();
+        var userId = (await userResponse.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetGuid();
+        Assert.Equal(HttpStatusCode.Conflict, (await admin.DeleteAsync($"/api/departments/{id}")).StatusCode);
+        (await admin.DeleteAsync($"/api/users/{userId}")).EnsureSuccessStatusCode();
+        (await admin.DeleteAsync($"/api/departments/{id}")).EnsureSuccessStatusCode();
+        Assert.DoesNotContain(id.ToString(), await admin.GetStringAsync("/api/departments?page=1&pageSize=100"));
+        Assert.DoesNotContain(id.ToString(), await admin.GetStringAsync("/api/users/access-options"));
+        Assert.Equal(HttpStatusCode.NotFound, (await admin.PutAsJsonAsync($"/api/departments/{id}", input)).StatusCode);
+        using var scope = factory.Services.CreateScope();
+        Assert.NotNull((await scope.ServiceProvider.GetRequiredService<AigcHubDbContext>().Departments.IgnoreQueryFilters().SingleAsync(x => x.Id == id)).DeletedAt);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task VirtualKeyDeleteBlocksGatewayBeforeHidingAndPreservesRecordOnFailure(bool fail)
+    {
+        using var gateway = new PolicyGateway(); using var factory = new Factory(gateway); using var admin = await Login(factory);
+        var response = await admin.PostAsJsonAsync("/api/virtual-keys", new { alias = "待删除套餐" }); response.EnsureSuccessStatusCode();
+        var id = (await response.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetGuid();
+        gateway.FailBlock = fail;
+        var deleted = await admin.DeleteAsync($"/api/virtual-keys/{id}");
+        Assert.Equal(fail, !deleted.IsSuccessStatusCode);
+        Assert.True(gateway.BlockCalled);
+        using var scope = factory.Services.CreateScope(); var db = scope.ServiceProvider.GetRequiredService<AigcHubDbContext>();
+        var stored = await db.ManagedVirtualKeys.IgnoreQueryFilters().SingleAsync(x => x.Id == id);
+        Assert.Equal(!fail, stored.DeletedAt.HasValue);
+        Assert.Equal(fail, await db.ManagedVirtualKeys.AnyAsync(x => x.Id == id));
+        if (!fail)
+        {
+            Assert.DoesNotContain(id.ToString(), await admin.GetStringAsync("/api/virtual-keys"));
+            Assert.DoesNotContain(id.ToString(), await admin.GetStringAsync("/api/users/access-options"));
+            Assert.Equal(HttpStatusCode.NotFound, (await admin.PutAsync($"/api/virtual-keys/{id}/enabled?enabled=true", null)).StatusCode);
+        }
+    }
+
+    [Fact]
+    public async Task User_resources_roundtrip_clear_and_legacy_updates_preserve_selections()
+    {
+        using var factory = new Factory(); using var admin = await Login(factory);
+        var plugin = new ManagedPlugin { Name = "选择插件", PackageName = "test-plugin", IsEnabled = true };
+        var mcp = new ManagedMcpService { Name = "选择 MCP", IsEnabled = true };
+        var release = new DesktopRelease { Version = "1.2.3", Status = "Published", Bytes = 100 };
+        using (var scope = factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<AigcHubDbContext>();
+            db.AddRange(plugin, mcp, release); await db.SaveChangesAsync();
+        }
+        object Input(bool selected) => new { employeeNo = "resource-test", name = "资源测试", email = "resource@test.local",
+            departmentId = (Guid?)null, roleIds = Array.Empty<Guid>(), isEnabled = true,
+            pluginIds = selected ? new[] { plugin.Id } : Array.Empty<Guid>(),
+            mcpIds = selected ? new[] { mcp.Id } : Array.Empty<Guid>(),
+            releaseIds = selected ? new[] { release.Id } : Array.Empty<Guid>() };
+        var created = await admin.PostAsJsonAsync("/api/users", Input(true));
+        created.EnsureSuccessStatusCode();
+        var id = (await created.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetGuid();
+        async Task AssertSelected(bool selected)
+        {
+            var options = await admin.GetFromJsonAsync<JsonElement>($"/api/users/access-options?userId={id}");
+            foreach (var (key, resourceId) in new[] { ("plugins", plugin.Id), ("mcps", mcp.Id), ("releases", release.Id) })
+                Assert.Equal(selected, options.GetProperty(key).EnumerateArray().Single(x => x.GetProperty("id").GetGuid() == resourceId).GetProperty("selected").GetBoolean());
+        }
+        await AssertSelected(true);
+        (await admin.PutAsJsonAsync($"/api/users/{id}", new { employeeNo = "resource-test", name = "兼容更新", email = "resource@test.local",
+            departmentId = (Guid?)null, roleIds = Array.Empty<Guid>(), isEnabled = true })).EnsureSuccessStatusCode();
+        await AssertSelected(true);
+        var invalid = await admin.PutAsJsonAsync($"/api/users/{id}", new { employeeNo = "resource-test", name = "无效资源", email = "resource@test.local",
+            departmentId = (Guid?)null, roleIds = Array.Empty<Guid>(), isEnabled = true, pluginIds = new[] { Guid.NewGuid() }, releaseIds = Array.Empty<Guid>() });
+        Assert.Equal(HttpStatusCode.BadRequest, invalid.StatusCode);
+        await AssertSelected(true);
+        (await admin.PutAsJsonAsync($"/api/users/{id}", Input(false))).EnsureSuccessStatusCode();
+        await AssertSelected(false);
+    }
+
+    [Fact]
     public async Task Password_changes_require_current_password_or_administrator_and_revoke_desktop_sessions()
     {
         using var factory = new Factory(); using var admin = await Login(factory);
@@ -297,10 +406,17 @@ public class VirtualKeyGrantHttpTests
     {
         private readonly JsonObject info = JsonNode.Parse("{\"models\":[],\"max_budget\":null,\"budget_duration\":null,\"rpm_limit\":null,\"tpm_limit\":null,\"expires\":null,\"token\":\"secret-hash\"}")!.AsObject();
         public JsonObject? Update;
+        public bool FailBlock;
+        public bool BlockCalled;
         protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken ct)
         {
             if (request.Method == HttpMethod.Post)
             {
+                if (request.RequestUri!.AbsolutePath == "/key/block")
+                {
+                    BlockCalled = true;
+                    return new(FailBlock ? HttpStatusCode.ServiceUnavailable : HttpStatusCode.OK) { Content = new StringContent("{}") };
+                }
                 var payload = JsonNode.Parse(await request.Content!.ReadAsStringAsync(ct))!.AsObject();
                 if (request.RequestUri!.AbsolutePath == "/key/update") Update = payload;
                 foreach (var field in new[] { "models", "max_budget", "budget_duration", "rpm_limit", "tpm_limit" })

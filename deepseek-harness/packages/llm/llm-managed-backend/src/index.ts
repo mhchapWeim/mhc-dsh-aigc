@@ -9,8 +9,10 @@ import type { GenerateOptions, LlmModelInfo, LlmResolvedModelInfo, PreparedAdapt
 import { authContextFrom, credentialStoreFrom, PiAiAdapter, resolveProfiles } from '@deepseek-ai/dsh-llm-pi-ai'
 import type {} from '@deepseek-ai/dsh-fs'
 import type {} from '@deepseek-ai/dsh-command-feedback'
+import { ManagedTokenBilling } from './billing.ts'
 import { installUploadSync, type UploadSyncConfig } from './upload-sync.ts'
 import { installPersistentSession, type PersistentSessionTokens } from './persistent-session.ts'
+import { installConfigSync, type ManagedConfigSnapshot } from './config-sync.ts'
 
 declare module '@deepseek-ai/cordis' {
   interface Context {
@@ -24,6 +26,8 @@ declare module '@deepseek-ai/cordis' {
       storeSession?: (value: PersistentSessionTokens) => Promise<void>
       /** Remove local credentials and return the credential to revoke remotely. */
       clearSession?: () => Promise<string | undefined>
+      /** Most recent Host-verified per-user policy and model metadata. */
+      configuration?: ManagedConfigSnapshot
     }
   }
 }
@@ -192,11 +196,13 @@ export class ManagedBackendAdapter extends LlmAdapter {
     private readonly token: () => Promise<string>,
     private readonly request: typeof fetch = fetch,
     private readonly catalogRequestTimeoutMs = 30_000,
-  ) { super() }
+  ) { super(); this.billing = new ManagedTokenBilling(ctx, root, token, request) }
 
-  override providerInfo(provider: string) { return { id: provider, name: 'Managed' } }
+  private readonly billing: ManagedTokenBilling
 
-  override async listModels(provider: string): Promise<LlmModelInfo[]> {
+  override providerInfo(provider: string) { return { id: provider, name: '外部模型' } }
+
+  override async listModels(provider: string, signal?: AbortSignal): Promise<LlmModelInfo[]> {
     // An unsigned-in Host has no managed catalog yet; it is not a provider error.
     // resolveModel/prepareCall still require the token and fail closed.
     let token: string
@@ -205,7 +211,7 @@ export class ManagedBackendAdapter extends LlmAdapter {
       if (error instanceof LlmError && error.code === 'MISSING_CREDENTIAL') return []
       throw error
     }
-    return (await this.catalog(provider, token)).models
+    return (await this.catalog(provider, token, signal)).models
   }
 
   private async catalog(provider: string, token: string, signal?: AbortSignal) {
@@ -252,7 +258,7 @@ export class ManagedBackendAdapter extends LlmAdapter {
     const version = desktopVersion || APP_IDENTITY.version
     const userAgent = username === '' ? undefined : `${encodeURIComponent(username)}/${encodeURIComponent(version)}`
     const profiles = resolveProfiles({ [provider]: {
-      displayName: 'Managed', api: connection.api, baseURL: connection.baseURL,
+      displayName: '外部模型', api: connection.api, baseURL: connection.baseURL,
       defaultInput: ['text'],
       models: [{
         id: selected.id, name: selected.name, input: selected.input ?? ['text'],
@@ -275,7 +281,7 @@ export class ManagedBackendAdapter extends LlmAdapter {
     return { model: { ...prepared.model, ...allowed }, stream: options => {
       if (allowed.imageInputState === 'unknown' && options.messages.some(message => contentHasImage(message.content)))
         throw new LlmError('图片能力尚未确认，请管理员在 AIGC 模型管理中配置图片理解能力', 'MODEL_IMAGE_CAPABILITY_UNKNOWN')
-      return prepared.stream(options)
+      return this.billing.stream(options, selected.multiplier, value => prepared.stream(value))
     } }
   }
 
@@ -333,13 +339,20 @@ export function apply(ctx: Context, config: Config): void {
     providers.add(id)
     return () => { providers.delete(id) }
   } })
-  ctx.on('llm/stream', (options, next) => {
-    if (!providers.has(options.provider)) {
-      throw new LlmError('organization mode permits only backend-granted models', 'MODEL_UNAUTHORIZED')
-    }
-    return next()
+  const customAllowed = (): boolean => ctx.managedBackend.configuration?.capabilities?.allowCustomModels === true
+  ctx.llm.registerAccessPolicy({
+    provider: (id, namespace) => providers.has(id) || (customAllowed() && namespace === 'llm-pi-ai'),
+    configuration: namespace => !namespace.startsWith('llm-') || (namespace === 'llm-pi-ai' && customAllowed()),
+    source: (id, namespace) => id === provider ? 'external' : providers.has(id) ? 'internal' : namespace === 'llm-pi-ai' ? 'custom' : undefined,
   })
-  ctx.llm.registerAdapter([provider], new ManagedBackendAdapter(ctx, root, token, fetch, config.catalogRequestTimeoutMs))
+  const adapter = new ManagedBackendAdapter(ctx, root, token, fetch, config.catalogRequestTimeoutMs)
+  ctx.llm.registerAdapter([provider], adapter)
+  installConfigSync(ctx, root, token, APP_IDENTITY.version, async (snapshot, signal) => {
+    signal.throwIfAborted()
+    ctx.managedBackend.configuration = snapshot
+    ctx.emit('llm/adapters-updated')
+  }, fetch, { ...(key === undefined ? {} : { tokenKey: key }), ...(ref === undefined ? {} : { tokenRef: ref }),
+    reset: () => { delete ctx.managedBackend.configuration; ctx.emit('llm/adapters-updated') } })
   if (config.uploadSync !== undefined && Object.values(config.uploadSync).some(value => value !== undefined)) {
     installUploadSync(ctx, root, config.uploadSync)
   }
