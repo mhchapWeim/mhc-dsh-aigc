@@ -9,7 +9,7 @@ English | [中文](README.zh.md)
 
 ## Summary
 
-This package keeps long agent conversations working near the model's context limit. As token pressure builds, it condenses the oldest history into a summary while preserving recent messages; after a context-overflow error, it condenses and retries. You can also request condensation with `/compact` and optionally trim oversized tool outputs first. Condensation uses one extra model request and retains only its summary text. It cannot reduce the system prompt, tools, or session prefix, or split one indivisible unit such as a single huge tool call.
+This package keeps long agent conversations working near the model's context limit. As token pressure builds, it condenses the oldest history into a summary while preserving recent messages; after a context-overflow error, it condenses and retries. You can also request condensation with `/compact` and optionally trim oversized tool outputs first. Condensation normally uses one extra model request and retains only its summary text; summary overflow can require smaller-prefix retries. It cannot reduce the system prompt, tools, or session prefix, or split one indivisible unit such as a single huge tool call.
 
 ## Table of Contents
 
@@ -80,6 +80,8 @@ Misconfiguration fails fast: unknown settings, duplicate per-model overrides, in
 ### What happens when condensation runs
 
 The oldest balanced span is replaced by one summary message and the recent tail stays verbatim; the conversation continues from the summary. The operation reports how many history items were condensed and the estimated tokens freed. If nothing can be condensed safely — for example the whole conversation is one indivisible unit — nothing changes and nothing is written to the session log. If no model is available to write the summary (no configured target and no routed request yet), condensation fails with a clear error telling you to configure the summarization provider and model or route one request.
+
+If the summary request itself exceeds the model context window, the backend retries a strictly smaller oldest prefix, at most half as many selected history nodes each time, ending only at a balanced tool boundary. Only the successfully summarized prefix is replaced; the unprocessed suffix remains verbatim. Shrinking stops when no smaller balanced prefix exists. Authentication, quota, cancellation, and other summary errors do not trigger this fallback. Successful partial condensation may still leave the next request above capacity.
 
 ### On-demand condensation with /compact
 

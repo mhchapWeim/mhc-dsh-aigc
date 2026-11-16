@@ -55,7 +55,8 @@ public sealed class WorkflowException(string message, int statusCode = 400) : Ex
 public sealed class WorkflowService(
     AigcHubDbContext db,
     IRealtimeNotificationPublisher realtime,
-    WorkflowDefinitionReader definitions
+    WorkflowDefinitionReader definitions,
+    GiteaService? gitea = null
 )
 {
     public async Task<PublicationRequest> SubmitAsync(
@@ -64,6 +65,17 @@ public sealed class WorkflowService(
         CancellationToken ct
     )
     {
+        var resolvedFromGitea = input.CodeSource is not null;
+        var repositoryFullName = "";
+        if (input.CodeSource is not null)
+        {
+            if (gitea is null) throw new WorkflowException("Gitea 接入未配置", 409);
+            var snapshot = await gitea.ResolveAsync(actorId, input.CodeSource, ct);
+            repositoryFullName = snapshot.FullName;
+            if (!string.IsNullOrEmpty(input.CommitSha) && input.CommitSha != snapshot.CommitSha)
+                throw new WorkflowException("所选版本已有变化，请刷新提交信息后再申请", 409);
+            input = input with { RepositoryUrl = snapshot.RepositoryUrl, Branch = snapshot.Branch, CommitSha = snapshot.CommitSha };
+        }
         var actor =
             await db.Users.SingleOrDefaultAsync(x => x.Id == actorId && x.IsEnabled, ct)
             ?? throw new WorkflowException("当前用户不可提交申请", 403);
@@ -75,7 +87,10 @@ public sealed class WorkflowService(
             throw new WorkflowException("应用分类不存在或已停用");
         if (string.IsNullOrWhiteSpace(input.AppName) || string.IsNullOrWhiteSpace(input.Summary))
             throw new WorkflowException("应用名称和简介不能为空");
-        if (!string.IsNullOrWhiteSpace(input.RepositoryUrl) &&
+        // Only a hand-typed repository address must be HTTPS. When the address comes from
+        // the user's verified Gitea repository, the scheme is whatever that server serves
+        // (local development runs on plain HTTP), so re-validating it here is wrong.
+        if (!resolvedFromGitea && !string.IsNullOrWhiteSpace(input.RepositoryUrl) &&
             (!Uri.TryCreate(input.RepositoryUrl, UriKind.Absolute, out var repositoryUri) || repositoryUri.Scheme != Uri.UriSchemeHttps))
             throw new WorkflowException("代码仓库必须是有效的 HTTPS 地址");
         if (!string.IsNullOrWhiteSpace(input.CommitSha) && input.CommitSha.Trim().Length < 7)
@@ -90,7 +105,7 @@ public sealed class WorkflowService(
         var definition =
             await db
                 .ProcessDefinitions.OrderByDescending(x => x.Version)
-                .FirstOrDefaultAsync(x => x.Key == "application-publishing" && x.IsPublished, ct)
+                .FirstOrDefaultAsync(x => x.Key == (input.ProcessKey ?? "application-publishing") && x.IsPublished, ct)
             ?? throw new WorkflowException("没有已发布的应用发布流程", 409);
 
         var request = new PublicationRequest
@@ -101,6 +116,7 @@ public sealed class WorkflowService(
             Summary = input.Summary.Trim(),
             AccessUrl = input.AccessUrl?.Trim() ?? "",
             RepositoryUrl = input.RepositoryUrl?.Trim() ?? "",
+            RepositoryFullName = repositoryFullName,
             Branch = input.Branch?.Trim() ?? "",
             CommitSha = input.CommitSha?.Trim() ?? "",
             Version = input.Version?.Trim() ?? "",
@@ -123,6 +139,17 @@ public sealed class WorkflowService(
             InitiatorId = actorId,
         };
         request.ProcessInstanceId = instance.Id;
+        if (IntegrationWorkflowRunner.IsIntegrated(definition))
+        {
+            if (input.CodeSource is null) throw new WorkflowException("第三方发布流程必须选择已授权的 Gitea 仓库");
+            request.AccessUrl = "";
+            instance.VariablesJson = JsonSerializer.Serialize(new { codeSource = input.CodeSource with { CommitSha = request.CommitSha } }, IntegrationWorkflowRunner.JsonOptions);
+            db.AddRange(request, instance);
+            await new IntegrationWorkflowRunner(db, definitions).AdvanceAsync(definition, instance, request, null, "succeeded", ct);
+            db.WorkflowHistory.Add(new WorkflowHistory { InstanceId = instance.Id, NodeKey = instance.CurrentNodeKey, ActorId = actorId, EventType = "InstanceStarted", Detail = request.RequestNo });
+            await db.SaveChangesAsync(ct);
+            return request;
+        }
         var task = await definitions.CreateFirstUserTaskAsync(definition, instance.Id, actorId, ct);
         instance.CurrentNodeKey = task.NodeKey;
         request.CurrentNodeKey = task.NodeKey;
@@ -158,7 +185,7 @@ public sealed class WorkflowService(
         var request =
             await db.PublicationRequests.SingleOrDefaultAsync(x => x.Id == requestId, ct)
             ?? throw new WorkflowException("申请不存在", 404);
-        if (request.ApplicantId != actorId || request.Status != PublicationStatus.Rejected)
+        if (request.ApplicantId != actorId || request.Status is not (PublicationStatus.Rejected or PublicationStatus.Failed))
             throw new WorkflowException("当前用户不能重新提交该申请", 403);
         var instance = await db.WorkflowInstances.SingleAsync(
             x => x.Id == request.ProcessInstanceId,
@@ -168,6 +195,22 @@ public sealed class WorkflowService(
             x => x.Id == instance.ProcessDefinitionId,
             ct
         );
+        if (IntegrationWorkflowRunner.IsIntegrated(definition))
+        {
+            var source = JsonDocument.Parse(instance.VariablesJson).RootElement.GetProperty("codeSource").Deserialize<GiteaSelection>(IntegrationWorkflowRunner.JsonOptions)!;
+            if (gitea is null) throw new WorkflowException("Gitea 接入未配置", 409);
+            var snapshot = await gitea.ResolveAsync(actorId, source, ct);
+            if (!string.Equals(snapshot.CommitSha, request.CommitSha, StringComparison.OrdinalIgnoreCase)) throw new WorkflowException("重新提交的仓库版本与冻结 Commit 不一致", 409);
+            request.RepositoryUrl = snapshot.RepositoryUrl;
+            request.RepositoryFullName = snapshot.FullName;
+            request.AccessUrl = "";
+            instance.VariablesJson = JsonSerializer.Serialize(new { codeSource = source }, IntegrationWorkflowRunner.JsonOptions);
+            request.ReviewComment = null; request.ReviewerId = null;
+            db.WorkflowHistory.Add(new WorkflowHistory { InstanceId = instance.Id, NodeKey = "start", ActorId = actorId, EventType = "Resubmitted" });
+            await new IntegrationWorkflowRunner(db, definitions).AdvanceAsync(definition, instance, request, null, "succeeded", ct);
+            await db.SaveChangesAsync(ct);
+            return request;
+        }
         var task = await definitions.CreateFirstUserTaskAsync(definition, instance.Id, actorId, ct);
         instance.Status = WorkflowInstanceStatus.Running;
         instance.CurrentNodeKey = task.NodeKey;
@@ -244,6 +287,14 @@ public sealed class WorkflowService(
         request.UpdatedAt = DateTimeOffset.UtcNow;
         request.ConcurrencyToken = Guid.NewGuid();
         string? correlationId = null;
+        var currentDefinition = await db.ProcessDefinitions.SingleAsync(x => x.Id == instance.ProcessDefinitionId, ct);
+        if (IntegrationWorkflowRunner.IsIntegrated(currentDefinition))
+        {
+            await new IntegrationWorkflowRunner(db, definitions).AdvanceAsync(currentDefinition, instance, request, task.NodeKey, decision == "approve" ? "passed" : "rejected", ct);
+            db.WorkflowHistory.Add(new WorkflowHistory { InstanceId = instance.Id, NodeKey = task.NodeKey, ActorId = actorId, EventType = "TaskCompleted", Detail = decision });
+            await db.SaveChangesAsync(ct);
+            return new { taskId, decision, requestId = request.Id, request.Status };
+        }
         if (decision == "reject")
         {
             request.Status = PublicationStatus.Rejected;

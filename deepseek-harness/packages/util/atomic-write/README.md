@@ -54,13 +54,15 @@ await withFileLock('/home/u/.dsh/cordis.patch.yml', async () => {
 })
 ```
 
-Only writers contend — readers never take the lock — and a contender backs off exponentially and fails with a timed-out error rather than blocking forever. How long a contender waits is stated per call through `waitMs`: the default is sized for file work alone, so a holder whose cycle includes a network round trip — a credential mutation that refreshes an expired token — states a longer one, because leaving the default would fail every other writer of that file for the duration. The retry cadence stays fixed. A contender never removes an existing lock, because file age cannot prove that its owner stopped.
+Only writers contend — readers never take the lock — and a contender backs off exponentially and fails with a timed-out error rather than blocking forever. How long a contender waits is stated per call through `waitMs`: the default is sized for file work alone, so a holder whose cycle includes a network round trip — a credential mutation that refreshes an expired token — states a longer one, because leaving the default would fail every other writer of that file for the duration. The retry cadence stays fixed. A contender reclaims an existing lock only when the PID recorded in it is provably gone; a lock whose owner may still be alive is never touched.
 
 ### Failures to plan for
 
 Windows retries one `EPERM` when the lock cannot be observed, because its holder can release between exclusive creation and the existence check. A repeated unconfirmed `EPERM` is rethrown without running the operation.
 
-The lock's parent directory must already exist, so `withFileLock` rejects an invalid parent hierarchy before running the operation. A process that exits while holding the lock leaves the lock sibling behind; later writers time out, and an operator removes it only after verifying that no writer still owns it.
+The lock's parent directory must already exist, so `withFileLock` rejects an invalid parent hierarchy before running the operation. A process that exits while holding the lock leaves the lock sibling behind; the next contender reclaims it, because its recorded PID no longer resolves to a live process.
+
+A contender that gives up reports a `WriterLockTimeoutError` carrying `code: 'LOCK_TIMEOUT'` and the lock path. Contention is an infrastructure condition rather than a verdict on whatever the caller was about to write, so a caller that mutates durable state when it believes an operation failed should branch on that code instead of treating every rejection alike.
 
 -----
 
@@ -89,7 +91,8 @@ The package is built on one separation: the atomic commit owns the swap, and the
 
 - **Fresh inode, caller-stated mode** — the temp carries `mode` through the rename, so narrowing a wider-permission file has no chmod race. `mode` is required so the permission decision stays visible at every call site.
 - **Readers never contend** — the rename commit is atomic, so a reader needs no lock.
-- **A contender never deletes a lock** — age cannot distinguish a crashed owner from a paused live writer; recovery is an operator action.
+- **A contender only reclaims a provably dead owner** — the recorded PID is probed, and reclamation renames the lock aside before re-checking it, so a lock that changed hands is put back instead of stolen. A live or unreadable owner keeps its lock and the contender fails.
+- **Release absorbs a transient handle** — removing the lock retries briefly and never throws, so a failed release cannot replace a successful operation or fail a caller; a lock left behind is reclaimed once its owner exits.
 
 </details>
 

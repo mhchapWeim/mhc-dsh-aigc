@@ -16,6 +16,15 @@ export function authorizeManagedBundle(dir: string, name: string, enabled: boole
   else authorized.delete(key(dir, name))
 }
 
+/** Whether this process currently holds an authorization for the bundle.
+ * @param dir Profile directory.
+ * @param name Bundle package name.
+ * @returns True when the bundle may contribute to this process.
+ */
+export function isManagedBundleAuthorized(dir: string, name: string): boolean {
+  return authorized.has(key(dir, name))
+}
+
 /** Whether an organization-owned bundle may contribute to this process.
  * @param dir Profile directory.
  * @param name Bundle package name.

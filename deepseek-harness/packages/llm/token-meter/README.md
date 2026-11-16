@@ -46,6 +46,8 @@ The measurement anchor includes the priced surface immediately before the succes
 
 ### Session projections
 
+The optional `@deepseek-ai/dsh-token-meter/progress-policy` plugin adds logged task-progress reminders using the same usage fold. `everySteps` and `everyTokens` are positive integer cadences; omitted fields disable their triggers. The base bundle sets 12 steps and 1,000,000 reported tokens per crossing. Counts reset on each turn and include cache reads. The host-only `taskProgress` projection reconstructs counts and already-issued crossings after resume, without scanning history on each request. The reminder asks the model to review remaining requirements, reuse checked results, avoid optional extensions, and deliver once required checks pass. It does not stop execution, enforce a hard budget, or establish complete billing; compaction/subagent calls and unreported usage are outside its count. Disposing this plugin removes its projection and listener. The core measurement service remains independent of this policy.
+
 When the composition provides `ctx.sessionProjections`, token-meter registers three projection units. `tokenUsage` carries the complete durable log's `uncachedInputTokens`, `outputTokens`, `cacheReadTokens`, and `cacheWriteTokens`. A final assistant-message sample replaces streaming usage from the same attempt; `llm/retry-started` ends that replacement scope, so a retry in the same step contributes another billed attempt. `contextPressure` carries optional `pressureTokens` (the newest provider-reported prompt size), optional `projectedTokens` (what the next request's prompt would cost), and optional `contextWindow` from the newest `request/context` record. `contextBreakdown` carries heuristic `systemTokens`, `toolsTokens`, and `messageTokens` — the context's composition, not its provider-billed size. Unloading the plugin removes all three keys.
 
 Image offload reprices existing node identities while preserving prior usage anchors. The fixed reference heuristic excludes `offloaded` metadata, so an offload decision does not change `contextBreakdown` or the scalar heuristic total; route-aware measurement replaces the selected visual prices with placeholder text.
@@ -125,6 +127,8 @@ Read these pages when the package-level contract is not enough. They move from t
 ## Model Experience
 
 Indirectly, through consumers such as `dsh-compaction-basic`; the service itself adds no prompt, message, schema, tool, or model call.
+
+Mounting `progress-policy` separately appends a short logged user-role instruction at each configured step or token crossing. It reports observed main-request buckets and asks for scope review and timely delivery; it makes no auxiliary model call. Each reminder adds input tokens to later requests and preserves the existing prefix. Previously issued crossings replay from the host projection, so unchanged requests do not add duplicate reminders.
 
 #### KV Cache effect
 

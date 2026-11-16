@@ -6,8 +6,8 @@ import { setTimeout } from 'node:timers/promises'
 import { z } from 'zod'
 import type { Context } from '@deepseek-ai/cordis'
 import { credentialKey } from '@deepseek-ai/dsh-credentials'
-import { authorizeManagedBundle } from '@deepseek-ai/dsh-app-boot'
-import { writeFileAtomic } from '@deepseek-ai/dsh-atomic-write'
+import { authorizeManagedBundle, isManagedBundleAuthorized } from '@deepseek-ai/dsh-app-boot'
+import { writeFileAtomic, WriterLockTimeoutError } from '@deepseek-ai/dsh-atomic-write'
 import { managedVersionCompatible } from './managed-version.ts'
 import type { PluginManager } from './index.ts'
 import type { ManagedPluginUpdate, PluginInstallRequestId } from './types.ts'
@@ -27,6 +27,8 @@ export interface ManagedSyncOptions {
   pollMs: number
   requestTimeoutMs: number
   dshVersion: string
+  /** Delay before retrying a poll that could not take the profile write lock. */
+  lockRetryMs: number
 }
 
 /** Install one cancellable, serial policy loop; no token is persisted in package files.
@@ -66,11 +68,23 @@ export function installManagedPluginSync(ctx: Context, manager: PluginManager, d
       const persist = async (): Promise<void> => { await writeFileAtomic(stateFile, JSON.stringify(state), { mode: 0o600 }) }
       const disable = async (name: string): Promise<void> => {
         updateNotice(name)
+        const priorActivation = activated.get(name)
         activated.delete(name)
+        const wasAuthorized = isManagedBundleAuthorized(dir, name)
         authorizeManagedBundle(dir, name, false)
         const bundle = (await manager.listBundles()).find(item => item.name === name)
         if (bundle?.enabled) {
-          const result = await run(() => manager.setBundleEnabled(name, false))
+          let result: Awaited<ReturnType<PluginManager['setBundleEnabled']>>
+          try {
+            result = await run(() => manager.setBundleEnabled(name, false))
+          } catch (error) {
+            // The bundle is still enabled on disk, so withdrawing the
+            // entitlement would unload a working plugin over a transient
+            // failure. Restore the pre-call state and let the next poll retry.
+            if (wasAuthorized) authorizeManagedBundle(dir, name, true)
+            if (priorActivation !== undefined) activated.set(name, priorActivation)
+            throw error
+          }
           if (result.application === 'failed') throw new Error(result.error?.diagnostic ?? 'Managed plugin unload failed')
         }
       }
@@ -79,6 +93,13 @@ export function installManagedPluginSync(ctx: Context, manager: PluginManager, d
           try { await disable(name) } catch (error) { scope.logger('managed-plugins').error(String(error)) }
         }
       }
+      // A profile write lock that somebody else holds is an infrastructure
+      // condition, not evidence about the plugin: reporting it as a failure
+      // would withdraw an entitlement the policy still grants, and withdrawing
+      // it de-authorizes the bundle for this whole process even though the
+      // plugin is intact. Skips are therefore left unreported, so the next poll
+      // retries them and the previous status stands meanwhile.
+      const lockContended = (error: unknown): boolean => error instanceof WriterLockTimeoutError
       const task = (async () => {
         try { state = stateSchema.parse(JSON.parse(await readFile(stateFile, 'utf8'))) }
         catch (error) {
@@ -86,6 +107,7 @@ export function installManagedPluginSync(ctx: Context, manager: PluginManager, d
         }
         await persist()
         while (!lifetime.signal.aborted) {
+          let contended = false
           try {
             if (scope.managedBackend.accessToken !== undefined) await scope.managedBackend.accessToken().catch(error => {
               scope.logger('managed-plugins').warn(String(error))
@@ -106,7 +128,7 @@ export function installManagedPluginSync(ctx: Context, manager: PluginManager, d
               const names = new Set(policy.plugins.filter(item => item.enabled).map(item => item.packageName))
               for (const name of Object.keys(state.packages)) if (!names.has(name)) await disable(name)
               for (const plugin of policy.plugins) {
-                let status = 'Disabled'; let error = ''; let actualVersion = ''
+                let status = 'Disabled'; let error = ''; let actualVersion = ''; let skipped = false
                 try {
                   if (!plugin.enabled) { if (state.packages[plugin.packageName]) await disable(plugin.packageName) }
                   else if (!managedVersionCompatible(plugin.dshVersion, options.dshVersion)) { await disable(plugin.packageName); status = 'Incompatible' }
@@ -149,8 +171,18 @@ export function installManagedPluginSync(ctx: Context, manager: PluginManager, d
                     if (pendingRestart.has(plugin.packageName)) status = 'RestartRequired'
                     else if (activated.get(plugin.packageName) === signature) status = 'Active'
                     else {
+                      const alreadyAuthorized = isManagedBundleAuthorized(dir, plugin.packageName)
                       authorizeManagedBundle(dir, plugin.packageName, true)
-                      const enabled = await run(() => manager.setBundleEnabled(plugin.packageName, true))
+                      let enabled: Awaited<ReturnType<PluginManager['setBundleEnabled']>>
+                      try {
+                        enabled = await run(() => manager.setBundleEnabled(plugin.packageName, true))
+                      } catch (error) {
+                        // Activation persisted nothing, so restoring the
+                        // pre-call authorization keeps a transient lock from
+                        // both removing the entitlement and de-authorizing.
+                        if (!alreadyAuthorized) authorizeManagedBundle(dir, plugin.packageName, false)
+                        throw error
+                      }
                       if (enabled.application === 'failed') throw new Error(enabled.error?.diagnostic ?? 'Plugin activation failed')
                       status = enabled.application === 'restart-required' ? 'RestartRequired' : 'Active'
                       if (status === 'Active') activated.set(plugin.packageName, signature)
@@ -159,12 +191,24 @@ export function installManagedPluginSync(ctx: Context, manager: PluginManager, d
                     actualVersion = pendingRestart.has(plugin.packageName) ? '' : bundle?.version ?? ''
                   }
                 } catch (failure) {
-                  status = 'Failed'; error = failure instanceof Error ? failure.message : String(failure)
-                  await disable(plugin.packageName)
+                  // A contended profile lock says nothing about the plugin, so
+                  // it must not withdraw the entitlement or de-authorize the
+                  // bundle; leaving the status unreported lets the next poll
+                  // retry with the previous status standing. The account check
+                  // below still runs, because a lock conflict is not permission
+                  // to skip an identity change.
+                  if (lockContended(failure)) {
+                    contended = true
+                    skipped = true
+                  } else {
+                    status = 'Failed'; error = failure instanceof Error ? failure.message : String(failure)
+                    await disable(plugin.packageName)
+                  }
                 }
                 // A switched account must never receive a report authenticated as the previous one.
                 const current = await scope.credentials.readRecord(credentialKey('llm-managed-backend', 'user-session'))
                 if (current?.kind !== 'api-key' || current.key !== record.key) { await disableAll(); break }
+                if (skipped) continue
                 updateNotice(plugin.packageName, status === 'RestartRequired' ? plugin.version ?? undefined : undefined)
                 await request('/v1/plugins/reports', { method: 'POST', headers: { 'content-type': 'application/json' },
                   body: JSON.stringify({ deviceId: state.deviceId, pluginId: plugin.id, version: actualVersion,
@@ -172,10 +216,16 @@ export function installManagedPluginSync(ctx: Context, manager: PluginManager, d
               }
             }
           } catch (error) {
-            if (!lifetime.signal.aborted) { await disableAll(); scope.logger('managed-plugins').warn(String(error)) }
+            // A lock held by another process is not a policy verdict: retry on
+            // the next poll instead of withdrawing every managed entitlement.
+            if (!lifetime.signal.aborted && !lockContended(error)) { await disableAll(); scope.logger('managed-plugins').warn(String(error)) }
+            else if (!lifetime.signal.aborted) {
+              scope.logger('managed-plugins').warn(`profile write lock busy; delaying policy reconciliation: ${String(error)}`)
+            }
           }
           if (identityChanged) { identityChanged = false; wake = new AbortController(); continue }
-          try { await setTimeout(options.pollMs, undefined, { signal: AbortSignal.any([lifetime.signal, wake.signal]) }) }
+          const nextPollMs = contended ? options.lockRetryMs : options.pollMs
+          try { await setTimeout(nextPollMs, undefined, { signal: AbortSignal.any([lifetime.signal, wake.signal]) }) }
           catch (error) {
             if (lifetime.signal.aborted) break
             if (!wake.signal.aborted) throw error

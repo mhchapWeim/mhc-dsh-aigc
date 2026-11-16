@@ -109,6 +109,9 @@
     "@deepseek-ai/dsh-credentials": "workspace:*",
     "@deepseek-ai/dsh-web": "workspace:*",
     "@deepseek-ai/dsh-credentials-local": "workspace:*",
-    "@deepseek-ai/dsh-llm-managed-backend": "workspace:*"
+    "@deepseek-ai/dsh-llm-managed-backend": "workspace:*",
+    "@deepseek-ai/dsh-experimental-speech-to-text": "workspace:*",
+    "@deepseek-ai/dsh-experimental-speech-to-text-sensevoice": "workspace:*",
+    "@deepseek-ai/dsh-subprocess-local": "workspace:*"
   }
 }

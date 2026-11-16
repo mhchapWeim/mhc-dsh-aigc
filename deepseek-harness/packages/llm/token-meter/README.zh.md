@@ -44,7 +44,10 @@ const price = ctx.tokenMeter.estimateMessage(message)
 
 测量锚点包含成功的 `assistant/message` 之前的已计价表面，包括 `step/start` 之后接纳的系统与用户消息，以及重试之前执行的替换。持久输出未变时，完成调用的表面增量为零：其提示词已包含在提供方用量中。后续表面变更仍是相对于该锚点的带符号增量。
 
+<a id="session-projections"></a>
 ### 会话投影
+
+可选的 `@deepseek-ai/dsh-token-meter/progress-policy` 插件复用同一用量 fold，添加有日志记录的任务进度提醒。`everySteps` 与 `everyTokens` 是正整数间隔，未设置的字段不触发提醒。基础 bundle 配置为每 12 个步骤和每增加 1,000,000 个上报 token 提醒一次。计数每轮重置，并包含缓存读取。仅宿主可见的 `taskProgress` 投影在恢复后重建计数与已发提醒，无需每次请求扫描历史。提醒要求模型检查剩余需求、复用已检查结果、避免可选扩展，并在必需检查通过后交付。它不会停止执行、强制限制预算或提供完整账单；压缩、子代理调用和未上报用量不在计数范围内。卸载插件会移除投影和监听器。核心测量服务仍独立于此策略。
 
 当组合提供 `ctx.sessionProjections` 时，token-meter 注册三个投影单元。`tokenUsage` 携带完整持久日志中的 `uncachedInputTokens`、`outputTokens`、`cacheReadTokens` 与 `cacheWriteTokens`。最终 assistant 消息样本会替换同一次尝试的流式用量；`llm/retry-started` 会结束该替换范围，因此同一步骤中的重试会贡献另一次计费用量。`contextPressure` 携带可选 `pressureTokens`（提供方报告的最新提示词规模）、可选 `projectedTokens`（下一个请求的提示词将花费多少）与来自最新一条 `request/context` 记录的可选 `contextWindow`。`contextBreakdown` 携带启发式 `systemTokens`、`toolsTokens` 与 `messageTokens`——上下文的构成，而非提供方计费规模。卸载插件会移除全部三个键。
 
@@ -125,6 +128,8 @@ const price = ctx.tokenMeter.estimateMessage(message)
 ## 模型体验
 
 间接地，通过 `dsh-compaction-basic` 等消费方；服务本身不添加任何提示词、消息、schema、工具或模型调用。
+
+单独挂载 `progress-policy` 后，每次跨过配置的步骤或 token 间隔，会追加一条简短且有日志记录的用户角色指令。它报告已观察到的主请求用量，提醒检查范围并及时交付，不发起额外模型调用。每条提醒都会增加后续请求的输入 token，并保留既有前缀。已发提醒通过宿主投影回放，因此不变的请求不会重复添加提醒。
 
 #### KV Cache 影响
 

@@ -15,7 +15,15 @@ export function PlatformProvider({ children }: { children: React.ReactNode }) {
 
   const refresh = useCallback(async () => {
     if (!hasBackend || !localStorage.getItem('aigc_hub_access_token')) return;
-    const stored = JSON.parse(localStorage.getItem('aigc_hub_user') ?? '{}') as { id?: string; employeeNo?: string; name?: string; roles?: string[]; permissions?: string[] };
+    // Stored identity may be truncated by an interrupted write; fall back to an
+    // empty session instead of aborting the whole provider during render.
+    let stored: { id?: string; employeeNo?: string; name?: string; roles?: string[]; permissions?: string[] } = {};
+    try { stored = JSON.parse(localStorage.getItem('aigc_hub_user') ?? '{}') ?? {}; } catch { stored = {}; }
+    // Session identity must not depend on unrelated management requests succeeding.
+    if (stored.id) reducerDispatch({ type: 'hydrate-backend', state: {
+      currentUserId: stored.id,
+      users: [{ id: stored.id, name: stored.name ?? '', employeeNo: stored.employeeNo ?? '', email: '', department: '', role: stored.roles?.[0] ?? '', status: '启用', lastLogin: '当前登录' }],
+    }});
     const permissions = stored.permissions ?? [];
     const [userPage, departmentPage, rolePage, categoryPage, permissionItems] = await Promise.all([
       permissions.includes('user.manage') ? getUsers() : Promise.resolve({ items: [], page: 1, pageSize: 100, total: 0 }),

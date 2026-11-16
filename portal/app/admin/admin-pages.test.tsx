@@ -5,7 +5,6 @@ import { useLayoutEffect, useRef } from 'react';
 import AdminDashboard from './page';
 import UserManagementPage from './users/page';
 import CategoryManagementPage from './categories/page';
-import ProcessDesignerPage from './processes/page';
 import PublicationRequestsPage from './publications/page';
 import PublicationReviewsPage from './reviews/page';
 import { AdminShell } from './components/admin-shell';
@@ -110,22 +109,6 @@ describe('admin pages', () => {
     });
   });
 
-  it('adds a BPMN task from the palette', async () => {
-    const user = userEvent.setup();
-    render(<ProcessDesignerPage />);
-    const before = screen.getAllByTestId('process-node').length;
-    await user.click(screen.getByRole('button', { name: '添加用户任务' }));
-    expect(screen.getAllByTestId('process-node')).toHaveLength(before + 1);
-  });
-
-  it('connects two BPMN nodes from their ports', async () => {
-    const user = userEvent.setup();
-    render(<ProcessDesignerPage />);
-    await user.click(screen.getByRole('button', { name: '从开始开始连线' }));
-    await user.click(screen.getByRole('button', { name: '连接到生成内容' }));
-    expect(screen.getByRole('status')).toHaveTextContent('已存在');
-  });
-
   it('renders login and department management', () => {
     renderWithPlatform(<LoginPage />);
     expect(screen.getByRole('heading', { name: '登录 AIGC Agent Hub' })).toBeInTheDocument();
@@ -199,30 +182,6 @@ describe('admin pages', () => {
     await user.click(screen.getByRole('button', { name: '新增用户' }));
     await user.click(screen.getByRole('combobox', { name: '角色' }));
     expect(screen.getByRole('option', { name: '审计员' })).toBeInTheDocument();
-  });
-
-  it('assigns a user task to a searchable domain user', async () => {
-    const user = userEvent.setup();
-    render(<ProcessDesignerPage />);
-
-    const assignmentType = screen.getByRole('combobox', { name: '分配方式' });
-    await user.click(assignmentType);
-    await user.click(screen.getByRole('option', { name: '指定域用户' }));
-    await user.click(screen.getByRole('button', { name: '选择域用户' }));
-    await user.type(screen.getByRole('searchbox', { name: '搜索域用户' }), '李俊');
-    await user.click(screen.getByRole('option', { name: /李俊.*wh00412/ }));
-
-    expect(screen.getByText('李俊 · wh00412')).toBeInTheDocument();
-  });
-
-  it('configures inbox notification for user tasks', async () => {
-    const user = userEvent.setup();
-    render(<ProcessDesignerPage />);
-
-    const notification = screen.getByRole('switch', { name: '发送站内信' });
-    expect(notification).toHaveAttribute('aria-checked', 'true');
-    await user.click(notification);
-    expect(notification).toHaveAttribute('aria-checked', 'false');
   });
 
   it('submits an application request into the workflow', async () => {

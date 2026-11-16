@@ -337,6 +337,12 @@
     - id: token-meter
       name: '@deepseek-ai/dsh-token-meter'
 
+    - id: task-progress-policy
+      name: '@deepseek-ai/dsh-token-meter/progress-policy'
+      config:
+        everySteps: 12
+        everyTokens: 1000000
+
     - id: compaction-basic
       name: '@deepseek-ai/dsh-compaction-basic'
 

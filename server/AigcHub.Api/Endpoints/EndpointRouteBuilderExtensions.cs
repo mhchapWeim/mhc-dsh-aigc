@@ -17,6 +17,7 @@ public static class EndpointRouteBuilderExtensions
         app.MapRoleEndpoints();
         app.MapOrganizationEndpoints();
         app.MapProcessEndpoints();
+        app.MapIntegrationEndpoints();
         app.MapPublicationEndpoints();
         app.MapCatalogEndpoints();
         app.MapApplicationRegistryEndpoints();

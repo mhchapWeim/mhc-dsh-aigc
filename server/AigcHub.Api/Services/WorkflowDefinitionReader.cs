@@ -7,6 +7,8 @@ namespace AigcHub.Api.Services;
 
 public sealed class WorkflowDefinitionReader(AigcHubDbContext db)
 {
+    public Task<WorkflowTask> CreateNodeTaskAsync(ProcessDefinition definition, string key, Guid instanceId, Guid initiatorId, CancellationToken ct) =>
+        CreateTaskAsync(Read(definition).Nodes.Single(n => n.Id == key), instanceId, initiatorId, ct);
     private static readonly JsonSerializerOptions JsonOptions = new() { PropertyNameCaseInsensitive = true };
 
     public async Task<WorkflowTask> CreateFirstUserTaskAsync(ProcessDefinition definition,
@@ -33,6 +35,10 @@ public sealed class WorkflowDefinitionReader(AigcHubDbContext db)
     {
         try
         {
+            using var json = JsonDocument.Parse(definition.DefinitionJson);
+            if (!IntegrationWorkflowRunner.IsIntegrated(definition) && json.RootElement.GetProperty("nodes").EnumerateArray().Any(n =>
+                n.TryGetProperty("serviceCode", out var code) && !string.IsNullOrWhiteSpace(code.GetString())))
+                throw new WorkflowException("流程配置了第三方服务但未启用第三方流程执行，请复制新版本并启用 integrated-v1 后发布", 409);
             return JsonSerializer.Deserialize<WorkflowDefinitionDocument>(definition.DefinitionJson, JsonOptions)
                 ?? throw new JsonException();
         }

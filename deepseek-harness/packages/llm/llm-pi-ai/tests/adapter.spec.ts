@@ -415,6 +415,76 @@ describe('PiAiAdapter provider routing', () => {
     })
   })
 
+  it('keeps a completed answer when cached prompt usage exceeds catalog capacity', async () => {
+    const model = getBuiltinModels('deepseek').find(candidate => candidate.id === 'deepseek-v4-flash')
+    if (model === undefined) throw new Error('deepseek-v4-flash missing from pi-ai test catalog')
+    const server = await mockServer([{ events: [
+      ...textEvents.slice(0, 2),
+      JSON.stringify({
+        choices: [{ delta: {}, index: 0, finish_reason: 'stop' }],
+        usage: {
+          prompt_tokens: model.contextWindow + 1,
+          completion_tokens: 1,
+          prompt_tokens_details: { cached_tokens: model.contextWindow },
+        },
+      }),
+      '[DONE]',
+    ] }])
+    const ctx = await harness(server.url)
+    const result = await assemble(ctx, { model: model.id, messages: [] })
+    expect(result.finish).toEqual({ kind: 'stop' })
+    expect(result.message.content).toEqual([{ type: 'text', text: 'hello' }])
+    expect(result.usage?.totalTokens).toBe(model.contextWindow + 2)
+    expect(server.paths).toEqual(['/chat/completions'])
+  })
+
+  it('requests compaction before the SDK silently clamps the output allowance', async () => {
+    const server = await mockServer([{ events: textEvents }])
+    const ctx = await harness(server.url, {
+      models: [{ id: 'small-window', contextWindow: 8192, maxTokens: 1024 }],
+    })
+    const result = await assemble(ctx, {
+      model: 'small-window', messages: [createUserMessage({
+        content: [{ type: 'text', text: 'large historical context '.repeat(4000) }], source: { kind: 'user' },
+      })],
+    })
+    expect(result.finish).toMatchObject({ kind: 'error', failure: { code: CONTEXT_WINDOW_EXCEEDED_CODE } })
+    expect(server.paths).toEqual([])
+    const recovered = await assemble(ctx, {
+      model: 'small-window', messages: [createUserMessage({
+        content: [{ type: 'text', text: 'compacted checkpoint' }], source: { kind: 'user' },
+      })],
+    })
+    expect(recovered.finish).toEqual({ kind: 'stop' })
+    expect(server.paths).toEqual(['/chat/completions'])
+  })
+
+  it.each([1, 8, 36, 445])('routes a context-starved length response with %s tokens to recovery', async (output) => {
+    const server = await mockServer([{ events: [
+      '{"choices":[{"delta":{"role":"assistant","reasoning_content":"partial reasoning"},"index":0,"finish_reason":null}]}',
+      JSON.stringify({ choices: [{ delta: {}, index: 0, finish_reason: 'length' }], usage: {
+        prompt_tokens: 330930, completion_tokens: output, prompt_tokens_details: { cached_tokens: 330880 },
+      } }),
+      '[DONE]',
+    ] }])
+    const ctx = await harness(server.url, {
+      models: [{ id: 'starved', contextWindow: 262144, maxTokens: 32768 }],
+    })
+    const result = await assemble(ctx, { model: 'starved', messages: [] })
+    expect(result.finish).toMatchObject({ kind: 'error', failure: { code: CONTEXT_WINDOW_EXCEEDED_CODE } })
+    expect(result.usage?.outputTokens).toBe(output)
+  })
+
+  it('allows ordinary output clamping above the exhausted one-token floor', async () => {
+    const server = await mockServer([{ events: textEvents }])
+    const ctx = await harness(server.url, {
+      models: [{ id: 'ordinary-clamp', contextWindow: 8192, maxTokens: 8192 }],
+    })
+    const result = await assemble(ctx, { model: 'ordinary-clamp', messages: [] })
+    expect(result.finish).toEqual({ kind: 'stop' })
+    expect(server.paths).toEqual(['/chat/completions'])
+  })
+
   it('stops the SDK request when the adapter idle watchdog expires', async () => {
     const server = await mockServer([{ events: textEvents, delayMs: 200 }])
     const ctx = await harness(server.url, { streamIdleTimeoutMs: 20 })

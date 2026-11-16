@@ -1,5 +1,15 @@
 # nj304 RabbitMQ 用户同步部署材料
 
+## 为 Kubernetes 中的新服务创建消费资源
+
+在有集群访问权限的 Linux 终端运行 `bash add-consumer.sh service-2`，需要 kubectl、Python 3 和可交互终端。默认命名空间为 `bosch-aigc-dsh`，通过 `AIGC_MQ_NAMESPACE` 可覆盖；本地转发端口默认 18672，可通过 `AIGC_MQ_LOCAL_PORT` 覆盖。脚本通过临时 localhost port-forward 访问 `aigc-mq` Service，不需要安装 rabbitmqadmin。
+
+交互输入 MQ 管理账号及密码、新消费账号密码（至少 16 字符）。脚本创建 durable quorum 队列 `aigc.users.service-2`、账号 `aigc_user_service_2`，绑定现有 topic Exchange `aigc.identity.users`，绑定键为 `aigc.user.*.v1`。消费账号只能读取自己的队列，不能声明队列或发布消息；接收方应关闭自动声明拓扑，在业务落库后手动 ACK，并按 eventId/userVersion 幂等处理。
+
+脚本不会打印密码，不修改现有生产或消费账号；遇到同名账号或队列会退出。中途失败可能留下部分新资源，需检查后处理，不会自动删除队列。资源写入 broker 的持久化元数据；按现有流程备份 definitions 和持久化数据，原 `aigc-mq-definitions` Secret 不会自动更新，重建空 broker 时需恢复新增资源。新增账号凭据由运维安全保存和交付。
+
+完成后配置接收服务，再在 AIGC 手动执行一次全量同步；所有既有绑定队列也会收到快照。需要页面展示新接收方时，另行补充 `UserSync__Consumers__N__*` 配置，脚本不修改 API 配置、不触发全量同步。
+
 本目录为待部署材料；不会自动连接 nj304。业务协议和 API 配置见 [用户同步文档](../../docs/USER-SYNC-RABBITMQ.md)。默认拓扑含一个生产账号、一个消费账号、一个管理账号，生产端只有 Exchange 写权限，消费端只有独立队列读权限。
 
 1. 将本目录复制到 nj304 固定部署目录。准备 Docker Compose、Python 3，确保数据目录有持久化备份；镜像 `rabbitmq:4.2-management` 在本机验证通过，生产可将 `RABBITMQ_IMAGE` 固定到组织批准的版本和 digest。本次验证拉取的 digest 为 `sha256:d1fb8b38bd0805935907a22b2b7483fba38c9a8dd7e8a74bfba4a6e7a9e91707`。

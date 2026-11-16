@@ -6980,6 +6980,24 @@ tbody tr:hover {
   background: #1a304d;
   color: #b5c8e1;
 }
+/* Inline submit failure for the publication form. It lives inside the dialog so it
+   can never be hidden behind the modal scrim the way the page-level toast was. */
+.publication-form-error {
+  margin: 12px 0 0;
+  padding: 10px 12px;
+  border: 1px solid #ffccc7;
+  border-radius: 9px;
+  background: #fff2f0;
+  color: #cf1322;
+  font-size: 12px;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+:root[data-theme="dark"] .publication-form-error {
+  border-color: #6b3031;
+  background: #351c1d;
+  color: #ffb5b2;
+}
 .chat-tool-fields .chat-tool-directory {
   grid-column: 1/-1;
 }

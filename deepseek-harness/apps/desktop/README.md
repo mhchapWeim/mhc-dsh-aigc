@@ -2,6 +2,10 @@
 
 English | [中文](README.zh.md)
 
+## Organization-authorized voice input
+
+Desktop installers carry the release-pinned INT8 SenseVoice model, vocabulary and Silero VAD under `runtime/speech-models` (241,357,257 bytes). Model preparation verifies SHA-256 before packaging. The separate `@bhss/dsh-plugin-managed-voice-input` bundle is uploaded and authorized through AIGC; authorization activates its microphone and local provider without a manual model download. Logout, revocation and failed policy refresh use the existing managed-plugin lifecycle. The Host supplies the immutable resource location through `DSH_SPEECH_MODELS_ROOT`; missing resources fail rather than downloading. Upgrades remove the former unlicensed optional voice selection. Rebuild and reinstall Desktop to deliver the models and resource path.
+
 ## Local failure diagnostics
 
 The main-process build explicitly bundles the `dsh-home-paths` and `dsh-deepseek-account` workspace helpers because they are development dependencies excluded from the installed shell. The main-bundle regression test builds the real entry point and checks that neither helper remains an external import. Rebuild the installer to deliver this rule to installed clients.

@@ -14,6 +14,8 @@ import { AntPagination } from "../../components/ant-pagination";
 import { Modal } from "../../components/modal";
 import { ModernSelect } from "../../components/modern-select";
 import { DirectoryUserPicker } from "../../components/directory-user-picker";
+import { GiteaRepositoryPicker } from "../../components/gitea-repository-picker";
+import { getRequestTypes, type CodeSelection } from "../../lib/integrations";
 import { usePlatform } from "../../components/platform-provider";
 import { canResubmitPublication, type PublicationStatus } from "../../lib/platform-state";
 import {
@@ -29,6 +31,8 @@ import {
 } from "../../lib/api-client";
 
 type FormState = {
+  processKey?: string;
+  codeSource?: CodeSelection;
   appName: string;
   category: string;
   summary: string;
@@ -73,7 +77,9 @@ export default function PublicationRequestsPage() {
   const [backendCategories, setBackendCategories] = useState<PublicationOption[]>([]);
   const [accessOptions, setAccessOptions] = useState<PublicationAccessOptions>({ users: [], departments: [], roles: [] });
   const [backendNotice, setBackendNotice] = useState("");
+  const [formError, setFormError] = useState("");
   const [backendEnabled, setBackendEnabled] = useState(false);
+  const [requestTypes, setRequestTypes] = useState<{ code: string; name: string; version: number }[]>([]);
   const loadBackend = async () => {
     const [requests, options, access] = await Promise.all([getMyPublications(), getPublicationOptions(), getPublicationAccessOptions()]);
     setBackendRequests(requests.items);
@@ -88,6 +94,7 @@ export default function PublicationRequestsPage() {
   }, []);
   useEffect(() => {
     if (!backendEnabled) return;
+    getRequestTypes().then(setRequestTypes).catch((error: Error) => setBackendNotice(error.message));
     const timer = window.setTimeout(() => {
       loadBackend().catch((error: Error) => setBackendNotice(error.message));
     }, 0);
@@ -127,6 +134,7 @@ export default function PublicationRequestsPage() {
     if (backendEnabled) {
       try {
         await submitPublication({
+          processKey: form.processKey, codeSource: form.codeSource,
           appName: form.appName, categoryId: form.category, summary: form.summary,
           repositoryUrl: form.repositoryUrl, branch: form.branch, commitSha: form.commitSha,
           version: form.version, environment: form.environment, accessMode: form.accessMode,
@@ -135,7 +143,7 @@ export default function PublicationRequestsPage() {
         setForm(null);
         setBackendNotice("发布申请已提交，流程已进入审核节点");
         await loadBackend();
-      } catch (error) { setBackendNotice(error instanceof Error ? error.message : "提交失败"); }
+      } catch (error) { setFormError(error instanceof Error ? error.message : "提交失败"); }
     } else {
       dispatch({ type: "submit-publication", actorId: currentUserId, request: {
         id: `pub-${Date.now()}`, appName: form.appName, category: form.category,
@@ -161,7 +169,7 @@ export default function PublicationRequestsPage() {
         <button
           className="primary-action"
           type="button"
-          onClick={() => setForm({ ...emptyForm(), category: categoryOptions[0]?.value ?? "智慧服务" })}
+          onClick={() => { setFormError(""); setForm({ ...emptyForm(), category: categoryOptions[0]?.value ?? "智慧服务" }); }}
         >
           <FilePlus2 size={18} />
           新建发布申请
@@ -241,7 +249,7 @@ export default function PublicationRequestsPage() {
                 )}{" "}
                 {request.currentNodeName}
               </span>
-              {canResubmitPublication(currentUser, request) && (
+              {(backendRequests ? request.status === "已退回" || request.status === "发布失败" : canResubmitPublication(currentUser, request)) && (
                 <button
                   className="resubmit-button"
                   type="button"
@@ -279,6 +287,11 @@ export default function PublicationRequestsPage() {
         <Modal title="新建发布申请" onClose={() => setForm(null)}>
           <form className="entity-form publication-form" aria-label="发布申请表单" tabIndex={0} onSubmit={submit}>
             <div className="form-grid">
+              {backendEnabled && <div className="form-field form-span"><span>申请类型</span><ModernSelect ariaLabel="申请类型" value={form.processKey ?? "application-publishing"} options={requestTypes.map(t => ({ value: t.code, label: `${t.name} · V${t.version}` }))} onChange={processKey => setForm({ ...form, processKey })} /></div>}
+              {backendEnabled && <GiteaRepositoryPicker onChange={selection => setForm(previous => previous ? { ...previous,
+                codeSource: selection?.source, repositoryUrl: selection?.repository.html_url ?? "", branch: selection?.branch ?? "", commitSha: selection?.commit.sha ?? "",
+                appName: previous.appName || selection?.repository.name || "", summary: previous.summary || selection?.repository.description || ""
+              } : previous)} />}
               <label>
                 <span>应用名称 *</span>
                 <input
@@ -317,6 +330,7 @@ export default function PublicationRequestsPage() {
                   aria-label="代码仓库"
                   required
                   type="url"
+                  readOnly={Boolean(form.codeSource)}
                   value={form.repositoryUrl}
                   onChange={(event) =>
                     setForm({ ...form, repositoryUrl: event.target.value })
@@ -326,11 +340,11 @@ export default function PublicationRequestsPage() {
               </label>
               <label>
                 <span>分支 *</span>
-                <input aria-label="分支" required value={form.branch} onChange={(event) => setForm({ ...form, branch: event.target.value })} />
+                <input aria-label="分支" required readOnly={Boolean(form.codeSource)} value={form.branch} onChange={(event) => setForm({ ...form, branch: event.target.value })} />
               </label>
               <label>
                 <span>Commit SHA *</span>
-                <input aria-label="Commit SHA" required value={form.commitSha} onChange={(event) => setForm({ ...form, commitSha: event.target.value })} />
+                <input aria-label="Commit SHA" required readOnly={Boolean(form.codeSource)} value={form.commitSha} onChange={(event) => setForm({ ...form, commitSha: event.target.value })} />
               </label>
               <label>
                 <span>发布版本 *</span>
@@ -350,6 +364,9 @@ export default function PublicationRequestsPage() {
               </div>}
               <p className="form-span publication-url-note">部署后的访问地址将在第二个审批节点完成后，由部署服务回调写入。</p>
             </div>
+            {/* Submit failures must stay inside the dialog: the page toast sits
+                below the modal scrim and would be hidden behind it. */}
+            {formError && <p className="publication-form-error" role="alert">{formError}</p>}
             <footer className="modal-actions">
               <button type="button" onClick={() => setForm(null)}>
                 取消

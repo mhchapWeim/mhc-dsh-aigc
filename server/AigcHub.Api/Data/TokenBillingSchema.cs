@@ -28,5 +28,5 @@ public static class TokenBillingSchema
       "TotalTokens" bigint NOT NULL,"ChargedTokens" bigint NOT NULL,"Status" text NOT NULL,"Note" text NOT NULL);
     CREATE INDEX IF NOT EXISTS "IX_TokenBillingEntries_UserId_WeekStart" ON aigc_hub."TokenBillingEntries" ("UserId","WeekStart");
     CREATE INDEX IF NOT EXISTS "IX_TokenBillingEntries_CreatedAt" ON aigc_hub."TokenBillingEntries" ("CreatedAt");
-    """,ct):Task.CompletedTask;
+    """,Array.Empty<object>(),ct):Task.CompletedTask;
 }

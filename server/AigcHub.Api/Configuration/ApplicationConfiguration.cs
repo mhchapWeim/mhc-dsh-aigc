@@ -95,6 +95,16 @@ public static class ApplicationConfiguration
         builder.Services.AddScoped<CasAuthenticationService>();
         builder.Services.AddScoped<PortalSsoFlow>();
         builder.Services.AddScoped<WorkflowDefinitionReader>();
+        builder.Services.AddScoped<IntegrationWorkflowRunner>();
+        builder.Services.AddScoped<GiteaService>();
+        builder.Services.AddHostedService<IntegrationMqWorker>();
+        builder.Services.AddHttpClient("gitea", client => client.Timeout = TimeSpan.FromSeconds(30))
+            .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler { AllowAutoRedirect = false, UseCookies = false });
+        builder.Services.AddHttpClient("gitea-insecure", client => client.Timeout = TimeSpan.FromSeconds(30))
+            .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler {
+                AllowAutoRedirect = false, UseCookies = false,
+                ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
+            });
         builder.Services.AddScoped<WorkflowService>();
         builder.Services.AddScoped<IRealtimeNotificationPublisher, SignalRNotificationPublisher>();
         builder.Services.AddScoped<DatabasePermissionService>();

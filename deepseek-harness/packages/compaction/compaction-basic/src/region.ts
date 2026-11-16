@@ -16,7 +16,7 @@ import {
 } from '@deepseek-ai/dsh-compaction'
 import type { CompactionResult } from '@deepseek-ai/dsh-compaction'
 import type { CommandId } from '@deepseek-ai/dsh-commands/brand'
-import { createUserMessage, errorChain } from '@deepseek-ai/dsh-llm'
+import { CONTEXT_WINDOW_EXCEEDED_CODE, createUserMessage, errorChain, isContextWindowExceededError, LlmError } from '@deepseek-ai/dsh-llm'
 import type { Message, UserMessage } from '@deepseek-ai/dsh-llm'
 import type { TokenMeasurement, TokenMeter } from '@deepseek-ai/dsh-token-meter'
 import { SessionSeq, type Session, type SessionEvent } from '@deepseek-ai/dsh-session'
@@ -402,9 +402,22 @@ async function summarizeCompaction(
     } catch (error: unknown) {
       if (signal?.aborted === true) throw error
       assertStable(dependencies, agent.session, prepared)
-      if (!dependencies.recover(error, agent, prepared.shadowedSeqs, signal)) throw error
+      if (dependencies.recover(error, agent, prepared.shadowedSeqs, signal)) {
+        prepared = prepareCompaction(dependencies, agent.session,
+          validateSurfaceRegion(agent.session, prepared.start, prepared.end))
+        continue
+      }
+      const overflow = error instanceof LlmError
+        ? error.code === CONTEXT_WINDOW_EXCEEDED_CODE
+        : isContextWindowExceededError(errorChain(error))
+      if (!overflow) throw error
+      // Retry only a strictly smaller, tool-balanced prefix. The untouched
+      // suffix stays on the surface; no failed or omitted summary is committed.
+      const prefix = prepared.shadowedSeqs.slice(0, Math.floor(prepared.shadowedSeqs.length / 2))
+      const end = prefix.findLast(seq => toolPairingBalancedAfter(agent.session, seq))
+      if (end === undefined) throw error
       prepared = prepareCompaction(dependencies, agent.session,
-        validateSurfaceRegion(agent.session, prepared.start, prepared.end))
+        validateSurfaceRegion(agent.session, prepared.start, end))
     }
   }
   const checkpointMessage = createUserMessage({

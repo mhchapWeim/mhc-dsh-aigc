@@ -349,6 +349,8 @@ export class BasicCompactionEngine extends CompactionEngine {
   /**
    * Compact one inclusive positional range from the agent-owned surface using
    * the effective token meter for all retention and shrink pricing.
+   * If the summary request overflows, only a smaller balanced oldest prefix
+   * may be replaced; the returned shadowed range names the actual replacement.
    * @param start - inclusive first surface-node seq.
    * @param end - inclusive last surface-node seq.
    * @param agent - owner of the target session, used by the summarizer.

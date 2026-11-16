@@ -4,8 +4,9 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Bell, BookOpenCheck, ChevronDown, CircleCheckBig, Clock3, Download, FilePlus2, Heart, Inbox, Languages, LogOut, Moon, Search, Settings2, ShieldCheck, SlidersHorizontal, Sparkles, Sun, UserRound, Wrench } from 'lucide-react';
+import { ChevronDown, CircleCheckBig, Clock3, Download, FilePlus2, Heart, Languages, LogOut, Moon, Search, Settings2, ShieldCheck, SlidersHorizontal, Sparkles, Sun, UserRound } from 'lucide-react';
 import { AppCatalogGrid } from './app-catalog-grid';
+import { InboxBell } from './inbox-bell';
 import { PasswordChangeForm } from './password-change-form';
 import { Modal } from './modal';
 import { usePlatform } from './platform-provider';
@@ -41,7 +42,6 @@ export function PortalShell() {
   }, [notice]);
   const [profileOpen, setProfileOpen] = useState(false);
   const [profileCenterOpen, setProfileCenterOpen] = useState(false);
-  const [inboxOpen, setInboxOpen] = useState(false);
   const [filterOpen, setFilterOpen] = useState(false);
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [theme, setTheme] = useState<Theme>('light');
@@ -108,7 +108,6 @@ export function PortalShell() {
         searchRef.current?.blur();
       }
       if (event.key === 'Escape') {
-        setInboxOpen(false);
         setFilterOpen(false);
         setProfileOpen(false);
       }
@@ -207,13 +206,10 @@ export function PortalShell() {
             <Link className="text-button" href="/desktop" aria-label="下载弯崽工作伙伴"><Download size={17} /><span className="desktop-only">{locale === 'zh' ? '客户端下载' : 'Desktop app'}</span></Link>
             <button className="text-button desktop-only" type="button" aria-label={theme === 'light' ? copy.switchDark : copy.switchLight} onClick={toggleTheme}>{theme === 'light' ? <Sun size={17} /> : <Moon size={17} />}<span>{theme === 'light' ? copy.light : copy.dark}</span></button>
             <button className="text-button desktop-only" type="button" aria-label={copy.switchLanguage} onClick={toggleLocale}><Languages size={17} /><span>{copy.language}</span></button>
-            <div className="notification-wrap">
-              <button className="icon-button notification-button" type="button" aria-label={copy.notification} aria-expanded={inboxOpen} onClick={() => { setInboxOpen((current) => !current); setProfileOpen(false); }}><Bell size={19} /><span className="notification-count" aria-hidden="true">2</span></button>
-              {inboxOpen && <section className="notification-panel" role="dialog" aria-labelledby="inbox-title"><header><div><h2 id="inbox-title">{copy.inboxTitle}</h2><span>{copy.inboxUnread}</span></div><Inbox size={19} aria-hidden="true" /></header><div className="notification-list"><button type="button"><span className="notification-icon is-task"><BookOpenCheck size={18} /></span><span><strong>{copy.approvalMessage}</strong><small>{copy.approvalMeta}</small></span><time>{locale === 'zh' ? '刚刚' : 'Now'}</time></button><button type="button"><span className="notification-icon is-maintenance"><Wrench size={18} /></span><span><strong>{copy.maintenanceMessage}</strong><small>{copy.maintenanceMeta}</small></span><time>{locale === 'zh' ? '今天' : 'Today'}</time></button></div></section>}
-            </div>
+            <InboxBell locale={locale} />
             <Link className="publish-link desktop-only" href="/admin/publications"><FilePlus2 size={17} />{locale === 'zh' ? '发布应用' : 'Publish app'}</Link>
             <Link className="admin-link desktop-only" href="/admin"><Settings2 size={17} />{copy.admin}</Link>
-            <div className="profile-wrap"><button className="profile-button" type="button" aria-label={copy.openProfile} aria-expanded={profileOpen} onClick={() => { setProfileOpen((current) => !current); setInboxOpen(false); }}><span className="avatar">{currentUser?.name.slice(0, 1) ?? '访'}</span><span className="desktop-only">{currentUser?.employeeNo ?? (locale === 'zh' ? '未登录' : 'Guest')}</span><ChevronDown size={15} /></button>{profileOpen&&<div className="profile-menu"><div className="profile-menu__user"><span className="avatar">{currentUser?.name.slice(0, 1) ?? '访'}</span><span><strong>{currentUser?.name ?? (locale === 'zh' ? '访客' : 'Guest')}</strong><small>{currentUser?.email ?? (locale === 'zh' ? '请先登录' : 'Please sign in')}</small></span></div><Link href="/admin/usage"><SlidersHorizontal size={17}/>{locale === 'zh' ? '我的用量' : 'My usage'}</Link><Link href="/admin"><Settings2 size={17}/>{copy.enterAdmin}</Link><button type="button" onClick={() => { setProfileOpen(false); setProfileCenterOpen(true); }}><UserRound size={17}/>{copy.profile}</button><button className="logout-button" type="button" onClick={logout}><LogOut size={17}/>{copy.logout}</button></div>}</div>
+            <div className="profile-wrap"><button className="profile-button" type="button" aria-label={copy.openProfile} aria-expanded={profileOpen} onClick={() => setProfileOpen((current) => !current)}><span className="avatar">{currentUser?.name.slice(0, 1) ?? '访'}</span><span className="desktop-only">{currentUser?.employeeNo ?? (locale === 'zh' ? '未登录' : 'Guest')}</span><ChevronDown size={15} /></button>{profileOpen&&<div className="profile-menu"><div className="profile-menu__user"><span className="avatar">{currentUser?.name.slice(0, 1) ?? '访'}</span><span><strong>{currentUser?.name ?? (locale === 'zh' ? '访客' : 'Guest')}</strong><small>{currentUser?.email ?? (locale === 'zh' ? '请先登录' : 'Please sign in')}</small></span></div><Link href="/admin/usage"><SlidersHorizontal size={17}/>{locale === 'zh' ? '我的用量' : 'My usage'}</Link><Link href="/admin"><Settings2 size={17}/>{copy.enterAdmin}</Link><button type="button" onClick={() => { setProfileOpen(false); setProfileCenterOpen(true); }}><UserRound size={17}/>{copy.profile}</button><button className="logout-button" type="button" onClick={logout}><LogOut size={17}/>{copy.logout}</button></div>}</div>
           </nav>
         </header>
       </div>

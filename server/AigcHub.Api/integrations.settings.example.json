@@ -1,0 +1,42 @@
+{
+  "IntegrationConnections": {
+    "GiteaBosch": {
+      "VerifySsl": true,
+      "BaseUrl": "https://git.boschhuayu-steering.com",
+      "ClientId": "",
+      "ClientSecret": "",
+      "RedirectUri": "https://aigcplatform.boschhuayu-steering.com/admin/publications/gitea-callback"
+    },
+    "CodeAudit": {
+      "Enabled": false,
+      "HostName": "aigc-mq",
+      "Port": 5672,
+      "VirtualHost": "/aigc",
+      "UserName": "aigc_workflow_runtime",
+      "Password": "",
+      "UseTls": false,
+      "Exchange": "aigc.workflow.commands",
+      "ResultQueue": "aigc.workflow.code-audit.results",
+      "RoutingKeys": {
+        "audit.submit.v1": "code-audit.submit.v1",
+        "review.requested": "code-audit.submit.v1"
+      },
+      "CallbackSecret": ""
+    },
+    "Deployment": {
+      "Enabled": false,
+      "HostName": "aigc-mq",
+      "Port": 5672,
+      "VirtualHost": "/aigc",
+      "UserName": "aigc_workflow_runtime",
+      "Password": "",
+      "UseTls": false,
+      "Exchange": "aigc.workflow.commands",
+      "ResultQueue": "aigc.workflow.deployment.results",
+      "RoutingKeys": {
+        "deploy.submit.v1": "deployment.submit.v1"
+      },
+      "CallbackSecret": ""
+    }
+  }
+}

@@ -2,6 +2,10 @@
 
 [English](README.md) | 中文
 
+## AIGC 授权的语音输入
+
+桌面安装包在 `runtime/speech-models` 中预置固定版本的 INT8 SenseVoice 模型、词表和 Silero VAD，共 241,357,257 字节。打包准备时校验 SHA-256。独立的 `@bhss/dsh-plugin-managed-voice-input` Bundle 通过 AIGC 上传和授权；获得授权后自动提供麦克风和本地识别，无需手动下载模型。退出、撤权和策略刷新失败沿用现有托管插件生命周期。Host 通过 `DSH_SPEECH_MODELS_ROOT` 提供安装资源路径，资源缺失时明确失败，不自动下载。升级时移除此前免授权的可选语音配置。需重新构建并安装客户端才能交付模型和资源路径。
+
 ## 本地失败诊断
 
 主进程构建显式内联 `dsh-home-paths` 和 `dsh-deepseek-account` 工作区辅助包，因为安装后的外壳不包含这些开发依赖。main-bundle 回归测试构建真实入口，检查这两个包均未保留为外部导入。已安装客户端需要重新构建并安装新版安装包才能获得此规则。

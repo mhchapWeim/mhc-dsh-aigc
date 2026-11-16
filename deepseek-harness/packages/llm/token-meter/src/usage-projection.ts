@@ -114,7 +114,10 @@ type ContextPressureState = z.infer<typeof contextPressureStateSchema>
  * its stream. `llm/retry-started` closes the replacement slot so the retried
  * attempt adds to the total.
  */
-export const tokenUsageProjectionDefinition = {
+export const tokenUsageProjectionDefinition: Omit<ProjectionDefinition<'tokenUsage', TokenUsageState>, 'init' | 'wire'> & {
+  init(): TokenUsageState
+  wire: NonNullable<ProjectionDefinition<'tokenUsage', TokenUsageState>['wire']>
+} = {
   key: 'tokenUsage',
   stateVersion: 2,
   stateSchema: tokenUsageStateSchema,

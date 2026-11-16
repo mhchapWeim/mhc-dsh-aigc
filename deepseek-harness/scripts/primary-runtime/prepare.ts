@@ -179,10 +179,14 @@ export function smokePrimaryRuntime(root: string, environment: NodeJS.ProcessEnv
   if (manifest.platform !== process.platform || manifest.arch !== process.arch) return
   if (Object.keys(manifest.pythonPackages).length === 0) throw new Error('primary runtime: missing Python distribution versions; prepare the payload before running its smoke checks.')
   const entries = workspaceDependencyPaths(root, manifest)
-  const options = { stdio: 'inherit', timeout: 120_000, env: environment } as const
+  // Freshly extracted native libraries can take several minutes to load on Windows.
+  const options = { stdio: 'inherit', timeout: 300_000, windowsHide: true, env: environment } as const
+  console.log('primary runtime: checking Python standard library, NumPy and pandas')
   execFileSync(entries.python, ['-I', '-B', '-c', 'import decimal, xml.parsers.expat, lzma, uuid, numpy, pandas; assert numpy.arange(4).sum() == 6; assert pandas.DataFrame({"n": [1, 2]}).n.sum() == 3'], options)
+  console.log('primary runtime: checking Office libraries and document round trips')
   execFileSync(entries.python, ['-I', '-B', join(import.meta.dirname, 'smoke.py'), JSON.stringify(manifest.pythonPackages),
     manifest.python, join(dirname(root), 'office-skills', 'scripts', 'check_office.py')], options)
+  console.log('primary runtime: checking Python package dependencies')
   execFileSync(entries.python, ['-I', '-B', '-m', 'pip', 'check'], options)
   if (entries.node !== undefined) execFileSync(entries.node, ['-e', `if (process.versions.node !== ${JSON.stringify(manifest.node)}) process.exit(1)`], options)
   if (entries.pnpm !== undefined && entries.node !== undefined) execFileSync(entries.node, [entries.pnpm, '--version'], options)

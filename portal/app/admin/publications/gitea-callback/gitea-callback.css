@@ -1,0 +1,10 @@
+/* Landing page for the Gitea authorization popup. Scoped to the admin shell so the
+   public portal never inherits these rules. */
+.admin-app .gitea-callback-panel { display: grid; gap: 14px; max-width: 520px; margin: 48px auto; padding: 32px; text-align: center; }
+.admin-app .gitea-callback-panel h1 { margin: 0; font-size: 18px; font-weight: 500; color: var(--ink); }
+.admin-app .gitea-callback-status { margin: 0; padding: 12px 14px; border: 1px solid var(--line); border-radius: 6px; font-size: 14px; line-height: 1.6; overflow-wrap: anywhere; }
+.admin-app .gitea-callback-status.is-working { color: var(--ink); }
+.admin-app .gitea-callback-status.is-done { border-color: var(--success, #1D9E75); color: var(--success, #1D9E75); }
+.admin-app .gitea-callback-status.is-error { border-color: var(--danger, #D85A30); color: var(--danger, #D85A30); }
+.admin-app .gitea-callback-hint { margin: 0; font-size: 13px; color: var(--ink-soft, #5F5E5A); }
+.admin-app .gitea-callback-panel .secondary-action { justify-self: center; }

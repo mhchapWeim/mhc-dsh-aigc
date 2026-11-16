@@ -28,6 +28,29 @@ function LoginProbe() {
   </>;
 }
 
+it('restores the signed-in account even when management data fails to load', async () => {
+  localStorage.clear();
+  localStorage.setItem('aigc_hub_access_token', 'token');
+  localStorage.setItem('aigc_hub_user', JSON.stringify({ id: 'user-1', employeeNo: 'wh00028', name: '姚伟明', permissions: ['user.manage'] }));
+  mocks.users.mockRejectedValue(new Error('用户列表加载失败'));
+  render(<PlatformProvider><LoginProbe /></PlatformProvider>);
+  expect(await screen.findByText('用户列表加载失败')).toBeInTheDocument();
+  expect(screen.getByText('user-1')).toBeInTheDocument();
+  expect(screen.getByText('姚伟明')).toBeInTheDocument();
+  localStorage.clear();
+});
+
+it('restores the signed-in account while management data is still pending', async () => {
+  localStorage.clear();
+  localStorage.setItem('aigc_hub_access_token', 'token');
+  localStorage.setItem('aigc_hub_user', JSON.stringify({ id: 'user-1', employeeNo: 'wh00028', name: '姚伟明', permissions: ['user.manage'] }));
+  mocks.users.mockReturnValue(new Promise(() => {}));
+  render(<PlatformProvider><LoginProbe /></PlatformProvider>);
+  expect(await screen.findByText('user-1')).toBeInTheDocument();
+  expect(screen.getByText('姚伟明')).toBeInTheDocument();
+  localStorage.clear();
+});
+
 it('loads backend users after login instead of rejecting an empty local list', async () => {
   localStorage.clear();
   mocks.users.mockResolvedValue({ items: [{ id: 'user-1', employeeNo: 'wh00028', name: '姚伟明', email: 'admin@example.test', department: '数字化办公室', roles: [{ name: '平台管理员' }], isEnabled: true }], page: 1, pageSize: 100, total: 1 });

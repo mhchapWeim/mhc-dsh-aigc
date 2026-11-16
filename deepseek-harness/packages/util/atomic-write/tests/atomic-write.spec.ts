@@ -1,3 +1,4 @@
+import { spawnSync } from 'node:child_process'
 import { lstat, mkdtemp, readFile, readdir, rm, stat, symlink, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { dirname, join } from 'node:path'
@@ -242,5 +243,70 @@ describe('withFileLock', () => {
     release()
     await holder
     expect(await patient).toBe('patient')
+  })
+
+  it('reports contention as a distinguishable timeout that names its lock', async () => {
+    const dir = await scratch()
+    const target = join(dir, 'document')
+    const lockPath = `${target}.lock`
+    await writeFile(lockPath, `${process.pid}\n`)
+
+    // A caller that mutates durable state when it believes an operation
+    // failed needs to tell "somebody else holds the lock" apart from a real
+    // error; the stable code is that discriminator.
+    await expect(withFileLock(target, async () => 'unreachable', { waitMs: 10 }))
+      .rejects.toMatchObject({ code: 'LOCK_TIMEOUT', lockPath })
+  })
+
+  it('reclaims a lock whose recorded owner no longer exists', async () => {
+    const dir = await scratch()
+    const target = join(dir, 'document')
+    const lockPath = `${target}.lock`
+    // A child that has already exited models the writer that died while
+    // holding the lock: its PID is real but provably gone from the table.
+    const exited = spawnSync(process.execPath, ['-e', ''])
+    await writeFile(lockPath, `${String(exited.pid)}\n`)
+    const operation = vi.fn(async () => 'recovered')
+
+    // Without reclamation this lock would fail every later writer of the file
+    // forever, which is the reported defect.
+    await expect(withFileLock(target, operation)).resolves.toBe('recovered')
+    expect(operation).toHaveBeenCalledOnce()
+    expect(await readdir(dir)).toEqual([])
+  })
+
+  it('never steals a lock whose recorded owner is still alive', async () => {
+    const dir = await scratch()
+    const target = join(dir, 'document')
+    const lockPath = `${target}.lock`
+    await writeFile(lockPath, `${process.pid}\n`)
+    const operation = vi.fn(async () => 'stolen')
+
+    await expect(withFileLock(target, operation, { waitMs: 30 })).rejects.toMatchObject({ code: 'LOCK_TIMEOUT' })
+    expect(operation).not.toHaveBeenCalled()
+    // The live owner's lock and its recorded PID survive untouched.
+    expect((await readFile(lockPath, 'utf8')).trim()).toBe(String(process.pid))
+  })
+
+  it('leaves a lock with an unreadable owner in place rather than guessing', async () => {
+    const dir = await scratch()
+    const target = join(dir, 'document')
+    const lockPath = `${target}.lock`
+    // A writer between exclusive create and its PID write, or a holder paused
+    // mid-operation, must not be treated as dead.
+    await writeFile(lockPath, '')
+    const operation = vi.fn(async () => 'risky')
+
+    await expect(withFileLock(target, operation, { waitMs: 30 })).rejects.toMatchObject({ code: 'LOCK_TIMEOUT' })
+    expect(operation).not.toHaveBeenCalled()
+    expect(await readdir(dir)).toEqual(['document.lock'])
+  })
+
+  it('releases the lock even when the operation throws', async () => {
+    const dir = await scratch()
+    const target = join(dir, 'document')
+
+    await expect(withFileLock(target, async () => { throw new Error('operation failed') })).rejects.toThrow('operation failed')
+    expect(await readdir(dir)).toEqual([])
   })
 })

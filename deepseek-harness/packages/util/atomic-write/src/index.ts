@@ -11,7 +11,7 @@
  */
 
 import { randomBytes } from 'node:crypto'
-import { lstat, mkdir, rename, rm, writeFile } from 'node:fs/promises'
+import { lstat, mkdir, readFile, rename, rm, writeFile } from 'node:fs/promises'
 import { dirname } from 'node:path'
 
 const WINDOWS_TRANSIENT_RENAME_ERRORS: ReadonlySet<string> = new Set(['EACCES', 'EBUSY', 'EPERM'])
@@ -114,6 +114,11 @@ async function isLockContention(error: unknown, lockPath: string): Promise<boole
 const LOCK_RETRY_INITIAL_MS = 20
 const LOCK_RETRY_MAX_MS = 200
 
+/** Bounded retries for releasing the lock, absorbing transient Windows handles. */
+const RELEASE_RETRY_LIMIT = 5
+const RELEASE_RETRY_INITIAL_MS = 10
+const RELEASE_RETRY_MAX_MS = 80
+
 /**
  * How long a contender waits when the caller states no limit — sized for the
  * render-and-rename cycle every call site had when this package was written.
@@ -124,6 +129,92 @@ const LOCK_RETRY_MAX_MS = 200
  * alone.
  */
 const DEFAULT_LOCK_WAIT_MS = 2_000
+
+/**
+ * The caller's wait expired on a lock that someone else still held. Callers
+ * that mutate durable state as a side effect of failure can distinguish this
+ * transient infrastructure condition from a real error through {@link code}.
+ */
+export class WriterLockTimeoutError extends Error {
+  /** Stable discriminator for callers that must not treat contention as a domain failure. */
+  readonly code = 'LOCK_TIMEOUT'
+
+  /**
+   * @param lockPath - the contested lock file.
+   * @param waitMs - how long the contender waited before giving up.
+   */
+  constructor(readonly lockPath: string, readonly waitMs: number) {
+    super(`atomic-write: timed out waiting for the writer lock at ${lockPath}`)
+    this.name = 'WriterLockTimeoutError'
+  }
+}
+
+/**
+ * Whether the process that wrote this lock is provably gone. Only a lock whose
+ * recorded PID is a positive integer absent from the process table qualifies:
+ * an unreadable PID could be a writer that is merely paused, and PID reuse can
+ * only make a dead owner look alive. Both directions err toward leaving the
+ * lock in place, because a stolen live lock lets two writers interleave.
+ * @param lockPath - candidate lock file.
+ * @returns True only when the recorded owner no longer exists.
+ */
+async function isLockOrphaned(lockPath: string): Promise<boolean> {
+  let text: string
+  try {
+    text = await readFile(lockPath, 'utf8')
+  } catch {
+    // Vanished between contention and inspection: nothing left to reclaim.
+    return false
+  }
+  const pid = Number.parseInt(text.trim(), 10)
+  if (!Number.isSafeInteger(pid) || pid <= 0) return false
+  // A lock this process wrote belongs to a live writer: its own concurrent
+  // acquisition in this process, which must keep serializing, not be stolen.
+  try {
+    process.kill(pid, 0)
+    return false
+  } catch (error) {
+    return (error as NodeJS.ErrnoException | null)?.code === 'ESRCH'
+  }
+}
+
+/**
+ * Remove an orphaned lock without ever disturbing one that changed hands.
+ *
+ * The decision to reclaim is made from one file read, so the lock is first
+ * moved out of the way with a rename — the only atomic step available — which
+ * makes this contender the sole owner of whichever inode it captured. The
+ * captured file is then re-inspected: when its owner is still provably gone the
+ * reclamation stands, and when the content no longer matches the stale lock the
+ * capture raced a legitimate release-and-reacquire and is put back.
+ * @param lockPath - the contested lock file.
+ * @returns True when an orphaned lock was removed.
+ */
+async function reclaimOrphanedLock(lockPath: string): Promise<boolean> {
+  // Refuse to touch a lock whose owner may still be alive before disturbing
+  // anything; the re-check after the rename covers the instant in between.
+  if (!await isLockOrphaned(lockPath)) return false
+  const captured = `${lockPath}.stale-${randomBytes(6).toString('hex')}`
+  try {
+    await rename(lockPath, captured)
+  } catch {
+    // Another contender reclaimed first, or the holder released: just contend again.
+    return false
+  }
+  if (!await isLockOrphaned(captured)) {
+    // The lock changed hands between the check and the rename. Hand the live
+    // writer's lock back; if even that fails, leave the captured file rather
+    // than delete it, because removing a live lock admits a second writer.
+    try {
+      await rename(captured, lockPath)
+    } catch (error) {
+      process.emitWarning(`atomic-write: left a captured lock at ${captured}: ${String(error)}`)
+    }
+    return false
+  }
+  await rm(captured, { force: true })
+  return true
+}
 
 /** Options for one {@link withFileLock} acquisition. */
 export interface FileLockOptions {
@@ -146,10 +237,12 @@ export interface FileLockOptions {
  * contention only when a fresh `lstat` confirms the lock path exists, covering
  * Windows exclusive-create behavior. Windows retries one unconfirmed EPERM
  * because the holder can release before the probe; a repeated unconfirmed
- * permission error is rethrown. Contention backs off exponentially and times out
- * after the deadline. The contender never removes an existing lock because
- * file age cannot prove that its owner stopped; orphan recovery is an operator
- * action. The parent directory must exist.
+ * permission error is rethrown. Contention backs off exponentially and fails
+ * with a {@link WriterLockTimeoutError} after the deadline. A lock whose
+ * recorded owner is provably gone is reclaimed, because a process that exits
+ * while holding it would otherwise fail every later writer of that file
+ * forever; a lock whose owner may still be alive is never touched. The parent
+ * directory must exist.
  * @param filename - the file whose writers this lock serializes.
  * @param operation - the read-render-commit cycle to run while holding the lock.
  * @param options - acquisition options; omitted waits {@link DEFAULT_LOCK_WAIT_MS}.
@@ -161,7 +254,8 @@ export async function withFileLock<T>(
   options?: FileLockOptions,
 ): Promise<T> {
   const lockPath = `${filename}.lock`
-  const deadline = Date.now() + (options?.waitMs ?? DEFAULT_LOCK_WAIT_MS)
+  const waitMs = options?.waitMs ?? DEFAULT_LOCK_WAIT_MS
+  const deadline = Date.now() + waitMs
   let delay = LOCK_RETRY_INITIAL_MS
   let retriedUnconfirmedPermissionError = false
   for (;;) {
@@ -176,16 +270,40 @@ export async function withFileLock<T>(
           || retriedUnconfirmedPermissionError) throw error
         retriedUnconfirmedPermissionError = true
       }
+      if (await reclaimOrphanedLock(lockPath)) continue
     }
-    if (Date.now() >= deadline) {
-      throw new Error(`atomic-write: timed out waiting for the writer lock at ${lockPath}`)
-    }
+    if (Date.now() >= deadline) throw new WriterLockTimeoutError(lockPath, waitMs)
     await new Promise(resolve => setTimeout(resolve, delay))
     delay = Math.min(delay * 2, LOCK_RETRY_MAX_MS)
   }
   try {
     return await operation()
   } finally {
-    await rm(lockPath, { force: true })
+    await releaseLock(lockPath)
+  }
+}
+
+/**
+ * Release the lock, absorbing transient Windows handles. A release that still
+ * fails is reported and leaves the lock behind: the next contender reclaims it
+ * once its owner is provably gone, so an unremovable lock no longer poisons the
+ * file permanently. Release never throws, because a failure here must not
+ * replace the operation's own successful result.
+ * @param lockPath - the lock this call owns.
+ */
+async function releaseLock(lockPath: string): Promise<void> {
+  let delay = RELEASE_RETRY_INITIAL_MS
+  for (let retries = 0;; retries += 1) {
+    try {
+      await rm(lockPath, { force: true })
+      return
+    } catch (error) {
+      if (retries >= RELEASE_RETRY_LIMIT) {
+        process.emitWarning(`atomic-write: could not release the writer lock at ${lockPath}: ${String(error)}`)
+        return
+      }
+    }
+    await new Promise(resolve => setTimeout(resolve, delay))
+    delay = Math.min(delay * 2, RELEASE_RETRY_MAX_MS)
   }
 }

@@ -5,7 +5,7 @@ import * as api from '../lib/api-client';
 
 vi.mock('next/navigation', () => ({ useRouter: () => ({replace: vi.fn()}) }));
 vi.mock('./platform-provider', () => ({usePlatform: () => ({currentUserId: 'user', users: [{id: 'user', name: '李俊', employeeNo: 'wh00412'}], dispatch: vi.fn()})}));
-vi.mock('../lib/api-client', () => ({clearSession: vi.fn(), getRegisteredAppAccess: vi.fn(), getRecentCatalogApps: vi.fn(async () => []), getCatalogApps: vi.fn(async () => [{
+vi.mock('../lib/api-client', () => ({clearSession: vi.fn(), hasBackend: false, getInboxMessages: vi.fn(async () => ({items: [], page: 1, pageSize: 20, total: 0, unreadCount: 0})), getInboxUnread: vi.fn(async () => ({unread: 0, latest: null})), markInboxRead: vi.fn(), markInboxAllRead: vi.fn(), getRegisteredAppAccess: vi.fn(), getRecentCatalogApps: vi.fn(async () => []), getCatalogApps: vi.fn(async () => [{
   id: 'registered', name: '设备助手', nameEn: 'Device Assistant', description: '检索设备知识', descriptionEn: 'Find equipment knowledge', category: '智慧服务',
   owner: '质量部', ownerEn: 'Quality', categoryColor: '#2465d0', accessUrl: '', publishedAt: '2026-11-03', registered: true, subcategory: '设备知识', subcategoryId: 'child', clicks: {day: 2, week: 4, month: 6, year: 8}, totalClicks: 128,
 }])}));

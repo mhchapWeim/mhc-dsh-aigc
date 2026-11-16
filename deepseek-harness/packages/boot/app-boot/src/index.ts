@@ -7,7 +7,7 @@
  */
 
 import { pathToFileURL } from 'node:url'
-export { authorizeManagedBundle } from './managed-profile.ts'
+export { authorizeManagedBundle, isManagedBundleAuthorized } from './managed-profile.ts'
 import { readFileSync } from 'node:fs'
 import { inspect, parseEnv } from 'node:util'
 import { basename, dirname, isAbsolute, resolve } from 'node:path'

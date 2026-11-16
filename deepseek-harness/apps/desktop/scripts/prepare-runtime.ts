@@ -9,6 +9,7 @@ import { parseArgs } from 'node:util'
 import { downloadArtifact } from '@electron/get'
 import extractZip from 'extract-zip'
 import { resolveDesktopBuildTarget, resolveDesktopTargetBuildPaths } from './desktop-build-paths.mjs'
+import { downloadWithRetry, resolveAttempts, resolveMirror } from './electron-download.ts'
 import { preparePrimaryRuntime } from './prepare-primary-runtime.ts'
 
 const BUILD_PATHS = resolveDesktopTargetBuildPaths()
@@ -33,8 +34,18 @@ async function main(): Promise<void> {
   const arch = target.endsWith('arm64') ? 'arm64' : 'x64'
   const require = createRequire(import.meta.url)
   const { version } = require('electron/package.json') as { version: string }
+  // The archive source is configurable because GitHub release assets are regularly
+  // answered with a 504 here; the checksum is still the official Electron digest.
+  const mirrorOptions = resolveMirror()
+  const attempts = resolveAttempts()
   const archive = await packagingStep(process.env.DSH_DESKTOP_PACKAGING_RUN_DIR, 'download:electron',
-    () => downloadArtifact({ version, platform, arch, artifactName: 'electron', cacheRoot: BUILD_PATHS.downloads }))
+    () => downloadWithRetry(
+      () => downloadArtifact({ version, platform, arch, artifactName: 'electron', cacheRoot: BUILD_PATHS.downloads, ...(mirrorOptions === undefined ? {} : { mirrorOptions }) }),
+      attempts,
+      (attempt, error) => {
+        const reason = error instanceof Error ? error.message : String(error)
+        console.error(`desktop runtime: electron download attempt ${attempt}/${attempts} failed (${reason}); retrying`)
+      }))
   rmSync(BUILD_PATHS.electron, { recursive: true, force: true })
   await packagingStep(process.env.DSH_DESKTOP_PACKAGING_RUN_DIR, 'extract:electron', () => extractZip(archive, { dir: BUILD_PATHS.electron }))
   const executable = join(BUILD_PATHS.electron, platform === 'win32' ? 'electron.exe' : 'Electron.app/Contents/MacOS/Electron')

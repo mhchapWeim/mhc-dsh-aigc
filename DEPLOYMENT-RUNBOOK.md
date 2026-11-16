@@ -1,5 +1,67 @@
 # DSH、AIGC 和 Portal 部署记录
 
+## 2026-11-13-main.2 Gitea 证书校验开关 API 修复包（未部署）
+
+现场授权回调 `/api/code-sources/gitea/complete` 因公司CA证书链 `PartialChain` 失败。用户授权临时绕过Gitea证书校验；新增按连接引用读取 `VerifySsl`，缺省 true，显式false才使用独立Gitea客户端跳过校验。覆盖授权交换、刷新及仓库API，其他HTTPS服务不变，禁止自动重定向。
+
+- 交付包：`output/aigc-update-2026-11-13-main.2-gitea-tls-api-only.zip`，99,499,847字节。
+- ZIP SHA256：`2c458b16d1bb2b923ff9283f3bdef2a4bdc71f98db733424116884d29d20af8e`。
+- 镜像：`aigc-api:2026-11-13-main.2-gitea-tls`，linux/amd64；无Portal重建、无DSH。
+- 目录及步骤：[API-only README](deploy/k8s/bosch-aigc-dsh/update-2026-11-13-main.2-gitea-tls-api-only/README.md)。先nj304导入tar，再控制节点运行 `bash enable-gitea-tls-bypass.sh`。
+- 脚本设置现有 `aigc-settings` 中 `IntegrationConnections__GiteaBosch__VerifySsl=false`，清除Secret同名遮蔽键，备份并只更新/重启API，保留OAuth凭据及其他配置。
+- 后端全量249通过/4跳过；追加真实自签名HTTPS测试后Gitea专项8通过，验证默认严格/显式绕过/严格客户端隔离/拒绝重定向。新API镜像PostgreSQL+MQ七种终态/去重冒烟通过。tar层哈希、docker load、ZIP完整性通过。
+
+本包未在生产执行。部署后重新发起Gitea授权；后续安装公司CA后按README恢复VerifySsl=true。
+
+## 2026-11-13 新审查协议 API/Portal 离线交付（未部署）
+
+本次交付优先于下面 11-12 的旧协议材料。基于 main 当前工作区脱敏快照，包含审查方 `code-review-20261112` snake_case 协议、严格 AMQP/字段校验、七种终态、幂等回传与人工复核；包含既有 Gitea 用户授权与固定提交选择。不包含 DSH 客户端或基础设施镜像。
+
+- ZIP：`output/aigc-update-2026-11-13-main.1-review-mq-app-only.zip`，191,492,956 字节。
+- ZIP SHA-256：`934bd5a27fc65838528e25335ef7512f749756c46edb7a8b43b13ba2ce93159a`。
+- 交付目录：`deploy/k8s/bosch-aigc-dsh/update-2026-11-13-main.1-review-mq-app-only`。
+- 镜像：`aigc-api:2026-11-13-main.1-review-mq`、`aigc-portal:2026-11-13-main.1-review-mq`，均 linux/amd64。
+- 镜像 tar：`aigc-images-2026-11-13-main.1-review-mq-linux-amd64.tar`；SHA-256：`69882fa0d383a518de4857c638d826733847e585eb7b66f63d3139c5f9242a36`。
+- Portal 编译期 API 地址：`https://aigcplatform.boschhuayu-steering.com`；build-images.ps1 / package-offline-images.ps1 的旧域名已修正。
+
+生产 MQ 使用用户现场确认的既有 `bosch-aigc-dsh/aigc-mq`：nj304=`172.28.2.33`，AMQP NodePort30672、管理 NodePort30242，vhost=`/aigc`。旧 YAML 与 last-applied 中的 ClusterIP 已过期，不要 apply 旧 RabbitMQ 部署文件。API 内部连接 `aigc-mq:5672`。
+
+在控制节点、完整解压目录内，按 [MQ 增量命令](deploy/k8s/bosch-aigc-dsh/update-2026-11-13-main.1-review-mq-app-only/MQ-DEPLOYMENT.md) 预检后运行：
+
+```bash
+sha256sum -c SHA256SUMS
+python3 mq/configure-workflow.py > workflow-plan.json
+python3 mq/configure-workflow.py --apply --patch-api --patch-configmap
+```
+
+完整创建MQ、修改Secret和ConfigMap的命令统一见 [ALL-DEPLOYMENT-COMMANDS.md](deploy/k8s/bosch-aigc-dsh/update-2026-11-13-main.1-review-mq-app-only/ALL-DEPLOYMENT-COMMANDS.md)。联合模式将非敏感参数写入现有 `aigc-settings`、密码写入 `aigc-secrets`，清除Secret中对应同名非敏感键，保留其他现场配置。
+
+脚本交互读取管理员和新业务账号密码，增量创建交换机/队列/权限/策略，合并现有 `aigc-mq-definitions` 与 `aigc-secrets`；不修改 Service、NodePort、RabbitMQ Deployment 或存储，不重启服务。审查请求路由 `code-audit.submit.v1`，结果交换机独立并绑定 `review.finished`、`review.rejected` 及旧事件 `audit.completed.v1`。生产账户与密钥不在交付包中。
+
+应用导入、强制数据库备份、CHECK_ONLY、只更新两个镜像及回退步骤见 [README](deploy/k8s/bosch-aigc-dsh/update-2026-11-13-main.1-review-mq-app-only/README.md)。新协议服务登记和流程版本需由管理页面配置，不自动修改既有实例。
+
+本地验证：后端246通过/4跳过，前端52文件246通过，MQ拓扑6项、部署预检20项通过；新镜像连接隔离真实 PostgreSQL/RabbitMQ，七种审查结果及重复回传通过，三项新增列、四个鉴权入口、Portal七页通过。镜像敏感配置脱敏、旧域名检查、三份shell语法、tar全部layer校验及docker load、ZIP CRC/逐文件SHA均通过。详见交付目录 `BUILD-INFO.json`、`VALIDATION.md`。
+
+**本次仅生成命令与离线包，未执行生产导入、MQ配置、Secret修改或应用部署；真实审查服务及生产Gitea联调仍待现场验收。**
+
+## 2026-11-12 代码审计 MQ 集成 API/Portal 构建
+
+已基于 `main` 当前工作区构建 `2026-11-12-main.1-audit-mq` 离线包，交付代码审计第三方服务（MQ 异步）对接。包含：通用第三方异步流程节点（`executionMode=integrated-v1` 时 `serviceTask` 创建 `IntegrationInvocation`、投递 MQ、等待回调）、结果幂等与 Commit 校验、Gitea PKCE OAuth 用户授权与仓库/分支/固定提交选择、审计结果在审核详情页可见（结论徽标 + 详情页链接）、审计服务模拟器工具与第三方对接文档。
+
+- 交付目录：`deploy/k8s/bosch-aigc-dsh/update-2026-11-12-main.1-audit-mq`
+- 离线包：`output/aigc-audit-mq-images-linux-amd64.tar`（184 MB）
+- ZIP SHA-256：`8a20d4453ee66936e59922a14a66acfed5f48426dc0dcb3a65fbb3ae554f7e6f`
+- 镜像：`aigc-api:2026-11-12-main.1-audit-mq`（ID `850d59d37785`，351MB）、`aigc-portal:2026-11-12-main.1-audit-mq`（ID `3e6962729492`，398MB），linux/amd64
+- **Portal 编译期 API 地址为 `https://aigcplatform.boschhuayu-steering.com`**，镜像内旧域名 `aigcbackend` 出现 0 次
+
+**域名注意**：仓库 `build-images.ps1` 内 `$publicApiUrl` 仍写死旧域名 `aigcbackend`。本次按 2026-10-15 域名切换记录（"后续更新不得将配置改回旧值"）手工用新域名构建，该脚本需另行修正，否则下次构建会产出错误地址的 Portal。
+
+MQ 拓扑本次新增（代码不含 `QueueDeclare`/`ExchangeDeclare`，必须预置）：交换机 `aigc.workflow.commands`（direct）、`aigc.workflow.dead-letter`（fanout）；队列 `aigc.workflow.code-audit.requests`、`aigc.workflow.code-audit.results`、`aigc.workflow.dead-letters`（均 quorum，死信队列带 7 天 TTL 与 10 万条上限）；绑定 key `code-audit.submit.v1`。创建方式见交付目录 `prepare-workflow-mq.py`（输出 hashes-only 的 definitions.json，可合并进既有 `aigc-mq-definitions`）与 README 方式 B（管理台临时创建）。
+
+本次新增配置全部注入**既有 `aigc-secrets`**（merge patch，不新建 Secret）：`IntegrationConnections__CodeAudit__*`（含 `Password`、`CallbackSecret`，必须 Secret）与 `IntegrationConnections__GiteaLocal__*`（含 `ClientSecret`）。`AllowInsecureHttp` 生产不配置。第三方服务登记与流程定义属运行时数据（管理页面维护），不进 ConfigMap。
+
+本地验证：API 镜像以真实 PostgreSQL 启动，`FormatException` 出现 0 次、正常监听 5080（schema 初始化 SQL 花括号会导致启动失败，已修复 `ExecuteSqlRawAsync` 需转义 `{}`）；Portal 四页 200、镜像内旧域名 0 处；`prepare-workflow-mq.py` 密码校验与 topology 输出通过。本次仅完成本地构建与离线交付，**尚未执行生产导入、MQ 拓扑创建、Secret 注入或第三方业务联调**。完整导入、拓扑创建、配置注入、验收与回退命令以[本次交付说明](deploy/k8s/bosch-aigc-dsh/update-2026-11-12-main.1-audit-mq/README.md)为准。
+
 ## 2026-11-04-main.2 应用集合真实最近使用与卡片累计点击 API/Portal 构建
 
 已基于 `main` 当前工作区构建 `2026-11-04-main.2-app-only` 离线包，包含门户应用集合「最近使用」接入真实数据、应用卡片改为累计点击、注册中心可单独调整累计点击。

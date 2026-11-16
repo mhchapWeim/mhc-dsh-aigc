@@ -21,6 +21,7 @@ export default function PluginStatusPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   useEffect(() => {
+    if (query === searchTerm) return;
     const timer = window.setTimeout(() => { setSearchTerm(query); setPage(1); }, 300);
     return () => window.clearTimeout(timer);
   }, [query]);

@@ -37,9 +37,11 @@ import type {
   SimpleStreamOptions,
   ThinkingLevel,
 } from '@earendil-works/pi-ai'
+import { clampMaxTokensToContext } from '@earendil-works/pi-ai/api/simple-options'
 import {
   attributionHeaders,
   contentHasImage,
+  CONTEXT_WINDOW_EXCEEDED_CODE,
   LlmAdapter,
   LlmError,
   ReasoningEffortId,
@@ -437,6 +439,16 @@ export class PiAiAdapter extends LlmAdapter {
             maxBytes: profile.requestImageMaxBytes,
           },
         }, onReplayDegrade)
+      const desiredMaxOutput = options.maxTokens ?? model.maxTokens
+      const availableMaxOutput = clampMaxTokensToContext(model, context, desiredMaxOutput)
+      // pi-ai's exhausted-context clamp bottoms out at one token. Ordinary
+      // reductions can still produce useful answers; this floor cannot.
+      if (availableMaxOutput === 1 && availableMaxOutput < desiredMaxOutput) {
+        throw new LlmError(
+          `Context pressure would reduce the requested output allowance from ${desiredMaxOutput} to ${availableMaxOutput} tokens; compact the conversation before retrying`,
+          CONTEXT_WINDOW_EXCEEDED_CODE,
+        )
+      }
       const events = snapshot.models.streamSimple(model, context, {
         ...profileOptions(profile, reasoning, apiKey),
         ...options.temperature === undefined ? {} : { temperature: options.temperature },
@@ -449,7 +461,7 @@ export class PiAiAdapter extends LlmAdapter {
         headers: requestHeaders(profile.headers, this.config.userAgent),
         ...this.config.request === undefined ? {} : { fetch: this.config.request },
       })
-      const iterator = toStreamChunks(events, model.contextWindow, options.signal, model.id)[Symbol.asyncIterator]()
+      const iterator = toStreamChunks(events, model.contextWindow, options.signal, model.id, desiredMaxOutput)[Symbol.asyncIterator]()
       let exhausted = false
       try {
         while (true) {

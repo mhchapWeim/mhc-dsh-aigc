@@ -1,0 +1,463 @@
+/*
+  The list stays one compact row per task: the full submission is a dialog, because
+  nine inline fields turned every row into a card and pushed the queue off screen.
+*/
+.review-queue-row {
+  min-height: 92px;
+  padding: 14px 22px;
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr) minmax(150px, 0.32fr) auto;
+  align-items: center;
+  gap: 18px;
+  border-bottom: 1px solid #f0f0f0;
+  animation: admin-route-in 0.24s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.review-queue-row:last-child {
+  border-bottom: 0;
+}
+
+.review-queue-row__main {
+  min-width: 0;
+}
+
+.review-queue-row__main > div {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-width: 0;
+}
+
+.review-queue-row h3 {
+  margin: 0;
+  color: #262626;
+  font-size: 14.5px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.review-queue-row__version {
+  flex: none;
+  color: #8c8c8c;
+  font-size: 10.5px;
+}
+
+.review-queue-row p {
+  margin: 5px 0 4px;
+  color: #595959;
+  font-size: 12px;
+  line-height: 1.5;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.review-queue-row small {
+  color: #8c8c8c;
+  font-size: 11px;
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.review-queue-row__node {
+  min-height: 54px;
+  padding: 9px 11px;
+  border: 1px solid #f0f0f0;
+  border-radius: 8px;
+  background: #fafafa;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 4px;
+}
+
+.review-queue-row__node span {
+  color: #262626;
+  font-size: 12px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.review-queue-row__node small {
+  color: #8c8c8c;
+  font-size: 10px;
+}
+
+.review-queue-row__actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 7px;
+  flex-wrap: wrap;
+}
+
+.review-queue-row__actions .primary-action,
+.review-queue-row__actions .secondary-danger,
+.detail-button {
+  min-height: 30px;
+  padding: 0 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.detail-button {
+  border: 1px solid var(--line, #dbe3ef);
+  background: #fff;
+  color: #526078;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.detail-button:hover {
+  color: #174ea6;
+  border-color: #91caff;
+  background: #f3f7ff;
+}
+
+.review-queue-row__actions .readonly-hint {
+  min-height: 30px;
+  padding: 0 8px;
+  font-size: 11px;
+}
+
+/* Detail dialog */
+.review-detail-modal {
+  width: min(760px, 100%);
+}
+
+.review-detail {
+  padding: 18px 22px 20px;
+}
+
+.review-detail__head > div {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.review-detail__no {
+  color: #8c8c8c;
+  font-size: 11px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+.review-detail__head p {
+  margin: 9px 0 0;
+  color: #595959;
+  font-size: 12.5px;
+  line-height: 1.65;
+}
+
+.review-detail__grid {
+  margin: 16px 0 0;
+  padding: 14px 16px;
+  border: 1px solid #f0f0f0;
+  border-radius: 10px;
+  background: #fcfdff;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 11px 18px;
+}
+
+.review-detail__grid > div {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: 78px minmax(0, 1fr);
+  align-items: baseline;
+  gap: 8px;
+}
+
+.review-detail__grid > div.is-span {
+  grid-column: 1 / -1;
+}
+
+.review-detail__grid dt {
+  color: #8c8c8c;
+  font-size: 11.5px;
+  white-space: nowrap;
+}
+
+.review-detail__grid dd {
+  margin: 0;
+  color: #262626;
+  font-size: 12.5px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.review-detail__grid dd.is-wrap {
+  white-space: normal;
+  word-break: break-all;
+}
+
+.review-detail__grid dd.is-mono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 11.5px;
+}
+
+.review-detail__comment {
+  margin-top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.review-detail__comment > span {
+  color: #8c8c8c;
+  font-size: 11.5px;
+}
+
+.review-detail__comment textarea {
+  width: 100%;
+  padding: 9px 11px;
+  border: 1px solid #d9d9d9;
+  border-radius: 7px;
+  background: #fff;
+  color: #262626;
+  font: inherit;
+  font-size: 12.5px;
+  resize: vertical;
+}
+
+.review-detail__readonly {
+  margin: 16px 0 0;
+  padding: 9px 12px;
+  border: 1px solid #f0f0f0;
+  border-radius: 8px;
+  background: #fafafa;
+  color: #8c8c8c;
+  font-size: 11.5px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.review-detail .modal-actions {
+  margin-top: 18px;
+}
+
+:root[data-theme="dark"] .review-queue-row {
+  border-color: #293b52;
+}
+
+:root[data-theme="dark"] .review-queue-row h3,
+:root[data-theme="dark"] .review-queue-row__node span,
+:root[data-theme="dark"] .review-detail__grid dd {
+  color: #edf4ff;
+}
+
+:root[data-theme="dark"] .review-queue-row p,
+:root[data-theme="dark"] .review-detail__head p {
+  color: #bac7d9;
+}
+
+:root[data-theme="dark"] .review-queue-row__node,
+:root[data-theme="dark"] .review-detail__grid,
+:root[data-theme="dark"] .review-detail__readonly {
+  background: #122035;
+  border-color: #31435a;
+}
+
+:root[data-theme="dark"] .review-detail__grid dt {
+  color: #93a4bb;
+}
+
+:root[data-theme="dark"] .review-detail__comment textarea {
+  background: #122035;
+  border-color: #42556d;
+  color: #edf4ff;
+}
+
+:root[data-theme="dark"] .detail-button {
+  background: #172338;
+  border-color: #31435a;
+  color: #bac7d9;
+}
+
+.admin-app .review-queue-row {
+  border-color: var(--line);
+}
+
+.admin-app .review-queue-row h3,
+.admin-app .review-queue-row__node span,
+.admin-app .review-detail__grid dd {
+  color: var(--ink);
+}
+
+.admin-app .review-queue-row p,
+.admin-app .review-detail__head p {
+  color: var(--ink-soft);
+}
+
+.admin-app .review-queue-row__node,
+.admin-app .review-detail__grid,
+.admin-app .review-detail__readonly {
+  background: var(--admin-hover, #f7f9fc);
+  border-color: var(--line);
+}
+
+.admin-app .detail-button,
+.admin-app .review-detail__comment textarea {
+  background: var(--surface);
+  border-color: var(--line);
+  color: var(--ink-soft);
+}
+
+@media (max-width: 1280px) {
+  .review-queue-row {
+    grid-template-columns: 42px minmax(0, 1fr) auto;
+  }
+
+  .review-queue-row__node {
+    display: none;
+  }
+}
+
+@media (max-width: 900px) {
+  .review-queue-row {
+    grid-template-columns: 42px minmax(0, 1fr);
+    gap: 7px 12px;
+  }
+
+  .review-queue-row__actions {
+    grid-column: 1 / -1;
+    justify-content: flex-start;
+  }
+}
+
+@media (max-width: 680px) {
+  .review-queue-row {
+    padding: 14px;
+  }
+
+  .review-detail__grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .review-detail__grid > div,
+  .review-detail__grid > div.is-span {
+    grid-column: 1 / -1;
+  }
+}
+
+/* The detail dialog pins its header and actions so the footer stays visible while the
+   field grid scrolls. Only opted-in dialogs (Modal with a footer prop) get this. */
+.modal.modal--framed {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  max-height: calc(100dvh - 40px);
+}
+
+.modal--framed > header {
+  flex: none;
+}
+
+.modal--framed > .modal-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.modal--framed > .modal-footer {
+  flex: none;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 9px;
+  padding: 14px 22px;
+  border-top: 1px solid #f0f0f0;
+  background: #fff;
+  border-radius: 0 0 18px 18px;
+}
+
+.modal--framed > .modal-footer > button:not(.primary-action) {
+  min-height: 44px;
+  padding: 0 17px;
+  border: 1px solid var(--line, #dbe3ef);
+  border-radius: 10px;
+  background: #fff;
+  color: #526078;
+}
+
+.modal--framed > .modal-footer > button:not(.primary-action):hover {
+  border-color: #91caff;
+  color: #174ea6;
+  background: #f3f7ff;
+}
+
+/* The review dialog keeps its own paddings; the scroll area must not add a gutter. */
+.review-detail-modal .modal-body {
+  padding: 0;
+}
+
+.review-detail-modal .review-detail {
+  padding-bottom: 4px;
+}
+
+.review-detail-modal .review-detail .modal-actions {
+  display: none;
+}
+
+.admin-app .modal.modal--framed > .modal-footer {
+  background: var(--surface);
+  border-color: var(--line);
+}
+
+.admin-app .modal--framed > .modal-footer > button:not(.primary-action) {
+  background: var(--surface);
+  border-color: var(--line);
+  color: var(--ink-soft);
+}
+
+:root[data-theme="dark"] .modal.modal--framed > .modal-footer {
+  background: #162235;
+  border-color: #2d3c51;
+}
+
+:root[data-theme="dark"] .modal--framed > .modal-footer > button:not(.primary-action) {
+  background: #172338;
+  border-color: #31435a;
+  color: #bac7d9;
+}
+
+/* Audit evidence imported from the third-party service. The reviewer reads the
+   linked report, so the block sits above the comment box and stays neutral
+   except for the verdict chip. */
+.review-audit {
+  margin: 14px 0 0;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: var(--surface);
+  display: grid;
+  gap: 8px;
+}
+.review-audit__head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.review-audit__head strong { font-size: 13px; font-weight: 500; color: var(--ink); }
+.review-audit__verdict { padding: 2px 8px; border-radius: 999px; border: 1px solid var(--line); font-size: 12px; color: var(--ink-soft); }
+.review-audit__verdict.verdict-passed { border-color: #97c459; color: #3b6d11; background: #eaf3de; }
+.review-audit__verdict.verdict-rejected { border-color: #f0997b; color: #993c1d; background: #faece7; }
+.review-audit__verdict.verdict-failed { border-color: #f09595; color: #a32d2d; background: #fcebeb; }
+.review-audit__summary { margin: 0; font-size: 13px; line-height: 1.6; color: var(--ink-soft); overflow-wrap: anywhere; }
+.review-audit__meta { display: flex; flex-wrap: wrap; gap: 16px; margin: 0; }
+.review-audit__meta dt { font-size: 12px; color: var(--muted); }
+.review-audit__meta dd { margin: 0; font-size: 13px; color: var(--ink); overflow-wrap: anywhere; }
+.review-audit__meta dd.is-mono { font-family: var(--font-mono, monospace); }
+.review-audit__link { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: #185fa5; text-decoration: none; width: fit-content; }
+.review-audit__link:hover { text-decoration: underline; }
+.review-audit__missing { margin: 0; font-size: 12px; color: var(--muted); }
+:root[data-theme="dark"] .review-audit__verdict.verdict-passed { background: #1f3312; color: #c0dd97; border-color: #3b6d11; }
+:root[data-theme="dark"] .review-audit__verdict.verdict-rejected { background: #351f14; color: #f5c4b3; border-color: #993c1d; }
+:root[data-theme="dark"] .review-audit__verdict.verdict-failed { background: #351c1d; color: #ffb5b2; border-color: #6b3031; }
+:root[data-theme="dark"] .review-audit__link { color: #85b7eb; }

@@ -24,6 +24,7 @@ import type { DesktopRelease } from './release.ts'
 import { readDesktopRuntime } from './runtime-tree.ts'
 import {
   initProfile, PROFILE_TEMPLATES, removeLinkProjections, sanitizeProfile, type ProfileTemplate,
+  readProfileManifest, writeProfileBundles,
 } from '@deepseek-ai/dsh-app-boot'
 
 const PROJECT_NAME = '@deepseek-ai/dsh-desktop-runtime'
@@ -170,7 +171,11 @@ export function createDevelopmentProjectMetadata(projectDir: string, release: De
   writeFileSync(join(projectDir, 'pnpm-workspace.yaml'), workspaceFile(), { mode: 0o600 })
 }
 
-/** Create the first external plugin profile without running a package manager. */
+/** Initialize the Desktop profile and remove the former unmanaged voice selection without installing packages. */
 export function createPluginProfile(projectDir: string): void {
   initProfile(projectDir, WEB_PROFILE.bundles)
+  const manifest = readProfileManifest('dsh', projectDir)
+  const selected = manifest.dsh?.profile?.bundles ?? []
+  const bundles = selected.filter(name => name !== '@deepseek-ai/dsh-experimental-voice-input-bundle')
+  if (bundles.length !== selected.length) writeProfileBundles(projectDir, manifest, bundles)
 }

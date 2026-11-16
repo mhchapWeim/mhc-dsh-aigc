@@ -15,5 +15,5 @@ public static class UserSyncSchema
         CREATE INDEX IF NOT EXISTS "IX_UserSyncMessages_Status_NextAttemptAt" ON aigc_hub."UserSyncMessages" ("Status", "NextAttemptAt");
         CREATE INDEX IF NOT EXISTS "IX_UserSyncMessages_UserId_CreatedAt" ON aigc_hub."UserSyncMessages" ("UserId", "CreatedAt");
         CREATE INDEX IF NOT EXISTS "IX_UserSyncMessages_BatchId" ON aigc_hub."UserSyncMessages" ("BatchId");
-        """, ct) : Task.CompletedTask;
+        """, Array.Empty<object>(), ct) : Task.CompletedTask;
 }

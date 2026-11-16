@@ -84,6 +84,7 @@ public sealed class ProcessDefinition
     public int Version { get; set; } = 1;
     public string DefinitionJson { get; set; } = "{}";
     public bool IsPublished { get; set; }
+    public DateTimeOffset? PublishedAt { get; set; }
     public DateTimeOffset UpdatedAt { get; set; } = DateTimeOffset.UtcNow;
 }
 
@@ -99,6 +100,7 @@ public sealed class PublicationRequest
     public required string Summary { get; set; }
     public string AccessUrl { get; set; } = "";
     public string RepositoryUrl { get; set; } = "";
+    public string RepositoryFullName { get; set; } = "";
     public string Branch { get; set; } = "";
     public string CommitSha { get; set; } = "";
     public string Version { get; set; } = "";

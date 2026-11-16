@@ -1,4 +1,5 @@
-FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
+ARG SDK_IMAGE=mcr.microsoft.com/dotnet/sdk:9.0
+FROM ${SDK_IMAGE} AS build
 WORKDIR /src
 COPY AigcHub.Api.csproj .
 RUN dotnet restore

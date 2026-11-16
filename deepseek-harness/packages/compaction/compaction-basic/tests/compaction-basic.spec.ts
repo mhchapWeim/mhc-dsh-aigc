@@ -13,7 +13,7 @@ import {
   resolveTargetPolicy,
 } from '@deepseek-ai/dsh-compaction-basic/src/config.ts'
 import type { CompactionResult } from '@deepseek-ai/dsh-compaction'
-import LlmRuntime, { createUserMessage, ToolCallId, CONTEXT_WINDOW_EXCEEDED_CODE, createSystemMessage, createToolResultMessage, LlmAdapter , createMessage } from '@deepseek-ai/dsh-llm'
+import LlmRuntime, { createUserMessage, ToolCallId, CONTEXT_WINDOW_EXCEEDED_CODE, createSystemMessage, createToolResultMessage, LlmAdapter , createMessage, LlmError } from '@deepseek-ai/dsh-llm'
 import type { ContextFormed } from '@deepseek-ai/dsh-llm'
 import type {
   ContentBlock,
@@ -1023,6 +1023,47 @@ describe('optional model-free tool-result pruning', () => {
 })
 
 describe('compaction region transaction', () => {
+  it('recovers summary overflow with a smaller balanced prefix and preserves the suffix on replay', async () => {
+    const compact = service()
+    const session = conversation(4)
+    const before = [...session.surface.nodes]
+    compact.mutateDuringSummary = () => {
+      compact.error = compact.calls.length === 1
+        ? new LlmError('summary too large', CONTEXT_WINDOW_EXCEEDED_CODE)
+        : undefined
+    }
+    const result = await compact.compactRegion(before[0]!, before[7]!, agent(session, MODEL), SIGNAL)
+    expect(compact.calls).toHaveLength(2)
+    expect(result.shadowedSeqs).toEqual(before.slice(0, 4))
+    expect(compact.calls[1]!.input.messages).toHaveLength(4)
+    expect(session.surface.nodes.slice(1)).toEqual(before.slice(4))
+    const replay = Session.create(SessionId('overflow-prefix-replay'), session.snapshotEvents())
+    expect(replay.deriveMessages()).toEqual(session.deriveMessages())
+  })
+
+  it('stops shrinking an indivisible tool exchange without committing a checkpoint', async () => {
+    const compact = service()
+    const session = toolConversation()
+    const before = [...session.surface.nodes]
+    compact.error = new LlmError('summary too large', CONTEXT_WINDOW_EXCEEDED_CODE)
+    await expect(compact.compactRegion(before[0]!, before.at(-1)!, agent(session, MODEL), SIGNAL))
+      .rejects.toThrow('summary too large')
+    expect(session.surface.nodes).toEqual(before)
+    expect(session.snapshotEvents().some(event => event.type === 'compaction/summary')).toBe(false)
+    expect(compact.calls.length).toBeLessThanOrEqual(before.length)
+  })
+
+  it.each(['QUOTA', 'AUTH', 'TRANSPORT'])('does not retry a %s summary failure', async (code) => {
+    const compact = service()
+    const session = conversation(4)
+    const before = [...session.surface.nodes]
+    compact.error = new LlmError('request exceeds model context; access denied', code)
+    await expect(compact.compactRegion(before[0]!, before[7]!, agent(session, MODEL), SIGNAL))
+      .rejects.toBe(compact.error)
+    expect(compact.calls).toHaveLength(1)
+    expect(session.surface.nodes).toEqual(before)
+  })
+
   it('lands a framed, replayable checkpoint with exact source seqs and token price', async () => {
     const compact = service()
     compact.rawOutput = [

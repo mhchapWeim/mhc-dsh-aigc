@@ -173,11 +173,12 @@ export default defineConfig({
           name: 'independent-plugin-host-peers',
           enforce: 'pre',
           resolveId(id, importer) {
-            if (!importer?.replaceAll('\\', '/').match(/\/plugins\/dsh-plugin-(?:managed-search|internal-model)\//)) return
+            if (!importer?.replaceAll('\\', '/').match(/\/plugins\/dsh-plugin-(?:managed-search|managed-voice-input|internal-model)\//)) return
             const peers: Record<string, string> = {
               '@deepseek-ai/schemastery': './vendor/schemastery/src/index.ts',
               '@deepseek-ai/dsh-credentials': './packages/credentials/credentials/src/index.ts',
               '@deepseek-ai/dsh-web': './packages/web/web/src/index.ts',
+              '@deepseek-ai/dsh-experimental-speech-to-text-sensevoice': './packages/experimental/speech-to-text-sensevoice/src/index.ts',
                 '@deepseek-ai/dsh-llm': './packages/llm/llm/src/index.ts',
                 '@deepseek-ai/dsh-llm-pi-ai': './packages/llm/llm-pi-ai/src/index.ts',
             }
@@ -187,7 +188,7 @@ export default defineConfig({
         }],
         test: {
           name: 'thread-safe',
-          server: { deps: { inline: [/dsh-plugin-(managed-search|internal-model)/] } },
+          server: { deps: { inline: [/dsh-plugin-(managed-search|managed-voice-input|internal-model)/] } },
           execArgv: vitestExecArgv,
           // Node 24 has aborted in its CJS lexer (v8::ToLocalChecked Empty
           // MaybeLocal in cjs_lexer::Parse) from worker threads on macOS,

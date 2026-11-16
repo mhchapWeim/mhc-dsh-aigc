@@ -74,7 +74,9 @@ export function LandingShell() {
       <main className="landing-main">
         <section className="landing-copy">
           <p className="landing-eyebrow landing-reveal landing-delay-2">{t.eyebrow}</p>
-          <h1 className="landing-reveal landing-delay-3">{t.title}</h1>
+          <h1 className="landing-reveal landing-delay-3" aria-label={t.title}>
+            {locale === 'zh' ? <>让智能成为工作的<br />起点</> : t.title}
+          </h1>
           <p className="landing-intro landing-reveal landing-delay-4">{t.intro}</p>
           <div className="landing-actions landing-reveal landing-delay-5">
             <Link className="landing-action landing-action-primary" href="/chat">

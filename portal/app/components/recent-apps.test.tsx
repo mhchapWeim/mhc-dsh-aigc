@@ -7,6 +7,11 @@ vi.mock('next/navigation', () => ({ useRouter: () => ({ replace: vi.fn() }) }));
 vi.mock('./platform-provider', () => ({ usePlatform: () => ({ currentUserId: 'user', users: [{ id: 'user', name: '李俊', employeeNo: 'wh00412' }], dispatch: vi.fn() }) }));
 vi.mock('../lib/api-client', () => ({
   clearSession: vi.fn(),
+  hasBackend: false,
+  getInboxMessages: vi.fn(async () => ({ items: [], page: 1, pageSize: 20, total: 0, unreadCount: 0 })),
+  getInboxUnread: vi.fn(async () => ({ unread: 0, latest: null })),
+  markInboxRead: vi.fn(),
+  markInboxAllRead: vi.fn(),
   getRegisteredAppAccess: vi.fn(),
   getRecentCatalogApps: vi.fn(async () => []),
   getCatalogApps: vi.fn(async () => [{

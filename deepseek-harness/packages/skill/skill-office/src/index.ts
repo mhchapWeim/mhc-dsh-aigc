@@ -43,8 +43,10 @@ function parseSkill(raw: string, path: string): { description: string; content: 
 export function apply(ctx: Context, config: Config = {}): void {
   const assetRoot = config.assetRoot ?? fileURLToPath(new URL('../assets/', import.meta.url))
   if (!isAbsolute(assetRoot)) throw new Error('skill-office: assetRoot must be an absolute directory')
-  if (!statSync(join(assetRoot, 'scripts', 'check_office.py')).isFile()) {
-    throw new Error('skill-office: assets must contain scripts/check_office.py')
+  for (const resource of ['scripts/check_office.py', 'scripts/inspect_xlsx.py', 'scripts/analyze_xlsx.py', 'scripts/session_usage.py', 'office-xlsx/analysis.md']) {
+    if (!statSync(join(assetRoot, resource)).isFile()) {
+      throw new Error(`skill-office: assets must contain ${resource}`)
+    }
   }
   const candidates: SkillCandidate[] = SKILL_NAMES.map((skillName) => {
     const directory = join(assetRoot, skillName)

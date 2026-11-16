@@ -44,6 +44,8 @@ export interface Config {
   managedPollMs?: number
   /** Bound for each organization HTTP request; default 30000 ms. */
   managedRequestTimeoutMs?: number
+  /** Retry delay after a poll could not take the profile write lock; default 5000 ms. */
+  managedLockRetryMs?: number
   /** The pnpm executable name or path; resolved through `PATH` like the `dsh plugin` command. */
   pnpmCommand?: string
   /** Maximum retained pnpm diagnostic bytes per operation. */
@@ -179,6 +181,7 @@ export class PluginManager extends TypertRemoteService {
   static Config: z<Config> = z.object({
     managedPollMs: z.number().min(1000).default(60000),
     managedRequestTimeoutMs: z.number().min(1000).default(30000),
+    managedLockRetryMs: z.number().min(1000).default(5000),
     pnpmCommand: z.string().default('pnpm'),
     outputBytes: z.number().step(1).min(1).default(16384),
     lockWaitMs: z.number().step(1).min(0).default(120000),
@@ -214,6 +217,7 @@ export class PluginManager extends TypertRemoteService {
     const installation = JSON.parse(readFileSync(this.profile.installAnchor, 'utf8')) as { version: string }
     installManagedPluginSync(ctx, this, this.profile.dir, {
       pollMs: config.managedPollMs ?? 60000, requestTimeoutMs: config.managedRequestTimeoutMs ?? 30000,
+      lockRetryMs: config.managedLockRetryMs ?? 5000,
       dshVersion: installation.version,
     }, operation => this.managedOperation.run(true, operation), (name, configuration) => {
       const ids = new Set(this.bundleRows(name).map(row => row.id))

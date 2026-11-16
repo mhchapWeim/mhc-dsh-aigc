@@ -188,7 +188,9 @@ export class DesktopHostProcess {
       ...this.packageManager === undefined ? [] : [this.packageManager.pnpm, this.packageManager.nodeBin],
     ], {
       cwd: this.projectDir,
-      env: desktopNodeEnvironment(this.node, undefined, this.environment),
+      env: { ...desktopNodeEnvironment(this.node, undefined, this.environment),
+        DSH_SPEECH_MODELS_ROOT: join(this.primaryRuntime ?? join(this.runtimeDir, '..', 'runtime', 'primary-runtime'), '..', 'speech-models'),
+      },
       stdio: ['ignore', 'pipe', 'pipe', 'ipc'],
     })
     this.child = child

@@ -8,7 +8,40 @@ public static class DatabaseSchemaInitializer
     {
         if (!db.Database.IsRelational()) return;
         const string sql = """
+        CREATE TABLE IF NOT EXISTS aigc_hub."IntegrationServices" (
+          "Id" uuid PRIMARY KEY, "Code" text NOT NULL UNIQUE, "Name" text NOT NULL,
+          "Kind" text NOT NULL, "IsEnabled" boolean NOT NULL, "ConnectionKey" text NOT NULL, "OperationsJson" text NOT NULL);
+        CREATE TABLE IF NOT EXISTS aigc_hub."IntegrationInvocations" (
+          "Id" uuid PRIMARY KEY, "InstanceId" uuid NOT NULL, "NodeKey" text NOT NULL,
+          "ServiceCode" text NOT NULL, "ConnectionKey" text NOT NULL, "Operation" text NOT NULL,
+          "ResultEvent" text NOT NULL, "Status" text NOT NULL, "Payload" text NOT NULL, "ResultJson" text NOT NULL,
+          "Attempts" integer NOT NULL, "MaxAttempts" integer NOT NULL, "NextAttemptAt" timestamptz NOT NULL,
+          "ExpiresAt" timestamptz NOT NULL, "ConcurrencyToken" uuid NOT NULL);
+        CREATE INDEX IF NOT EXISTS "IX_IntegrationInvocations_Status_NextAttemptAt" ON aigc_hub."IntegrationInvocations" ("Status", "NextAttemptAt");
+        ALTER TABLE aigc_hub."IntegrationInvocations" ADD COLUMN IF NOT EXISTS "Protocol" text NOT NULL DEFAULT 'generic-v1';
+        ALTER TABLE aigc_hub."PublicationRequests" ADD COLUMN IF NOT EXISTS "RepositoryFullName" text NOT NULL DEFAULT '';
+        CREATE TABLE IF NOT EXISTS aigc_hub."IntegrationReceipts" (
+          "Id" uuid PRIMARY KEY, "ServiceCode" text NOT NULL, "MessageId" text NOT NULL,
+          "InvocationId" uuid NOT NULL, "Disposition" text NOT NULL, "ReceivedAt" timestamptz NOT NULL,
+          UNIQUE ("ServiceCode", "MessageId"));
+        ALTER TABLE aigc_hub."IntegrationReceipts" ADD COLUMN IF NOT EXISTS "PayloadJson" text NOT NULL DEFAULT '{}';
+        CREATE TABLE IF NOT EXISTS aigc_hub."GiteaConnections" (
+          "Id" uuid PRIMARY KEY, "UserId" uuid NOT NULL, "ServiceCode" text NOT NULL,
+          "ExternalUserId" bigint NOT NULL, "Login" text NOT NULL, "TokenProtected" text NOT NULL,
+          UNIQUE ("UserId", "ServiceCode"), UNIQUE ("ServiceCode", "ExternalUserId"));
+        CREATE TABLE IF NOT EXISTS aigc_hub."GiteaAuthorizations" (
+          "Id" uuid PRIMARY KEY, "UserId" uuid NOT NULL, "ServiceCode" text NOT NULL,
+          "VerifierProtected" text NOT NULL, "ExpiresAt" timestamptz NOT NULL, "Consumed" boolean NOT NULL);
         ALTER TABLE aigc_hub."Users" ADD COLUMN IF NOT EXISTS "AllowCustomModels" boolean NOT NULL DEFAULT false;
+        DO $$ BEGIN
+          IF NOT EXISTS (SELECT 1 FROM information_schema.columns
+            WHERE table_schema = 'aigc_hub' AND table_name = 'ProcessDefinitions' AND column_name = 'PublishedAt') THEN
+            ALTER TABLE aigc_hub."ProcessDefinitions" ADD COLUMN "PublishedAt" timestamptz NULL;
+            -- Earlier versions did not retain publication history. Preserve all
+            -- existing versions as immutable snapshots; users can copy to edit.
+            UPDATE aigc_hub."ProcessDefinitions" SET "PublishedAt" = "UpdatedAt";
+          END IF;
+        END $$;
         ALTER TABLE aigc_hub."Categories" ADD COLUMN IF NOT EXISTS "ParentId" uuid NULL REFERENCES aigc_hub."Categories" ("Id") ON DELETE RESTRICT;
         CREATE INDEX IF NOT EXISTS "IX_Categories_ParentId" ON aigc_hub."Categories" ("ParentId");
         CREATE TABLE IF NOT EXISTS aigc_hub."ApplicationClicks" (
@@ -285,6 +318,20 @@ public static class DatabaseSchemaInitializer
         CREATE UNIQUE INDEX IF NOT EXISTS "IX_PublicationAccessGrants_PublicationRequestId_SubjectType_SubjectId"
             ON aigc_hub."PublicationAccessGrants" ("PublicationRequestId", "SubjectType", "SubjectId");
 
+        -- Inbox rows are written by the workflow engine; older deployments may predate this table.
+        CREATE TABLE IF NOT EXISTS aigc_hub."Notifications" (
+            "Id" uuid NOT NULL,
+            "UserId" uuid NOT NULL,
+            "Title" text NOT NULL,
+            "Content" text NOT NULL,
+            "Link" text NULL,
+            "IsRead" boolean NOT NULL,
+            "CreatedAt" timestamp with time zone NOT NULL,
+            CONSTRAINT "PK_Notifications" PRIMARY KEY ("Id")
+        );
+        CREATE INDEX IF NOT EXISTS "IX_Notifications_UserId_CreatedAt" ON aigc_hub."Notifications" ("UserId", "CreatedAt");
+        CREATE INDEX IF NOT EXISTS "IX_Notifications_UserId_IsRead" ON aigc_hub."Notifications" ("UserId", "IsRead");
+
         CREATE TABLE IF NOT EXISTS aigc_hub."ChatConversations" (
             "Id" uuid NOT NULL,
             "UserId" uuid NOT NULL,
@@ -353,6 +400,8 @@ public static class DatabaseSchemaInitializer
         ALTER TABLE aigc_hub."ManagedVirtualKeys" ADD COLUMN IF NOT EXISTS "DeletedAt" timestamptz NULL;
         ALTER TABLE aigc_hub."DesktopReleases" ADD COLUMN IF NOT EXISTS "DeletedAt" timestamptz NULL;
         """;
-        await db.Database.ExecuteSqlRawAsync(sql, ct);
+        // ExecuteSqlRaw runs String.Format over the script even when no parameters are given,
+        // so any literal brace in the DDL (DEFAULT '{}') must be escaped as {{ }} first.
+        await db.Database.ExecuteSqlRawAsync(sql.Replace("{", "{{").Replace("}", "}}"), Array.Empty<object>(), ct);
     }
 }

@@ -61,6 +61,7 @@ public sealed partial class AigcHubDbContext(DbContextOptions<AigcHubDbContext> 
     protected override void OnModelCreating(ModelBuilder builder)
     {
         builder.HasDefaultSchema("aigc_hub");
+        ConfigureIntegrations(builder);
         builder.Entity<AppCategory>().HasOne(x => x.Parent).WithMany().HasForeignKey(x => x.ParentId).OnDelete(DeleteBehavior.Restrict);
         builder.Entity<ApplicationClick>().HasIndex(x => new { x.ApplicationId, x.UserId, x.VisitId }).IsUnique();
         builder.Entity<ApplicationClick>().HasIndex(x => new { x.ApplicationId, x.CreatedAt });

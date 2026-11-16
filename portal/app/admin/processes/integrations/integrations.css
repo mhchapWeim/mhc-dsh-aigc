@@ -1,0 +1,14 @@
+.admin-app .integration-fields { display: grid; gap: 14px; min-width: 0; }
+.admin-app .integration-fields label { display: grid; gap: 6px; min-width: 0; }
+.admin-app .integration-fields input:not([type=checkbox]),
+.admin-app .integration-fields select,
+.admin-app .integration-fields textarea { width: 100%; min-height: 38px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 6px; color: var(--ink); background: var(--surface); font: inherit; }
+.admin-app .integration-fields input[type=checkbox] { width: auto; }
+.admin-app .integration-fields p { overflow-wrap: anywhere; }
+.admin-app .integration-fields .modal-actions { display: flex; flex-wrap: wrap; }
+
+/* Inline guidance for third-party lookups. Deliberately neutral: an empty repository
+   or an unfinished connection is a normal state, not an error. `.model-form-error`
+   stays reserved for real failures (it is a fixed-position global toast). */
+.admin-app .integration-note { margin: 0; padding: 8px 10px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); color: var(--ink-soft); font-size: 13px; line-height: 1.6; }
+.admin-app .integration-note.is-hint { color: var(--muted); }

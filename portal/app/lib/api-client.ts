@@ -85,7 +85,7 @@ export type BackendDshUploadBatch = {
 };
 export type BackendProcessDefinition = {
   id: string; key: string; name: string; version: number; definitionJson: string;
-  isPublished: boolean; updatedAt: string;
+  isPublished: boolean; publishedAt?: string | null; updatedAt: string;
 };
 export type DesignerOption = { value: string; label: string; employeeNo?: string };
 export type DesignerOptions = {
@@ -103,6 +103,14 @@ export type BackendPublication = {
   currentNodeKey: string; currentNodeName: string; createdAt: string; updatedAt: string;
   reviewComment?: string; taskId?: string; availableActions: Array<{ code: string; name: string }>;
   correlationId?: string;
+  repositoryUrl?: string; branch?: string; commitSha?: string; version?: string; environment?: string;
+  accessMode?: string; accessScope?: string; reviewerName?: string; taskName?: string | null;
+  candidateScope?: string; assigneeId?: string | null;
+  audit?: { nodeKey: string; nodeName: string; decision?: string | null; summary?: string | null;
+    detailUrl?: string | null; commitSha?: string | null; executionStatus?: string | null;
+    issueCount?: string | null; verdict?: string | null; riskLevel?: string | null; taskId?: string | null;
+    finishedAt?: string | null; errorCode?: string | null; retryable?: boolean | null;
+    repositoryFullName?: string | null; reviewerSubject?: string | null } | null;
 };
 export type BackendDepartment = { id: string; code: string; name: string; description: string; managerId?: string; isEnabled: boolean; billingPlanId?: string | null };
 export type BackendRole = { id: string; code: string; name: string; description: string; isBuiltIn: boolean; userCount: number; permissions: string[] };
@@ -178,7 +186,11 @@ export async function apiRequest<T>(path: string, init: RequestInit = {}): Promi
     throw new Error(typeof body === 'string' ? body : body?.detail || body?.message || body?.error || `请求失败（${response.status}）`);
   }
   if (response.status === 204) return undefined as T;
-  return response.json() as Promise<T>;
+  // Some authorized responses (failed auth challenges, 202 with no payload) carry an
+  // empty body; parsing it as JSON would surface a misleading syntax error.
+  const text = await response.text();
+  if (!text) return undefined as T;
+  return JSON.parse(text) as T;
 }
 
 export async function loginBackend(employeeNo: string, password: string): Promise<BackendLogin> {
@@ -243,8 +255,19 @@ export const saveProcessDefinition = (input: {
   method: "POST", body: JSON.stringify(input),
 });
 
-export const publishProcessDefinition = (id: string) =>
-  apiRequest<void>(`/api/process-definitions/${id}/publish`, { method: "POST" });
+export const publishProcessDefinition = (id: string, expectedUpdatedAt?: string) =>
+  apiRequest<void>(`/api/process-definitions/${id}/publish`, {
+    method: "POST", ...(expectedUpdatedAt ? { body: JSON.stringify({ expectedUpdatedAt }) } : {}),
+  });
+
+export const updateProcessDefinition = (id: string, input: {
+  name: string; definition: unknown; expectedUpdatedAt: string;
+}) => apiRequest<BackendProcessDefinition>(`/api/process-definitions/${id}`, {
+  method: 'PUT', body: JSON.stringify(input),
+});
+
+export const disableProcessDefinition = (id: string) =>
+  apiRequest<void>(`/api/process-definitions/${id}/disable`, { method: 'POST' });
 
 export const getPublicationOptions = () =>
   apiRequest<PublicationOption[]>("/api/publication-requests/options");
@@ -258,6 +281,8 @@ export const getReviewablePublications = (page = 1, pageSize = 100) =>
   (page === 1 && pageSize === 100 ? allPages<BackendPublication>("/api/publication-requests/reviewable") : apiRequest<BackendPage<BackendPublication>>(`/api/publication-requests/reviewable?page=${page}&pageSize=${pageSize}`));
 
 export const submitPublication = (input: {
+  processKey?: string;
+  codeSource?: { serviceCode: string; repositoryId: number; ref: string; commitSha?: string };
   appName: string; categoryId: string; summary: string; accessUrl?: string;
   repositoryUrl?: string; branch?: string; commitSha?: string; version?: string;
   environment?: string; accessMode?: "All" | "Subjects";
@@ -272,6 +297,17 @@ export const completeWorkflowTask = (taskId: string, action: "approve" | "reject
   apiRequest<unknown>(`/api/workflow/tasks/${taskId}/complete`, {
     method: "POST", body: JSON.stringify({ action, comment, variables: null }),
   });
+
+export type InboxMessage = { id: string; title: string; content: string; link?: string | null; isRead: boolean; createdAt: string };
+export type InboxPage = { items: InboxMessage[]; page: number; pageSize: number; total: number; unreadCount: number };
+export const getInboxMessages = (page = 1, pageSize = 20) =>
+  apiRequest<InboxPage>(`/api/notifications/mine?page=${page}&pageSize=${pageSize}`);
+export const getInboxUnread = () =>
+  apiRequest<{ unread: number; latest: InboxMessage | null }>("/api/notifications/unread");
+export const markInboxRead = (id: string) =>
+  apiRequest<void>(`/api/notifications/${encodeURIComponent(id)}/read`, { method: "POST" });
+export const markInboxAllRead = () =>
+  apiRequest<void>("/api/notifications/read-all", { method: "POST" });
 
 export type UserAccessOption = { id: string; name: string; isEnabled: boolean; selected: boolean; inherited: boolean; departmentIds?: string[]; roleIds?: string[]; organizationInherited?: boolean };
 export type UserAccessOptions = { departments?: Array<{ id: string; name: string }>; roles?: Array<{ id: string; name: string }>; plugins?: UserAccessOption[]; releases?: UserAccessOption[]; mcps?: UserAccessOption[]; models: UserAccessOption[]; virtualKeys: UserAccessOption[] };

@@ -43,6 +43,23 @@ afterEach(() => {
 })
 
 describe('desktop external plugin profile', () => {
+  it('removes the former unlicensed voice selection while preserving other profile settings', async () => {
+    const { manager } = setup()
+    await manager.applyRelease()
+    const path = join(manager.paths.profile, 'package.json')
+    const manifest = JSON.parse(readFileSync(path, 'utf8')) as { dsh: { profile: { bundles: string[] } } }
+    const voice = '@deepseek-ai/dsh-experimental-voice-input-bundle'
+    expect(manifest.dsh.profile.bundles).not.toContain(voice)
+    manifest.dsh.profile.bundles.push(voice, 'custom')
+    writeFileSync(path, JSON.stringify(manifest))
+    await manager.applyRelease()
+    expect(JSON.parse(readFileSync(path, 'utf8')).dsh.profile.bundles).toEqual([
+      '@deepseek-ai/dsh-base', '@deepseek-ai/dsh-web-app', 'custom',
+    ])
+    const before = readFileSync(path, 'utf8')
+    await manager.applyRelease()
+    expect(readFileSync(path, 'utf8')).toBe(before)
+  })
   it('preserves installed packages, profile state, and the lockfile when preparing a launch', async () => {
     const { manager } = setup()
     await manager.applyRelease()

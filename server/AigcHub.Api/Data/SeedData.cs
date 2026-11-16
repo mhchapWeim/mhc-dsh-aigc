@@ -68,7 +68,7 @@ public static class SeedData
         };
         var process = new ProcessDefinition
         {
-            Key = "application-publishing", Name = "应用发布审批流程", Version = 2, IsPublished = true,
+            Key = "application-publishing", Name = "应用发布审批流程", Version = 2, IsPublished = true, PublishedAt = DateTimeOffset.UtcNow,
             DefinitionJson = PublishingProcessV2Json()
         };
         db.AddRange(departments); db.AddRange(permissions); db.AddRange(adminRole, workflowRole, userRole);
@@ -115,10 +115,10 @@ public static class SeedData
     {
         if (await db.ProcessDefinitions.AnyAsync(x => x.Key == "application-publishing" && x.Version >= 2, ct)) return;
         var oldDefinitions = await db.ProcessDefinitions.Where(x => x.Key == "application-publishing" && x.IsPublished).ToListAsync(ct);
-        foreach (var definition in oldDefinitions) definition.IsPublished = false;
+        foreach (var definition in oldDefinitions) { definition.PublishedAt ??= definition.UpdatedAt; definition.IsPublished = false; }
         db.ProcessDefinitions.Add(new ProcessDefinition
         {
-            Key = "application-publishing", Name = "应用发布审批流程", Version = 2, IsPublished = true,
+            Key = "application-publishing", Name = "应用发布审批流程", Version = 2, IsPublished = true, PublishedAt = DateTimeOffset.UtcNow,
             DefinitionJson = PublishingProcessV2Json()
         });
         await db.SaveChangesAsync(ct);

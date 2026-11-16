@@ -1,0 +1,339 @@
+.inbox-bell-wrap {
+  position: relative;
+  display: inline-flex;
+}
+
+/* The popup is deliberately loud: a reviewer can miss a quiet badge, but not a
+   card that lands above every other layer for five seconds. */
+.inbox-popup-stack {
+  position: fixed;
+  top: 84px;
+  right: 24px;
+  z-index: 400;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  pointer-events: none;
+  max-width: min(390px, calc(100vw - 32px));
+}
+
+.inbox-popup {
+  pointer-events: auto;
+  position: relative;
+  overflow: hidden;
+  display: grid;
+  grid-template-columns: 40px minmax(0, 1fr) 22px;
+  align-items: start;
+  gap: 12px;
+  padding: 14px 14px 16px;
+  border: 1px solid #ffccc7;
+  border-left: 4px solid #e20015;
+  border-radius: 12px;
+  background: #fff;
+  color: #172033;
+  box-shadow: 0 18px 44px rgba(28, 63, 112, 0.24);
+  animation: inbox-popup-in 0.28s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+.inbox-popup.is-leaving {
+  animation: inbox-popup-out 0.24s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+.inbox-popup__icon {
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  border-radius: 11px;
+  background: #ffeceb;
+  color: #e20015;
+}
+
+.inbox-popup__body {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.inbox-popup__body strong {
+  font-size: 13.5px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: #172033;
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.inbox-popup__body p {
+  margin: 0;
+  color: #526078;
+  font-size: 12px;
+  line-height: 1.55;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.inbox-popup__body small {
+  margin-top: 2px;
+  color: #8a94a6;
+  font-size: 10px;
+}
+
+.inbox-popup__link {
+  margin-top: 6px;
+  align-self: flex-start;
+  min-height: 30px;
+  padding: 0 12px;
+  border: 1px solid #e20015;
+  border-radius: 7px;
+  background: #e20015;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 650;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+}
+
+.inbox-popup__link:hover {
+  background: #b8000f;
+}
+
+.inbox-popup__close {
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: #8a94a6;
+  display: grid;
+  place-items: center;
+}
+
+.inbox-popup__close:hover {
+  background: #f1f4f9;
+  color: #172033;
+}
+
+.inbox-popup__timer {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  height: 3px;
+  width: 100%;
+  background: #e20015;
+  transform-origin: left center;
+  animation: inbox-popup-timer 5s linear forwards;
+}
+
+@keyframes inbox-popup-in {
+  from {
+    opacity: 0;
+    transform: translate(16px, -10px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes inbox-popup-out {
+  to {
+    opacity: 0;
+    transform: translate(14px, -6px) scale(0.97);
+  }
+}
+
+@keyframes inbox-popup-timer {
+  to {
+    transform: scaleX(0);
+  }
+}
+
+.inbox-panel__actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.inbox-panel__actions button {
+  min-height: 26px;
+  padding: 0 8px;
+  border: 1px solid #dbe3ef;
+  border-radius: 6px;
+  background: #fff;
+  color: #526078;
+  font-size: 11px;
+}
+
+.inbox-panel__actions button:hover:not(:disabled) {
+  color: #174ea6;
+  border-color: #91caff;
+  background: #f3f7ff;
+}
+
+.inbox-panel__actions button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.inbox-panel__empty {
+  padding: 26px 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  color: #8a94a6;
+  font-size: 12px;
+}
+
+.inbox-panel__empty svg {
+  opacity: 0.55;
+}
+
+.inbox-panel__footer {
+  padding: 8px 12px 10px;
+  border-top: 1px solid #edf1f5;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.inbox-list__item {
+  width: 100%;
+  min-height: 72px;
+  padding: 10px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  display: grid;
+  grid-template-columns: 38px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  text-align: left;
+  color: var(--ink, #172033);
+}
+
+.inbox-list__item:hover {
+  background: #f3f7ff;
+}
+
+/* The shared list styles target buttons, but a message with a link renders as an
+   anchor, so the middle column needs the same stacked layout for both. */
+.inbox-list__item > span:nth-child(2) {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.inbox-list__item strong {
+  font-size: 12px;
+  color: #172033;
+}
+
+.inbox-list__item small {
+  margin-top: 4px;
+  color: #7b879c;
+  font-size: 10px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.inbox-list__item time {
+  align-self: start;
+  padding-top: 2px;
+  color: #8a94a6;
+  font-size: 9px;
+  white-space: nowrap;
+}
+
+.inbox-list__item.is-unread {
+  background: #fbfdff;
+}
+
+.inbox-list__item.is-unread strong::after {
+  content: '';
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  margin-left: 6px;
+  border-radius: 50%;
+  background: #e20015;
+  vertical-align: middle;
+}
+
+/* Admin scope: the console paints its own palette, so the shared panel follows it. */
+.admin-app .inbox-popup {
+  background: var(--surface);
+  color: var(--ink);
+  border-color: var(--line);
+  border-left-color: #e20015;
+  box-shadow: 0 12px 32px #1027472e;
+}
+
+.admin-app .inbox-popup__body strong {
+  color: var(--ink);
+}
+
+.admin-app .inbox-popup__body p,
+.admin-app .inbox-popup__body small {
+  color: var(--ink-soft);
+}
+
+.admin-app .inbox-popup__icon {
+  background: var(--blue-100);
+  color: #e20015;
+}
+
+.admin-app .notification-panel {
+  background: var(--surface);
+  border-color: var(--line);
+  box-shadow: 0 12px 32px #1027471f;
+}
+
+.admin-app .notification-panel > header,
+.admin-app .notification-panel h2,
+.admin-app .notification-list strong {
+  color: var(--ink);
+}
+
+.admin-app .notification-panel > header {
+  border-color: var(--line);
+}
+
+.admin-app .notification-list small,
+.admin-app .notification-list time,
+.admin-app .inbox-panel__empty {
+  color: var(--ink-soft);
+}
+
+.admin-app .inbox-list__item:hover {
+  background: var(--admin-hover);
+}
+
+.admin-app .inbox-panel__footer,
+.admin-app .inbox-panel__actions button {
+  border-color: var(--line);
+  background: var(--surface);
+  color: var(--ink-soft);
+}
+
+.admin-app .inbox-panel__footer + .inbox-panel__actions {
+  border-color: var(--line);
+}
+
+@media (max-width: 760px) {
+  .inbox-popup-stack {
+    top: auto;
+    bottom: 18px;
+    right: 12px;
+    left: 12px;
+    max-width: none;
+  }
+}

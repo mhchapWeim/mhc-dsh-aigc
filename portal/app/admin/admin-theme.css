@@ -149,6 +149,38 @@
 .admin-app .modern-select__options > button:hover { background: var(--admin-hover); color: var(--ink); }
 .admin-app .modern-select__options > button.is-selected { background: var(--blue-100); color: var(--blue-700); }
 .admin-app .modern-select__options small { color: var(--muted); }
+.admin-app .directory-picker__popup {
+  box-sizing: border-box;
+  width: 310px;
+  max-width: 100%;
+  background: var(--surface);
+  color: var(--ink);
+}
+.admin-app .directory-picker .directory-picker__search {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 7px;
+  height: 36px;
+  margin: 3px 3px 5px;
+  background: var(--surface);
+  border-color: var(--line);
+  color: var(--muted);
+}
+.admin-app .directory-picker__search:focus-within { border-color: var(--blue-600); box-shadow: 0 0 0 2px var(--blue-100); }
+.admin-app .directory-picker__search > svg { flex: none; }
+.admin-app .directory-picker .directory-picker__search input[type='search'] {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  min-height: 0;
+  color: var(--ink);
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  outline: none;
+  box-shadow: none;
+}
 .admin-app .table-meta { height: auto; min-height: 40px; padding: 10px 20px; background: var(--admin-chrome); color: var(--muted); font-size: 12px; }
 .admin-app :is(th, .table-panel th, .plugin-status-table th) { background: var(--admin-chrome); color: var(--ink-soft); font-size: 12px; font-weight: 600; text-transform: none; letter-spacing: 0; border-color: var(--line); }
 .admin-app :is(td, .plugin-status-table td) { font-size: 13px; color: var(--ink-soft); border-color: var(--line); }
@@ -191,6 +223,76 @@
 .admin-app .process-toolbar__actions .primary-action,
 .admin-app .process-toolbar__actions .primary-action:hover:not(:disabled) { background: #225dcc; color: #fff; border-color: #225dcc; }
 .admin-app .process-canvas { background-color: var(--page); }
+.admin-app .process-list-actions, .admin-app .process-row-actions { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.admin-app .process-row-actions { min-width: 180px; }
+.admin-app .process-row-actions :is(a, button) { display: inline-flex; align-items: center; gap: 5px; background: transparent; border: 0; padding: 5px 0; color: var(--blue-600); font-size: 13px; }
+.admin-app .process-key { display: block; color: var(--muted); margin-top: 5px; }
+.admin-app .process-editor { margin: -28px; height: calc(100dvh - 60px); background: var(--page); }
+.admin-app .process-editor .process-toolbar { height: auto; min-height: 72px; flex: none; gap: 12px; padding: 12px 18px; flex-wrap: wrap; }
+.admin-app .process-title h1 { font-size: 15px; }
+.admin-app .process-title h1 small { font-size: 12px; font-weight: 400; color: var(--muted); }
+.admin-app .process-title span, .admin-app .process-toolbar__actions button { font-size: 12px; }
+.admin-app .process-editor .designer-shell { position: relative; grid-template-columns: 160px minmax(0, 1fr) 280px; }
+.admin-app .process-editor .properties-panel { position: static; width: auto; overflow: auto; }
+.admin-app .process-editor .designer-pane-title small, .admin-app .process-editor .palette-tip span { font-size: 12px; }
+.admin-app .process-editor .palette-tip { display: block; }
+.admin-app .process-editor .palette-tip span { display: block; margin-top: 8px; line-height: 1.8; }
+.admin-app .process-editor .palette-section button { cursor: grab; min-height: 52px; }
+.admin-app .process-editor .palette-section button:disabled { cursor: default; opacity: .6; }
+.admin-app .process-properties { border: 0; padding: 0; margin: 0; min-width: 0; }
+.admin-app .process-properties:disabled { opacity: .8; }
+.admin-app .process-properties .property-form { font-size: 13px; }
+.admin-app .process-properties label > span, .admin-app .process-properties .property-field > span { font-size: 12px; }
+.admin-app .process-editor .canvas-stage { transition: none; }
+.admin-app .process-editor .canvas-size { position: relative; }
+.admin-app .process-editor .process-canvas { touch-action: none; overscroll-behavior: contain; }
+.admin-app .process-editor .process-node { cursor: grab; user-select: none; }
+.admin-app .process-editor .process-node > span:not(.event-label) { font-size: 12px; }
+.admin-app .process-editor .process-node > small { font-size: 10px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.admin-app .process-editor .event-label { font-size: 12px; }
+.admin-app .process-editor .process-node.is-dragging { cursor: grabbing; z-index: 4; }
+.admin-app .process-editor.is-pan-mode :is(.process-canvas, .process-node) { cursor: grab; }
+.admin-app .process-editor .process-node:focus-visible { outline: 2px solid var(--blue-600); outline-offset: 5px; }
+.admin-app .process-editor .node-port { opacity: 1; width: 22px; height: 22px; min-height: 22px; right: -12px; cursor: crosshair; background: var(--surface); touch-action: none; }
+.admin-app .process-editor .node-port::after { content: ''; position: absolute; inset: -8px; border-radius: 50%; }
+.admin-app .process-editor .node-port:focus-visible { outline-offset: 5px; }
+.admin-app .process-editor .is-connect-target { outline: 2px dashed var(--blue-600); outline-offset: 6px; cursor: crosshair; }
+.admin-app .process-editor .is-connect-target:hover { outline-style: solid; box-shadow: 0 0 0 6px var(--blue-100); }
+.admin-app .process-editor .process-edges { pointer-events: none; }
+.admin-app .process-editor .process-edges .edge-hit { pointer-events: stroke; stroke: transparent; stroke-width: 18px; cursor: pointer; }
+.admin-app .process-editor .process-edges .edge-line { stroke-width: 2px; }
+.admin-app .process-editor .process-edges .is-selected .edge-line, .admin-app .process-editor .process-edges g:hover .edge-line { stroke: var(--blue-600); stroke-width: 3px; }
+.admin-app .process-editor .process-edges .edge-preview { stroke: var(--blue-600); stroke-width: 2px; stroke-dasharray: 6 4; }
+.admin-app .process-editor .process-edges text { font-size: 12px; fill: var(--ink-soft); paint-order: stroke; stroke: var(--page); stroke-width: 5px; stroke-linejoin: round; }
+.admin-app .process-editor .canvas-empty { position: absolute; top: 120px; left: 60px; color: var(--muted); font-size: 14px; pointer-events: none; }
+.admin-app .canvas-mode-tools { position: absolute; top: 14px; left: 14px; z-index: 5; display: flex; padding: 3px; gap: 3px; background: var(--surface); border: 1px solid var(--line); border-radius: 6px; }
+.admin-app .canvas-mode-tools button { width: 38px; height: 38px; display: grid; place-items: center; border: 0; border-radius: 4px; color: var(--ink); background: transparent; }
+.admin-app .canvas-mode-tools button[aria-pressed='true'] { background: var(--blue-100); color: var(--blue-600); }
+.admin-app .connection-hint { position: absolute; bottom: 74px; left: 14px; right: 14px; z-index: 5; display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 9px 12px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); color: var(--ink); font-size: 12px; pointer-events: none; }
+.admin-app .connection-hint button { color: var(--blue-600); border: 0; background: transparent; white-space: nowrap; pointer-events: auto; }
+.admin-app .process-editor-error { display: flex; justify-content: space-between; padding: 10px 20px; margin: 0; }
+.admin-app .process-editor-error button { border: 0; background: transparent; color: inherit; }
+.admin-app .process-toolbar__actions .properties-toggle { display: none; }
+@media (max-width: 1100px) {
+  .admin-app .process-editor { margin: -20px; }
+  .admin-app .process-editor .designer-shell { grid-template-columns: 130px minmax(0, 1fr); }
+  .admin-app .process-editor .properties-panel { display: none; position: absolute; z-index: 8; top: 0; right: 0; bottom: 0; width: min(300px, calc(100% - 60px)); box-shadow: -5px 0 18px #0002; }
+  .admin-app .process-editor.is-properties-open .properties-panel { display: block; }
+  .admin-app .process-toolbar__actions .properties-toggle { display: flex; }
+}
+@media (max-width: 760px) {
+  .admin-app .process-editor { margin: -20px -14px; }
+  .admin-app .process-editor .designer-shell { grid-template-columns: 64px minmax(0, 1fr); }
+  .admin-app .process-editor .process-toolbar { padding: 10px; }
+  .admin-app .process-editor .process-title h1 small { display: block; margin-top: 4px; }
+  .admin-app .process-editor .palette-tip { display: none; }
+  .admin-app .process-editor .palette-section { padding: 8px; }
+  .admin-app .process-editor .process-toolbar__actions { width: 100%; justify-content: flex-end; }
+  .admin-app .process-editor .process-toolbar__actions button:not(.primary-action) { flex: none; width: 38px; height: 38px; padding: 0; font-size: 0; }
+  .admin-app .process-editor .process-toolbar__actions button svg { flex: none; }
+  .admin-app .process-list-actions { width: 100%; }
+  .admin-app .connection-hint { flex-wrap: wrap; }
+}
 .admin-app :is(.palette-tip, .selected-type, .notification-setting) { background: var(--admin-chrome); border-color: var(--line); }
 .admin-app .notification-setting small { color: var(--muted); }
 .admin-app .palette-icon { background: color-mix(in srgb, currentColor 12%, transparent); }

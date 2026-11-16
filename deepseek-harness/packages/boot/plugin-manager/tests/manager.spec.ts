@@ -6,7 +6,8 @@ import { tmpdir } from 'node:os'
 import { createHash } from 'node:crypto'
 import CredentialsLocal from '@deepseek-ai/dsh-credentials-local'
 import { credentialKey } from '@deepseek-ai/dsh-credentials'
-import { authorizeManagedBundle } from '@deepseek-ai/dsh-app-boot'
+import { authorizeManagedBundle, isManagedBundleAuthorized } from '@deepseek-ai/dsh-app-boot'
+import { WriterLockTimeoutError } from '@deepseek-ai/dsh-atomic-write'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 import type { Context } from '@deepseek-ai/cordis'
 import { expect, it, onTestFinished, vi } from 'vitest'
@@ -146,6 +147,64 @@ it.each(['0.1.7-alpha.2', '0.1.7-alpha.2.20261010.1', '0.1.7-alpha.2.20261102.1'
   await ctx.credentials.modifyRecord(key, async () => ({ kind: 'api-key', key: 'organization-token' }))
   await vi.waitFor(() => expect(ctx.get('marketProbe')).toBe(true), { timeout: 5000 })
   expect(install).toHaveBeenCalledTimes(1)
+})
+
+it('keeps a working organization bundle authorized when the profile lock is contended', async () => {
+  const { ctx, dir, manager, bundle } = await fixture('live', false, undefined, { managedPollMs: 1000 })
+  await ctx.plugin(CredentialsLocal, { path: join(dir, 'credentials.yaml'), watch: false })
+  const key = credentialKey('llm-managed-backend', 'user-session')
+  await ctx.credentials.modifyRecord(key, async () => ({ kind: 'api-key', key: 'organization-token' }))
+  const archive = Buffer.from('externally-built-package')
+  const sha256 = createHash('sha256').update(archive).digest('hex')
+  const reports: { status: string }[] = []
+  let revision = 1
+  const fetcher = vi.spyOn(globalThis, 'fetch').mockImplementation(async (url, options) => {
+    if (String(url).endsWith('/policy')) return Response.json({ userId: '00000000-0000-4000-8000-000000000001', plugins: [{
+      id: '00000000-0000-4000-8000-000000000002', packageName: 'market-addon', revision, enabled: true,
+      version: '1.0.0', dshVersion: '0.1.7-alpha.2', sha256, size: archive.length,
+      downloadPath: '/v1/plugins/package.tgz', configuration: { 'market-row': { service: 'marketProbe' } },
+    }] })
+    if (String(url).endsWith('.tgz')) return new Response(archive)
+    reports.push(JSON.parse(String(options?.body)) as { status: string })
+    return new Response(null, { status: 204 })
+  })
+  const install = vi.spyOn(operations, 'runProfilePnpm').mockImplementation(async () => {
+    bundle('market-addon', [{ id: 'market-row', name: './plugin.mjs' }])
+    const manifest = readProfileManifest('test', dir)
+    manifest.dependencies = { ...manifest.dependencies, 'market-addon': '1.0.0' }
+    writeFileSync(join(dir, 'package.json'), JSON.stringify(manifest))
+    return { exitCode: 0, output: '', truncated: false, logPath: '/external-pnpm-log' }
+  })
+  onTestFinished(() => { fetcher.mockRestore(); install.mockRestore() })
+  ctx.provide('managedBackend', { endpoint: 'https://aigc.example' })
+  await vi.waitFor(() => expect(ctx.get('marketProbe')).toBe(true), { timeout: 5000 })
+  await vi.waitFor(() => expect(reports.some(report => report.status === 'Active')).toBe(true), { timeout: 5000 })
+
+  // Another process holds the profile write lock for the whole poll. That is
+  // infrastructure contention, not a verdict on the plugin: withdrawing the
+  // entitlement here is what unloads a working organization model and leaves
+  // it unloadable on every later start.
+  const contended = vi.spyOn(manager, 'setBundleEnabled').mockRejectedValue(
+    new WriterLockTimeoutError(join(dir, 'package.json.lock'), 120000))
+  const statusesBefore = reports.length
+  // A new policy revision forces the activation path that takes the lock.
+  revision = 2
+  ctx.emit('credentials/record-updated', key)
+  await new Promise(resolve => setTimeout(resolve, 2500))
+  expect(contended).toHaveBeenCalled()
+
+  // The plugin stays authorized and loaded, and no failure is reported for it.
+  expect(ctx.get('marketProbe')).toBe(true)
+  expect(isManagedBundleAuthorized(dir, 'market-addon')).toBe(true)
+  expect(reports.slice(statusesBefore).some(report => report.status === 'Failed')).toBe(false)
+  expect((await manager.listBundles()).find(item => item.name === 'market-addon')?.enabled).toBe(true)
+
+  // Once the lock frees up, the next poll reports normally again.
+  contended.mockRestore()
+  revision = 3
+  ctx.emit('credentials/record-updated', key)
+  await vi.waitFor(() => expect(reports.slice(statusesBefore).some(report => report.status === 'Active')).toBe(true), { timeout: 5000 })
+  expect(ctx.get('marketProbe')).toBe(true)
 })
 
 it('keeps hot configuration changes silent and announces verified code updates until logout', async () => {

@@ -34,6 +34,7 @@ import {
   BadgeJapaneseYen,
 } from "lucide-react";
 import { usePlatform } from "../../components/platform-provider";
+import { InboxBell } from "../../components/inbox-bell";
 import {
   canAccessAdminPath,
   canReviewPublication,
@@ -48,7 +49,8 @@ const sections = [
       { href: "/admin", label: "工作台", icon: Grid2X2 },
       { href: "/admin/publications", label: "发布申请", icon: FilePlus2 },
       { href: "/admin/reviews", label: "发布审核", icon: ClipboardCheck },
-      { href: "/admin/processes", label: "流程设计", icon: Network },
+      { href: "/admin/processes", label: "流程管理", icon: Network },
+      { href: "/admin/processes/integrations", label: "第三方服务", icon: Network },
       { href: "/admin/categories", label: "分类管理", icon: Tags },
       { href: "/admin/registry", label: "注册中心", icon: Boxes },
     ],
@@ -119,7 +121,7 @@ const versionPages = [
   { href: '/admin/client-releases/status', label: '版本状态', icon: ScrollText },
 ];
 const items = [...sections.flatMap((section) => section.items).filter(item => item.href !== '/admin/client-releases'), ...versionPages];
-const matchesPath = (href: string, path: string) => href === path || ((href === '/admin/client-releases' || href === '/admin/users') && path.startsWith(href + '/'));
+const matchesPath = (href: string, path: string) => href === path || ((href === '/admin/client-releases' || href === '/admin/users' || (href === '/admin/processes' && !path.startsWith('/admin/processes/integrations'))) && path.startsWith(href + '/'));
 type StoredAdminUser = { id: string; name: string; employeeNo: string; roles: string[]; permissions: string[] };
 
 export function AdminShell({ children }: { children: React.ReactNode }) {
@@ -159,6 +161,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
   ).length;
   const permissionByPath: Record<string, string> = {
     '/admin/registry': 'category.manage',
+    '/admin/processes/integrations': 'process.design',
     '/admin/click-reports': 'category.manage',
     '/admin/config-updates': 'model.manage',
     '/admin': 'admin.view', '/admin/publications': 'publication.create', '/admin/reviews': 'publication.review',
@@ -174,8 +177,8 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
     ? storedUser.permissions.includes(permissionByPath[target] ?? 'admin.view')
     : canAccessAdminPath(platform, currentUser, target);
   const canOpenReviews = canAccess('/admin/reviews');
-  const hasAccess = canAccess(path);
-  const active = path === '/admin/users/sync' ? { label: '用户同步' } : items.find((item) => item.href === path) ?? items[0];
+  const hasAccess = canAccess(path.startsWith('/admin/processes/') ? '/admin/processes' : path);
+  const active = path === '/admin/users/sync' ? { label: '用户同步' } : items.find((item) => matchesPath(item.href, path)) ?? items[0];
   return (
     <div className={`admin-app${collapsed ? " is-collapsed" : ""}`}>
       <a className="skip-link" href="#admin-main">
@@ -236,7 +239,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
                 )
                 .map((item) => {
                   const Icon = item.icon;
-                  const selected = path === item.href;
+                  const selected = matchesPath(item.href, path);
                   if (item.href === '/admin/client-releases') return <details className="admin-version-nav" key={item.href} open={matchesPath(item.href, path) || undefined}>
                     <summary>{item.label}</summary>
                     <div>{versionPages.map(child => <Link key={child.href} href={child.href} aria-label={child.label} aria-current={path === child.href ? 'page' : undefined} className={path === child.href ? 'is-active' : ''} onClick={() => setMobileOpen(false)}>{child.label}</Link>)}</div>
@@ -312,6 +315,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
             <strong>{active.label}</strong>
           </div>
           <div className="admin-user">
+            <InboxBell />
             <span className="avatar">
               {currentUser?.name.slice(0, 1) ?? "W"}
             </span>
