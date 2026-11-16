@@ -1,0 +1,45 @@
+{
+  "name": "@bhss/dsh-plugin-managed-voice-input",
+  "version": "1.0.0",
+  "description": "AIGC 授权的本地语音输入，使用客户端预置模型，无需手动下载",
+  "type": "module",
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/index.d.ts",
+      "default": "./lib/index.js"
+    }
+  },
+  "files": [
+    "lib",
+    "cordis.patch.yml",
+    "icon.svg",
+    "locale"
+  ],
+  "scripts": {
+    "build": "node build.mjs"
+  },
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "^4.0.1",
+    "@deepseek-ai/schemastery": "^3.18.1",
+    "@deepseek-ai/dsh-experimental-speech-to-text": "0.1.7-alpha.2",
+    "@deepseek-ai/dsh-experimental-speech-to-text-sensevoice": "0.1.7-alpha.2",
+    "@deepseek-ai/dsh-experimental-api-speech-to-text": "0.1.7-alpha.2",
+    "@deepseek-ai/dsh-experimental-client-ui-voice-input": "0.1.7-alpha.2"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  },
+  "aigc": {
+    "dshVersion": "0.1.7-alpha.2",
+    "kind": "host",
+    "capabilities": [
+      "voice-input"
+    ]
+  },
+  "license": "MIT",
+  "icon": "./icon.svg"
+}

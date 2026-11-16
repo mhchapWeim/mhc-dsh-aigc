@@ -51,7 +51,12 @@ tmp/
 /.agent-handoff/
 /.workbuddy/
 /skills/
-/plugins/
+/plugins/*
+!/plugins/dsh-plugin-internal-model/
+!/plugins/dsh-plugin-managed-search/
+!/plugins/dsh-plugin-managed-voice-input/
+/plugins/*/lib/
+/plugins/*/*.tgz
 
 # Build output backups
 **/dist.bak-*/

@@ -62,6 +62,8 @@ npm run build
 
 ## DSH 公告与灰度更新
 
+DSH 的上游基线、隔离升级、AIGC 兼容检查和候选推广流程见 [DSH 上游升级机制](dsh-aigc/README.md)。
+
 管理入口是 `/admin/announcements` 与 `/admin/client-releases`，分别需要 `announcement.manage` 和 `client-release.manage` 权限。已有数据库启动时会补齐权限并授予平台管理员；现有登录令牌需重新登录后获取新权限。
 
 公告先保存草稿，选择指定人员并设置生效时间和可选到期时间，再发布。已发布正文不可修改；撤回后需要重新创建公告。Windows DSH 登录后每 45 秒同步有效公告，托盘和应用菜单显示最近最多 100 条及未读数量，重要公告在窗口可见时通过 DSH 内置遮罩弹窗显示，不调用 Windows 消息框或系统通知。后台收到的公告可通过菜单阅读。送达、已读、确认分别保存到数据库；离线客户端重新登录会补收。

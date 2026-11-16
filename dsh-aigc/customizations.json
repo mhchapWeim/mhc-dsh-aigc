@@ -1,0 +1,6541 @@
+{
+  "schemaVersion": 1,
+  "baseline": {
+    "tag": "dsh-v0.1.7-alpha.2",
+    "commit": "00102833dfaee1da9f48a3a8eae9d34005a75218"
+  },
+  "sourceTree": "b92695f3e343221cd96aad001eabc38aeb351fc6",
+  "extensionRoots": [
+    "packages/client/ui-managed-account",
+    "packages/guard/sensitive-word-filter",
+    "packages/llm/llm-managed-backend"
+  ],
+  "files": [
+    {
+      "path": ".agents/notes/implemented/CLAUDE.md",
+      "category": "patch",
+      "upstream": {
+        "mode": "120000",
+        "kind": "blob",
+        "oid": "47dc3e3d863cfb5727b87d785d09abf9743c0a72"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "47dc3e3d863cfb5727b87d785d09abf9743c0a72"
+      }
+    },
+    {
+      "path": ".agents/notes/implemented/architecture/2026-10-15-account-owned-cloud-backups.i18n.yaml",
+      "category": "addition",
+      "upstream": null,
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "f9f92340c5ee551fe2dabc42faff292062bb8cad"
+      }
+    },
+    {
+      "path": ".agents/notes/implemented/architecture/2026-10-15-account-owned-cloud-backups.md",
+      "category": "addition",
+      "upstream": null,
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "f5b686c466347d92b6aead96baedd51143df7efe"
+      }
+    },
+    {
+      "path": ".agents/notes/implemented/architecture/2026-10-15-account-owned-cloud-backups.zh.md",
+      "category": "addition",
+      "upstream": null,
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "d3cb20a703d2e4dc72a6956a9158a761fdfaec9e"
+      }
+    },
+    {
+      "path": ".agents/notes/implemented/bug-fix/2026-11-05-writer-lock-reclamation.i18n.yaml",
+      "category": "addition",
+      "upstream": null,
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "398981b0f9e639e5790c455a781a86a1566dba98"
+      }
+    },
+    {
+      "path": ".agents/notes/implemented/bug-fix/2026-11-05-writer-lock-reclamation.md",
+      "category": "addition",
+      "upstream": null,
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "797acfa707b8a24da8155b519d215c47a63b9bc4"
+      }
+    },
+    {
+      "path": ".agents/notes/implemented/bug-fix/2026-11-05-writer-lock-reclamation.zh.md",
+      "category": "addition",
+      "upstream": null,
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "8f0ae804d61ae7d704c19688bf8cfdbf15a4dfd6"
+      }
+    },
+    {
+      "path": ".agents/skills/record-browser-gif/scripts/encode_gif.py",
+      "category": "patch",
+      "upstream": {
+        "mode": "100755",
+        "kind": "blob",
+        "oid": "cfda42ccabd53b015e15de6e8a35306a6c0faa74"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "cfda42ccabd53b015e15de6e8a35306a6c0faa74"
+      }
+    },
+    {
+      "path": ".claude/skills",
+      "category": "patch",
+      "upstream": {
+        "mode": "120000",
+        "kind": "blob",
+        "oid": "2b7a412b8fa0fb7e985b0793321bd4e698f2b6cd"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "2b7a412b8fa0fb7e985b0793321bd4e698f2b6cd"
+      }
+    },
+    {
+      "path": "CLAUDE.md",
+      "category": "patch",
+      "upstream": {
+        "mode": "120000",
+        "kind": "blob",
+        "oid": "47dc3e3d863cfb5727b87d785d09abf9743c0a72"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "47dc3e3d863cfb5727b87d785d09abf9743c0a72"
+      }
+    },
+    {
+      "path": "apps/cli/src/args.ts",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "be579bbd9586685a5af58c74432410351072d4db"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "380bad2c65de08db2307136af83890a884d82269"
+      }
+    },
+    {
+      "path": "apps/cli/src/process-shutdown.ts",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "e34f85f7f3a5ac533ac97a29474ac713b6a62cec"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "5aadec5b6ec7c3293a4eab5d00743489af888516"
+      }
+    },
+    {
+      "path": "apps/cli/tests/process-shutdown.spec.ts",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "95e54fe754f2bbbf0c184ed358037a273d0be987"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "c3b7d0e204c933556ba3793b4a4789602d937a18"
+      }
+    },
+    {
+      "path": "apps/cli/tests/profiles/acp/cordis.yml",
+      "category": "patch",
+      "upstream": {
+        "mode": "120000",
+        "kind": "blob",
+        "oid": "8a6e191c8e97ad8f581569c74f922c60aa5797c0"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "8a6e191c8e97ad8f581569c74f922c60aa5797c0"
+      }
+    },
+    {
+      "path": "apps/desktop-host/package.json",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "5d9628bdeecd7e70a34637d5b15fca832d0d8396"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "b52668330e51039c66abf8a11a9f91461a021514"
+      }
+    },
+    {
+      "path": "apps/desktop-host/src/failure-diagnostics.ts",
+      "category": "addition",
+      "upstream": null,
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "6a087e58495c299267fb96b0abc1f1945af96fb4"
+      }
+    },
+    {
+      "path": "apps/desktop-host/src/index.ts",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "209882013ecf891c4f940fac29aa1e547606162a"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "8cf479b8d968e3ba88a4c39be7f2f9ef618b36d1"
+      }
+    },
+    {
+      "path": "apps/desktop-host/src/managed-session.ts",
+      "category": "addition",
+      "upstream": null,
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "c4d153a989464163d6bbe86be28c7220f4486d76"
+      }
+    },
+    {
+      "path": "apps/desktop-host/src/office-engine.ts",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "d8f0bd1d5fa5a9f70dfe7c2e97b72791ef8d29e1"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "6220af63d3523da77cb520beba6f1b164a026f99"
+      }
+    },
+    {
+      "path": "apps/desktop-host/src/shutdown-diagnostics.ts",
+      "category": "addition",
+      "upstream": null,
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "842d25ba7d358f5da58f7118a346214f5b93944d"
+      }
+    },
+    {
+      "path": "apps/desktop-host/src/workspace-permissions.ts",
+      "category": "addition",
+      "upstream": null,
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "3c4d2db2ad0c4f1ec018516bde487d9f7cf7d15d"
+      }
+    },
+    {
+      "path": "apps/desktop-host/tests/failure-diagnostics.spec.ts",
+      "category": "addition",
+      "upstream": null,
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "294c5c07cacfb2c669c6f9a0cbcaeb97856a7e2d"
+      }
+    },
+    {
+      "path": "apps/desktop-host/tests/office-engine.spec.ts",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "716aef756dcdb823514d24df198b1f02513557ff"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "95bb23cacb598c153daa3b6b0893568f35da2c66"
+      }
+    },
+    {
+      "path": "apps/desktop-host/tests/shutdown-diagnostics.spec.ts",
+      "category": "addition",
+      "upstream": null,
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "5791b55f7ea8933e4ddccc95fa8ef099ee30e966"
+      }
+    },
+    {
+      "path": "apps/desktop-host/tests/workspace-permissions.spec.ts",
+      "category": "addition",
+      "upstream": null,
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "6dcefe72801606eac2c0efa434641f408ff2d3d6"
+      }
+    },
+    {
+      "path": "apps/desktop-host/tsconfig.json",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "865875e338db3c62c3c8909e255e01079d7dd4f0"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "fa8586420ef9e4bdddac374b0b5bfe5f87a82ea5"
+      }
+    },
+    {
+      "path": "apps/desktop/.env.windows.example",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "4950c70b27ea1fffcc324c64101d01b43d5fa755"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "9e88e157a41376b17da354d533a47feca7045339"
+      }
+    },
+    {
+      "path": "apps/desktop/OUTBOUND-AUDIT.md",
+      "category": "addition",
+      "upstream": null,
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "ea49cc6adae106dd5ef7a6829a82161e06d9a50d"
+      }
+    },
+    {
+      "path": "apps/desktop/README.i18n.yaml",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "77500865f6ab5fd7d22840cb9271c4b0c5f2e582"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "2e1638fb3e07af570355181e1d98ca90ae3c32b3"
+      }
+    },
+    {
+      "path": "apps/desktop/README.md",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "2b07b2b9d95c3d16a3aaa58b6d52f55cb1242e2e"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "6465c1fd0866e1e4b67a303b1faa42b7c75360d4"
+      }
+    },
+    {
+      "path": "apps/desktop/README.zh.md",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "4ebae34332b1d622a35d0bf857f1f3252736512c"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "5c5f4d55d7bc6c7b43b3f7ff78921853052c4d4a"
+      }
+    },
+    {
+      "path": "apps/desktop/electron-builder.config.d.mts",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "d1cae61b6a2e2683d19b466c2096e9e25c3edbae"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "8b617152c6a77a8df64887d433eb52665802cc2c"
+      }
+    },
+    {
+      "path": "apps/desktop/installer/assets/brand-2x.png",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "01dfb844c71ec30e2d1faa9b1a170618d2efbfd3"
+      },
+      "aigc": null
+    },
+    {
+      "path": "apps/desktop/installer/assets/brand-dark-2x.png",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "da372d2839aaaa9034d7be904940d858e1b7b6d1"
+      },
+      "aigc": null
+    },
+    {
+      "path": "apps/desktop/installer/assets/brand-dark.png",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "3983af4e65a97025a9de387af8b1194c17c7ef0e"
+      },
+      "aigc": null
+    },
+    {
+      "path": "apps/desktop/installer/assets/brand.png",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "9685dc2004a16fc37f2d274b7eb151e1fb5da33c"
+      },
+      "aigc": null
+    },
+    {
+      "path": "apps/desktop/installer/assets/uninstaller-sidebar.png",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "6546dfb0147dd23aeda2ff2f7d7b0883f1b45807"
+      },
+      "aigc": null
+    },
+    {
+      "path": "apps/desktop/installer/diagnostics.nsh",
+      "category": "addition",
+      "upstream": null,
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "1ea41a45f64957723276c3d9c8877bd0f1a04187"
+      }
+    },
+    {
+      "path": "apps/desktop/installer/extract-report.h",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "c885816c756a13fbfe6296747b93c2e441a1d5cb"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "00e1ac09d15209cde642d98ac6813e0e4a1ba976"
+      }
+    },
+    {
+      "path": "apps/desktop/installer/failure-report.h",
+      "category": "addition",
+      "upstream": null,
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "0daae5fb7839f9bdb481e0ffaa3fe7959940b85e"
+      }
+    },
+    {
+      "path": "apps/desktop/installer/lifecycle.nsh",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "452c4d26623ab94ab2d9aa7943178c9c622812b7"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "efe36f004078ab80bd50be3609fb27e9c979b1da"
+      }
+    },
+    {
+      "path": "apps/desktop/installer/pages.nsh",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "13ce171cc365b2fc07152baef3091c04c2b0a5e2"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "0bde06f87669cc627383db8622acd9b66abaec89"
+      }
+    },
+    {
+      "path": "apps/desktop/installer/path.nsh",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "6d5723c196b8d133a75382cf081f0bd5d71b5fa9"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "5edd54c7bf6b4d3def15bbf44d60e8d47d25637d"
+      }
+    },
+    {
+      "path": "apps/desktop/installer/strings.nsh",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "f2f2b08191b60fa43280388f9661eaac3809ef04"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "6209f0e120df53d94f5a4ed94e563580a4b6b99d"
+      }
+    },
+    {
+      "path": "apps/desktop/installer/window-frame.cpp",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "001fe57a293c9e99c2e831db0a82e6e76de82b19"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "5b983febdaf69a84fac3c6c491d89f32243b6649"
+      }
+    },
+    {
+      "path": "apps/desktop/outbound-policy.json",
+      "category": "addition",
+      "upstream": null,
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "809378e5ee066cf3e90154019480a0d374493ee7"
+      }
+    },
+    {
+      "path": "apps/desktop/package.json",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "db69834af227360b1a18c48c47058efe9a8d91b2"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "b90f3221233bc774e0545d2663b728213e1c25a3"
+      }
+    },
+    {
+      "path": "apps/desktop/renderer/assets/welcome-brand.svg",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "67c917d0bc664fe7d1b0cb30c4f2712d87587daf"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "26ebc549419996730b3652e6cfd96ecfceb179cd"
+      }
+    },
+    {
+      "path": "apps/desktop/renderer/update-dialog.css",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "98183989a5a8b027ef460d3bccdd84525410f698"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "4478edc54db698be98fa7fee64f721572569a5ff"
+      }
+    },
+    {
+      "path": "apps/desktop/renderer/welcome.css",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "3d5fc88460d3a1fe5effd63246cbc05c27d91ec2"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "dbbc5fa929464021bfffd5ddcbece20e8e6e7614"
+      }
+    },
+    {
+      "path": "apps/desktop/resources/icon-macos.png",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "f96a4f3c606349f131c314ff60d194edee660add"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "7afdf8599d01eefe6c2de6d980d3e7bec56099f9"
+      }
+    },
+    {
+      "path": "apps/desktop/resources/icon-macos.svg",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "36d9068cc78c8e77e2211bdfb0640b67fa8c8325"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "26ebc549419996730b3652e6cfd96ecfceb179cd"
+      }
+    },
+    {
+      "path": "apps/desktop/resources/icon-windows.png",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "cc8a09e311149d1157743e4e6a5de5d8afd21495"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "7afdf8599d01eefe6c2de6d980d3e7bec56099f9"
+      }
+    },
+    {
+      "path": "apps/desktop/resources/icon-windows.svg",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "eb07a50158238ac0a59d0e9eb0937b8b1e2cbe8b"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "26ebc549419996730b3652e6cfd96ecfceb179cd"
+      }
+    },
+    {
+      "path": "apps/desktop/resources/icon.png",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "d7b136f2bd8b8f15b632904826629546b23f2ebe"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "7afdf8599d01eefe6c2de6d980d3e7bec56099f9"
+      }
+    },
+    {
+      "path": "apps/desktop/resources/icon.svg",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "ae3e8c2c2cc8ad04a5ecd3c367d0dfbae10f5b1b"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "26ebc549419996730b3652e6cfd96ecfceb179cd"
+      }
+    },
+    {
+      "path": "apps/desktop/scripts/bash-payload.mjs",
+      "category": "addition",
+      "upstream": null,
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "ff2719d594aca8fad52488017cfb30fa79f4acee"
+      }
+    },
+    {
+      "path": "apps/desktop/scripts/desktop-build-version-discovery.ts",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "6bb7a1b04541a45cc9a0a41e3cf6a5a98422b613"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "592e2f70618c3d2c04d4c5b767f1e22884cb38b1"
+      }
+    },
+    {
+      "path": "apps/desktop/scripts/desktop-managed-backend.d.mts",
+      "category": "addition",
+      "upstream": null,
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "4e1a60d89a6d83419b94ded143fab01a1d0d6178"
+      }
+    },
+    {
+      "path": "apps/desktop/scripts/desktop-managed-backend.mjs",
+      "category": "addition",
+      "upstream": null,
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "e6f6a130367bbcd6d6f36ee60976adb7fed67f5e"
+      }
+    },
+    {
+      "path": "apps/desktop/scripts/desktop-package-environment.mjs",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "3addf3ff6563a4a083abc295da86a36ea6de86c1"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "693d2f6fb8354eca1292a93cbc8ef8c0b78bf93c"
+      }
+    },
+    {
+      "path": "apps/desktop/scripts/desktop-upload-plan.ts",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "e14228cf69d7719d225a7cc4a4cfb705bd17b637"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "a6858960a51aafbb1d12a59ce5f700ce114f5a4d"
+      }
+    },
+    {
+      "path": "apps/desktop/scripts/dev.ts",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "74840eae037e05995c8b8e8b64872b61eb156542"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "277d593bf8eaeaf5cd671037fe498bdbd8527612"
+      }
+    },
+    {
+      "path": "apps/desktop/scripts/development-app.ts",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "ff09b8b783952179ceb1e9bed7e4aee989176005"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "6f6fe57b7c0f9b98e5c23d815269aae9f0d5710e"
+      }
+    },
+    {
+      "path": "apps/desktop/scripts/development-debug-ports.ts",
+      "category": "addition",
+      "upstream": null,
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "4eb731ec2b7540a94433748be2ad455b08c45b42"
+      }
+    },
+    {
+      "path": "apps/desktop/scripts/electron-builder-config.mjs",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "2cee72d23d253aaf35eb5df20262032df605330e"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "6efcf0fe9be19b48f2df25a6751172f229daccdd"
+      }
+    },
+    {
+      "path": "apps/desktop/scripts/electron-download.ts",
+      "category": "addition",
+      "upstream": null,
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "f6c22ae45a122351e28aeb9d2e8221f74aab1aa0"
+      }
+    },
+    {
+      "path": "apps/desktop/scripts/ensure-office-engine.ts",
+      "category": "addition",
+      "upstream": null,
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "2e85399f6db485e281f9bb56435f34d2a56219b4"
+      }
+    },
+    {
+      "path": "apps/desktop/scripts/installed-update-builder.ts",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "2f0cbefe6c7c3ffcc5185bf3f4b54d9985b76736"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "cdc78e51f1cf81399a9c6adf1327986f928b0d09"
+      }
+    },
+    {
+      "path": "apps/desktop/scripts/installed-update-distribution.ts",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "3738fda13fb337730921355a09ed48abd630bea0"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "8e37437000e6961745dd12032a4be04f5585906a"
+      }
+    },
+    {
+      "path": "apps/desktop/scripts/installer-directories.nsh",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "49d4a2fb8222eadcc411204c8b7d1875535c06df"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "dd1dda5916d09f72f31a98ce1cb03c7494e9f25c"
+      }
+    },
+    {
+      "path": "apps/desktop/scripts/installer.nsh",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "598028785973b59032154397fd74d313d8ee4365"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "aacd5e77a0115a4b7eb1617c6a50bf0929615537"
+      }
+    },
+    {
+      "path": "apps/desktop/scripts/logged-notarytool.mjs",
+      "category": "patch",
+      "upstream": {
+        "mode": "100755",
+        "kind": "blob",
+        "oid": "ae2a9bf055047781e3f4c97165b21fb5b3fb3fc8"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "ae2a9bf055047781e3f4c97165b21fb5b3fb3fc8"
+      }
+    },
+    {
+      "path": "apps/desktop/scripts/node-bin/node",
+      "category": "patch",
+      "upstream": {
+        "mode": "100755",
+        "kind": "blob",
+        "oid": "ad241722b75723d03a50c91e7077a498b816a4ac"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "ad241722b75723d03a50c91e7077a498b816a4ac"
+      }
+    },
+    {
+      "path": "apps/desktop/scripts/outbound-audit.d.mts",
+      "category": "addition",
+      "upstream": null,
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "e61f3106af3aa8af6462686048bca01a13f2762f"
+      }
+    },
+    {
+      "path": "apps/desktop/scripts/outbound-audit.mjs",
+      "category": "addition",
+      "upstream": null,
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "46b0598740076ac0654df9a448de20dc3638cb69"
+      }
+    },
+    {
+      "path": "apps/desktop/scripts/package-macos.ts",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "c1a2cb5c71269079004045b6ba2a37ea45dcfef9"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "a31868d86ed78d219c4e4cddf9157fe65e78683f"
+      }
+    },
+    {
+      "path": "apps/desktop/scripts/package-target.ts",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "62f4fcbbb25a8596b25cf8d227a1ee3bf2ec5f37"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "68b94832e1461a7a6a0e9cf0cab558ade2a933a9"
+      }
+    },
+    {
+      "path": "apps/desktop/scripts/prepare-dsh.ts",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "a89247ad18e63b25eaf488779f424f7a15809d58"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "64430708580aa31914ce87eba768c71887ad8c4c"
+      }
+    },
+    {
+      "path": "apps/desktop/scripts/prepare-package-set.ts",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "7e7d62eea289ae7f3beb7194a083e1aecae2a001"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "4c2fcfa8fa4996a43db9fb5d15cc949da1705a94"
+      }
+    },
+    {
+      "path": "apps/desktop/scripts/prepare-primary-runtime.ts",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "44484baefcbd3947ad230d6708a08e44ab87b42b"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "c6a20062becf8c7ff258b022676de8718363d684"
+      }
+    },
+    {
+      "path": "apps/desktop/scripts/prepare-runtime.ts",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "04ddd937b02bdbeb95471679ffc3b054e341578e"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "fc4d84c51984d83916fce88adc27dcfd1fec63c1"
+      }
+    },
+    {
+      "path": "apps/desktop/scripts/prepare-speech-models.ts",
+      "category": "addition",
+      "upstream": null,
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "e59f03433701fcf28b58326885c6f9c26346d82e"
+      }
+    },
+    {
+      "path": "apps/desktop/scripts/prepare-windows-installer.ps1",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "98e02cf9a67d56c9df99deac9f9bf8f2a8d0ceff"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "27b26a4c18b53bf46e974a54174b1a84d84dd9ee"
+      }
+    },
+    {
+      "path": "apps/desktop/scripts/render-installer-brand.ps1",
+      "category": "addition",
+      "upstream": null,
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "3d745635a5d94f6a5b736ac16acc1cb494bc8766"
+      }
+    },
+    {
+      "path": "apps/desktop/scripts/smoke-packaged-runtime.ts",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "106830b5ada7b31dcfb50924747df511c43dabe4"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "8528a949dc9f29da885f60617ba6a087b3992bee"
+      }
+    },
+    {
+      "path": "apps/desktop/scripts/smoke-runtime.ts",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "19b26fac1a184ef64fa7658f1ac0482986e18c40"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "8fd134f250788c4bb6b6cb90e54fb6010b659d60"
+      }
+    },
+    {
+      "path": "apps/desktop/scripts/stage-internal-pilot.ts",
+      "category": "addition",
+      "upstream": null,
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "d09274929f9a0470d62e45afbb507107ec547030"
+      }
+    },
+    {
+      "path": "apps/desktop/scripts/test-windows-installer.mjs",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "03b601b1874c13dc88db4088da301c5071889fab"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "08a090e61692d159d42fedc743f0513feddeddb8"
+      }
+    },
+    {
+      "path": "apps/desktop/scripts/windows-directory-installer.mjs",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "0f2f985142f9ba70734fb473f093963b53e6e3bb"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "88f604dee661d9b02c158be24870e353810a32eb"
+      }
+    },
+    {
+      "path": "apps/desktop/src/bash-payload.ts",
+      "category": "addition",
+      "upstream": null,
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "58083576294c71df13cc2c7173066308692f295b"
+      }
+    },
+    {
+      "path": "apps/desktop/src/client/WelcomePage.tsx",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "179bc4ef094b232253cc68630dea9a9062033174"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "f63165649d72f525a16e5c25ba18786e9bbdfaa1"
+      }
+    },
+    {
+      "path": "apps/desktop/src/crash-report.ts",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "9c6d9ed793d14238c76935681f396f10818e9bfc"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "196a9f3acbf066fec7c64d14c0bb7506c388bfe6"
+      }
+    },
+    {
+      "path": "apps/desktop/src/directory-picker.ts",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "e7cf84c393e3359c0fd308eee20a0206458ce8f8"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "d09bd14085ddd5793e6ae5b9255674395342bd3a"
+      }
+    },
+    {
+      "path": "apps/desktop/src/failure-journal.ts",
+      "category": "addition",
+      "upstream": null,
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "055be42b72b931d11ee5a975fa4a3a7ebd7fbc70"
+      }
+    },
+    {
+      "path": "apps/desktop/src/failure-uploader.ts",
+      "category": "addition",
+      "upstream": null,
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "117d86b8d1262be0bc9b0b2a8604f44dc6b4165c"
+      }
+    },
+    {
+      "path": "apps/desktop/src/host-process.ts",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "37d8c31e4b2c368a6e23b8ace6598de9ee4865e2"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "a89985b5cdb81c570f461428023b57c8d60c42c8"
+      }
+    },
+    {
+      "path": "apps/desktop/src/ipc.ts",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "cf03b7e6c2fdb8b0e62ff85b9cfd749e59eac70e"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "2216a9265220226f1f061405405e01daed4739df"
+      }
+    },
+    {
+      "path": "apps/desktop/src/locale.ts",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "7a1c935a8dd255c3e68d066f932200194ef7cfbf"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "d20e31e91f04eb8ed7dbee7712840090aabb053a"
+      }
+    },
+    {
+      "path": "apps/desktop/src/main.ts",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "9f8ad5c22f667a2b8fa23f4242a193652091a9de"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "557c358f380bf94591c5fc273c9467dadba676b1"
+      }
+    },
+    {
+      "path": "apps/desktop/src/managed-backend-environment.ts",
+      "category": "addition",
+      "upstream": null,
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "5e9a7b18c860c3be2fbaecb781753c6a911b9877"
+      }
+    },
+    {
+      "path": "apps/desktop/src/managed-distribution.ts",
+      "category": "addition",
+      "upstream": null,
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "f3f3a77477d5d53d874fa0fed74245d067a910d6"
+      }
+    },
+    {
+      "path": "apps/desktop/src/preload-app.ts",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "13bbc206904423d829273cba98ccff3e1bf8e7ef"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "a40b832588efac6536b5cccc7c2234405d96e73c"
+      }
+    },
+    {
+      "path": "apps/desktop/src/project-manager.ts",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "270d87d6b25c90acc68ea3cbd3e31d3231ab9872"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "84eda59fc44a5c4e4a3f2123e1c0e6af63249cb6"
+      }
+    },
+    {
+      "path": "apps/desktop/src/update-coordinator.ts",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "c7bf91c3844db01616643d2770ae423669b8dd3c"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "b005816023325df9ee9d86fcaa832dc1592ccc03"
+      }
+    },
+    {
+      "path": "apps/desktop/tests/brand-assets.spec.ts",
+      "category": "addition",
+      "upstream": null,
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "f8f563ddc6bac9647373967c9b01d9c78f61ccb0"
+      }
+    },
+    {
+      "path": "apps/desktop/tests/crash-report.spec.ts",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "ec2f6e755aebc15ed557fd2b3baf87d5e78ba643"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "54650db7236013fe1243498495f7d2929b5d77d9"
+      }
+    },
+    {
+      "path": "apps/desktop/tests/desktop-build-version-discovery.spec.ts",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "8438e076adc3b1e594115c71311633def1540768"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "1de14b5e81d2045ced6411a5a28553f2f2a628fe"
+      }
+    },
+    {
+      "path": "apps/desktop/tests/desktop-package-environment.spec.ts",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "76129b56f858377f41e95669b27652d6ae48e36c"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "f7b7493c0634906daa836b75ce0680d9e4705b3c"
+      }
+    },
+    {
+      "path": "apps/desktop/tests/desktop-policy-environment.spec.ts",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "e4d893eca0fbf8664434ce50ef2fa77e85dfda06"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "d6866a5a1fd617cb7fb6831908c348dffb31e64d"
+      }
+    },
+    {
+      "path": "apps/desktop/tests/desktop-upload-plan.spec.ts",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "bf4d68843cbe929de5d7054bb339c544d20aab39"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "0fb336486264e4e5231debc8bd3eb19171878df8"
+      }
+    },
+    {
+      "path": "apps/desktop/tests/development-debug-ports.spec.ts",
+      "category": "addition",
+      "upstream": null,
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "5fb455272e3c3d244073be8102185525bf58ba88"
+      }
+    },
+    {
+      "path": "apps/desktop/tests/directory-picker.spec.ts",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "2f4a9b4ba6267cb4f32ac37f653d59e5d0de26f6"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "437f979b2741f11fbd5bce97ff4498e5c05ebfc9"
+      }
+    },
+    {
+      "path": "apps/desktop/tests/ensure-office-engine.spec.ts",
+      "category": "addition",
+      "upstream": null,
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "f254afb4586ac7babe0ff78bd6d270e685d9966f"
+      }
+    },
+    {
+      "path": "apps/desktop/tests/expected/about-panel.json",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "8dc6ee90632bbab44957e49729a661964225e6df"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "6c40d7af5481e6c3493a70d30f44c9a31f762e18"
+      }
+    },
+    {
+      "path": "apps/desktop/tests/expected/application-menu-en-US.json",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "af72c9b264074f1c0bd37710a92b36d608ae0b43"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "caa84aceb3c1010b09dd0866de2df70d5da2da9a"
+      }
+    },
+    {
+      "path": "apps/desktop/tests/expected/application-menu-zh-CN.json",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "991b9d763910059a7404e86559530688cf22174f"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "950498fbcfa07be7cde36175fd86c865856f28ea"
+      }
+    },
+    {
+      "path": "apps/desktop/tests/expected/fatal-address-in-use-en.txt",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "1e9a9b62d0081228503e5eb82479fe940d6cec59"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "4ac85c85ddee6612b65ae594133b6562a0a55fd3"
+      }
+    },
+    {
+      "path": "apps/desktop/tests/expected/fatal-address-in-use-zh-CN.txt",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "30cad3d061e2c8b2933692340292e13ae36723c1"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "5aeec6c2c5cbc75d9e511e9c720dfea9a9e4eb33"
+      }
+    },
+    {
+      "path": "apps/desktop/tests/expected/fatal-dialog-en.txt",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "0dd0a62eb375bb8b0005dd69acbb487a20e22d66"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "1ed0df76c3dafa797af11f86c6ee5c088d51fc5c"
+      }
+    },
+    {
+      "path": "apps/desktop/tests/expected/fatal-dialog-with-report-en.txt",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "aaa637ca1abf48ec3c4637c50b0a3633b5ae3bb8"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "5541763e793373d2f856bbd6d1bf738ee0826163"
+      }
+    },
+    {
+      "path": "apps/desktop/tests/expected/fatal-dialog-with-report-zh-CN.txt",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "353b59f4a42a0063c6dfaa0225139df5986276f6"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "52239ba7969cdd30ee65171d77eb68139982203f"
+      }
+    },
+    {
+      "path": "apps/desktop/tests/expected/fatal-dialog-zh-CN.txt",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "6c40644c090a0afd8ecc0ba5fe0187c7fd457de5"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "c93baa870fa7d7199695c56d031ef1d59239bb7b"
+      }
+    },
+    {
+      "path": "apps/desktop/tests/expected/test-release-upload-mac-arm64.json",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "515f0234f9449728363bd407a66aae16ca34313d"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "797cd840549e787bbbae7775347a4d5c173a3330"
+      }
+    },
+    {
+      "path": "apps/desktop/tests/expected/test-release-upload-mac-x64.json",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "5039a3aededf86f10a463d65bd7314f0d7b06d47"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "94ad57f3deb438dd90aacd620b7a1136b1e82b2a"
+      }
+    },
+    {
+      "path": "apps/desktop/tests/expected/test-release-upload-win-x64.json",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "cb60e0ce297566b06c3c0604cfb61689c9ef55c6"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "343ecef375cf52c9b1347a27ea89d601856f9c8f"
+      }
+    },
+    {
+      "path": "apps/desktop/tests/expected/welcome/en-api-key.expected.txt",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "25c5a624b511c97ca2557006a5dbe962a89a7071"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "d17a8e04b0796dc892a01d279c6c20d5323a8841"
+      }
+    },
+    {
+      "path": "apps/desktop/tests/expected/welcome/en-timeout.expected.txt",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "2fa1f3a3007b528c1f826719192a96d444a29af3"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "c37c41098cabae82715122c5e0f4b1777a93ee16"
+      }
+    },
+    {
+      "path": "apps/desktop/tests/expected/welcome/en-waiting.expected.txt",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "f6b5b8c1b243d5386e1fc1b240716c3d221f3dee"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "c0efcbe34567735e3e6fc9c8ae428d711aaf32ac"
+      }
+    },
+    {
+      "path": "apps/desktop/tests/expected/welcome/en.expected.txt",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "d559755d4e42849d822a2a810c333b1ca704c7a5"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "963bbf591a20307a51883ae97ee2c8b83c3f4c6a"
+      }
+    },
+    {
+      "path": "apps/desktop/tests/expected/welcome/zh-CN-api-key.expected.txt",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "676a5505e818e1b80bb785840cfb55100df5536d"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "3ed04e6ece8f299586330051504c6e6240b3c96f"
+      }
+    },
+    {
+      "path": "apps/desktop/tests/expected/welcome/zh-CN-timeout.expected.txt",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "f44aa1dadd9689396dcb1313b2568d4270984f4e"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "374417fa0b94f9b73a37a961be8e91c0d0497fca"
+      }
+    },
+    {
+      "path": "apps/desktop/tests/expected/welcome/zh-CN-waiting.expected.txt",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "faa7d73386af85ae4e73bc7b9b56f1df310bb812"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "fdbae7819cab2c2732ae87675ddc53160fc9e5cd"
+      }
+    },
+    {
+      "path": "apps/desktop/tests/expected/welcome/zh-CN.expected.txt",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "7baf913be3150b87f0d0a80bfafb8c2e78cf615e"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "51d01c0e3e8524d226bf7f65c4be9cac8dabdd4d"
+      }
+    },
+    {
+      "path": "apps/desktop/tests/failure-journal.spec.ts",
+      "category": "addition",
+      "upstream": null,
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "7399020ff3c6407ddf6a3feaf3467461bcd3426c"
+      }
+    },
+    {
+      "path": "apps/desktop/tests/failure-uploader.spec.ts",
+      "category": "addition",
+      "upstream": null,
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "fecba6bd98d18da7df6b5e4380502e2a2fd68bc3"
+      }
+    },
+    {
+      "path": "apps/desktop/tests/fatal-recovery.spec.ts",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "7ab4efd68a132d50e8a78cd0adbe4ec8487602b1"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "af6f30d818fefeea78773a48f74a7a2b973b5d37"
+      }
+    },
+    {
+      "path": "apps/desktop/tests/fixtures/installed-update-packaging.mjs",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "bf9d1070eba58204f978af4be7fa532610eea437"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "635c68d64dc13818eaec56bb16b9655a630e0ed7"
+      }
+    },
+    {
+      "path": "apps/desktop/tests/host-process.spec.ts",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "cb092742a76cec4fc4baba5dedee411f1977e352"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "6ffe96cd4217adcb35fbcbe71bd6d33739b41632"
+      }
+    },
+    {
+      "path": "apps/desktop/tests/installed-update-distribution.spec.ts",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "100a9723ec089ff3ce28504d3fc2e1ae3dc007ed"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "d7e798078f95732374d3c05289d99275306eab4a"
+      }
+    },
+    {
+      "path": "apps/desktop/tests/installed-update-package-content.spec.ts",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "8ecfeb9f3900faeee20c10083c7354ad065a45c7"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "77d707d578f3b3d3bb0f9c535021fba536c89ee2"
+      }
+    },
+    {
+      "path": "apps/desktop/tests/installed-update-publication.spec.ts",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "8c6bc4f0cadad8cd631c154f5347eefe6f3de09b"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "aa306714d5165c256375bd5d8518dd151f8a8880"
+      }
+    },
+    {
+      "path": "apps/desktop/tests/installer-packaging.spec.ts",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "3e42ed5a63a67edbbc3cf6e08effdc26540bfb6d"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "cca555b071f93f0eff66c5ddd87fd444626ba9c9"
+      }
+    },
+    {
+      "path": "apps/desktop/tests/locale.spec.ts",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "2bdd6673bdb49e95e890fd548ff5c08ee9d831da"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "775d333976964dda40886309b0cec0e042a76864"
+      }
+    },
+    {
+      "path": "apps/desktop/tests/macos-app-update-config.spec.ts",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "72a003734a331d7a52414bd723a4128fb5d1640c"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "255885241c63ad2aef2e0b2d6c60bebc5e502c92"
+      }
+    },
+    {
+      "path": "apps/desktop/tests/macos-notarized-application.spec.ts",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "38fc57054c7ab84d5048e2905cde1dada1a8ba8d"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "af6562ad34c9e72f5747b80716259cb15d678900"
+      }
+    },
+    {
+      "path": "apps/desktop/tests/macos-signature.spec.ts",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "8ce24c225097ef753a53003c9e167dab262012c7"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "96bdbe241914b7054bb94695f241b5e76cb39e3d"
+      }
+    },
+    {
+      "path": "apps/desktop/tests/main-bundle.spec.ts",
+      "category": "addition",
+      "upstream": null,
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "5222e03ef994275e004f1736c0cd2a4571f47456"
+      }
+    },
+    {
+      "path": "apps/desktop/tests/main-startup.spec.ts",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "0242d214a3494b17c058bd4991c1e163726c7694"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "887adf61f29d6b9dcaafb2670b83164bcca66185"
+      }
+    },
+    {
+      "path": "apps/desktop/tests/managed-backend-package.spec.ts",
+      "category": "addition",
+      "upstream": null,
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "6e92c7af0d12b0c3e5b3b8790096550c7607ae0b"
+      }
+    },
+    {
+      "path": "apps/desktop/tests/managed-distribution.spec.ts",
+      "category": "addition",
+      "upstream": null,
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "f5c3490760296aa923fdfe954b05eb310f1f5ed6"
+      }
+    },
+    {
+      "path": "apps/desktop/tests/outbound-audit.test.mjs",
+      "category": "addition",
+      "upstream": null,
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "11c8196571c0ec3ecc2cb1e911aad95b4de26d78"
+      }
+    },
+    {
+      "path": "apps/desktop/tests/package-macos.spec.ts",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "e8fb5dcf34a40053200744c7271b0076fc8cd3e8"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "a4a0a143b6e00bf785bc4092122a93c4c05de090"
+      }
+    },
+    {
+      "path": "apps/desktop/tests/package-target-errors.spec.ts",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "9c8297ef20cbecbd75625446719296dac445a52e"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "a77eb3b6937d750629f2312599831db8e0d2a3dd"
+      }
+    },
+    {
+      "path": "apps/desktop/tests/package-target-stages.spec.ts",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "41e1ee8d4e1755149aa41427f4eff665a69e316b"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "102c9e1ec13918b4ebf6e558c87a5f8c890c1c5d"
+      }
+    },
+    {
+      "path": "apps/desktop/tests/preload-app.spec.ts",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "16c94456a4bd437051d53fa3e5a300584de9cabd"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "4a6bf1bbf858b9004eb995eede310ee9c2e769a3"
+      }
+    },
+    {
+      "path": "apps/desktop/tests/project-manager.spec.ts",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "1dd76b35f9be8ef72332ae2acbce19fe25774a8a"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "154ade82fd5b4c79bac5a5ad3b971a834c6e118e"
+      }
+    },
+    {
+      "path": "apps/desktop/tests/update-coordinator.spec.ts",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "d600b5eecb8813a22cc6654b9b718656b658b491"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "e7a14e932cb93488ab4c47371a3eb85d84cc7550"
+      }
+    },
+    {
+      "path": "apps/desktop/tests/welcome-startup.spec.ts",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "4a823afdf9bb267d175a8d4f7275bd9f9ebb0eb2"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "3cfa3e5d258ce46a26a58b4e000da95c5675c0d1"
+      }
+    },
+    {
+      "path": "apps/desktop/tests/windows-asar-unpack.spec.ts",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "1be1eb6266c6731e5b5d68332c05b455ccd1becd"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "759dac710f80eb1c996234f78a1c1be0899651a4"
+      }
+    },
+    {
+      "path": "apps/desktop/tests/windows-brand-upgrade-smoke.ps1",
+      "category": "addition",
+      "upstream": null,
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "9507daaf8aabf79cf889267ecd5188fb5fc1251d"
+      }
+    },
+    {
+      "path": "apps/desktop/tests/windows-installer-failure-payload.cpp",
+      "category": "addition",
+      "upstream": null,
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "2096d737ad1fd4c7010754f9e60d8c36790b4628"
+      }
+    },
+    {
+      "path": "apps/desktop/tests/windows-sign.spec.ts",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "e5d5a7cd3f8fe92afff0646fa79e4a535287a1e0"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "60e90d04a1c0ae8919a284260a224a1b4eebf64a"
+      }
+    },
+    {
+      "path": "apps/desktop/tests/windows-update-publisher.spec.ts",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "a1af8d5416708f93bd530877aad00540fce7d991"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "5d90082a7e9b68ff4ef32f6a614f42979c5a0d69"
+      }
+    },
+    {
+      "path": "apps/desktop/tests/windows-visible-update-smoke.ps1",
+      "category": "addition",
+      "upstream": null,
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "41491302a372517428fc096c79ec3544c9a87493"
+      }
+    },
+    {
+      "path": "apps/desktop/tsdown.config.ts",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "6db212aee78d7c9d84d691a8b399a71065c18f4a"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "32318267f86126fe3423789a2315b9a355b65207"
+      }
+    },
+    {
+      "path": "apps/web/public/bhss-office-assistant.svg",
+      "category": "addition",
+      "upstream": null,
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "26ebc549419996730b3652e6cfd96ecfceb179cd"
+      }
+    },
+    {
+      "path": "apps/web/public/favicon-dark.svg",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "648fe4f2b9b5c7f94973e922094613e3012ceeba"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "26ebc549419996730b3652e6cfd96ecfceb179cd"
+      }
+    },
+    {
+      "path": "apps/web/public/favicon.svg",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "754615a37acaf1d24973b4e757ccdb16b9b8f003"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "26ebc549419996730b3652e6cfd96ecfceb179cd"
+      }
+    },
+    {
+      "path": "apps/web/public/manifest.webmanifest",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "6592d6a7000ec65d67e408ffc5402f23cb3939ea"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "8ad7eff16edfeb88a9ae62aee6e708d13c65e0de"
+      }
+    },
+    {
+      "path": "apps/web/src/main.ts",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "1a84cd5f63249305d1e0b3843036fc6bffb2ee11"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "0d0471780ba5ef9b439dbf15acd7ecefc71096fe"
+      }
+    },
+    {
+      "path": "apps/web/tests/desktop-boot.spec.ts",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "cac91ad7e7518e68988850701b2420de02d37ece"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "6fb2ff3eadc2edfb21f338544822cadb941514b9"
+      }
+    },
+    {
+      "path": "apps/web/tests/document-preview.e2e.ts",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "a28b0b35254820949455b87771f140a0bcdad0e9"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "60e441f718475263eb0f3be296f4fa938b5ce838"
+      }
+    },
+    {
+      "path": "apps/web/tests/managed-connectors.spec.ts",
+      "category": "addition",
+      "upstream": null,
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "462f50d638edf9abb18c858cd4b6f4af8ef97924"
+      }
+    },
+    {
+      "path": "apps/web/tests/pwa-manifest.e2e.ts",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "2cfc21e2c913917015a6e4cee10c37062d57d634"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "cc0ef4ab914b9aea8bc9b38136d07dac3203c398"
+      }
+    },
+    {
+      "path": "apps/web/vite.config.ts",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "9984bf38de09af218865d98c0b17c49e8105ede7"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "f2ebd3fac5209661b490ce325ad5ab6546ffd946"
+      }
+    },
+    {
+      "path": "package.json",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "986af9f481373c3f49ce82d05ea5f276c80d2008"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "987e7350f09914be7b6bee986df784b8a86e1721"
+      }
+    },
+    {
+      "path": "packages/CLAUDE.md",
+      "category": "patch",
+      "upstream": {
+        "mode": "120000",
+        "kind": "blob",
+        "oid": "47dc3e3d863cfb5727b87d785d09abf9743c0a72"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "47dc3e3d863cfb5727b87d785d09abf9743c0a72"
+      }
+    },
+    {
+      "path": "packages/api/gateway/src/index.ts",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "777da35065831803394d31e28b11816c8da7152b"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "82fc52d41d1b82d0c71f95443ac88fa22fa1991b"
+      }
+    },
+    {
+      "path": "packages/api/remotes/src/remote-events.ts",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "115cbff692d7dfcc1b65910841e98c5ccf33d5a2"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "8325af4af9dacedb89fd9612cd66207ef3e5fe99"
+      }
+    },
+    {
+      "path": "packages/api/session-controller/README.md",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "fa2a251e94cfa2855790d7d71457ac4bdf2ff752"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "c8d8548b3f40f6b337cee13d2ce793448a9c412c"
+      }
+    },
+    {
+      "path": "packages/api/session-controller/src/agent.ts",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "3f0fa77944418d8385f4c97604f0ca1833ead1ef"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "593643a7612b9c2bf704001cd89c9e901528918a"
+      }
+    },
+    {
+      "path": "packages/api/session-controller/src/catalog.ts",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "0c97107f0395c1f3c5ed303c80d299e9d40afb53"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "e9b00623f58b2a2014ce6ab5d8dc50885d25b0a6"
+      }
+    },
+    {
+      "path": "packages/api/session-controller/src/commands.ts",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "03c697734b84331429aef9a61f59e6c740747361"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "899af75edfb76419a32a72e6c97c51b67ede7a6d"
+      }
+    },
+    {
+      "path": "packages/api/session-controller/src/index.ts",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "5796434086e3b8a0a928ecb7fd8cc82d1c68e022"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "61c042f9ea3f61292609516a82b8f6384a1a7abc"
+      }
+    },
+    {
+      "path": "packages/api/session-controller/src/types.ts",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "84378cc34d332433820c2f4df3d6b26689dac0bc"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "a97d0deddd2ed6f89d1df3869c3f70a8b5ef95bd"
+      }
+    },
+    {
+      "path": "packages/api/session-controller/tests/session-models.host.spec.ts",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "51133aafde8b01f9a3ed573d40a8918aa0449a2d"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "0c3d623101ad9e93fd25346df9c3d75c6d652388"
+      }
+    },
+    {
+      "path": "packages/api/session-controller/tests/session-presets.host.spec.ts",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "5406d235f82fbd16409286065bdfd72c69ce9939"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "a2aebfa417bc84150f706bb3898ca7e43090584d"
+      }
+    },
+    {
+      "path": "packages/api/settings-controller/README.md",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "b7472f6b0f32eeb6d5f674da7187ae35f7d96936"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "7e5ea9901bd9a0d4f7ecb8301775af052507634a"
+      }
+    },
+    {
+      "path": "packages/api/settings-controller/README.zh.md",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "9159e1f1678ec9a3fc282986ee89141e55ff3b4c"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "f5bd6f9e821fe88297bd6c520195d4c605cdc7b7"
+      }
+    },
+    {
+      "path": "packages/api/settings-controller/package.json",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "e228f2cbeb957dc9be1bba213cb85f07e1fc7fbf"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "222f6450ce3e8b9fbe38ad3eb5149d4a847c8fb9"
+      }
+    },
+    {
+      "path": "packages/api/settings-controller/src/credentials.ts",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "99c42a4cf0e5bfbcfb218fd9cd0aeb81a315114c"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "b1f194da6c5f9da7f8928eb469599d9eb01a8671"
+      }
+    },
+    {
+      "path": "packages/api/settings-controller/src/index.ts",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "34aebd87a516db73247d424248fb88facf19b8fd"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "c33a93b0da10ab2d123fc66f323bbac9c52fb787"
+      }
+    },
+    {
+      "path": "packages/api/settings-controller/src/types.ts",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "21101843633dcb0490d458c6dcca3b3c5e5422da"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "5643b1f40bcba58b8bcd5e34c3ec20897f0ee009"
+      }
+    },
+    {
+      "path": "packages/api/settings-controller/tests/credentials-controller.host.spec.ts",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "9ac14d9eb88e69ae14baa8f9f6a3519d86e9e7cd"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "15b874e2d2525afe880402c787f446a50827d749"
+      }
+    },
+    {
+      "path": "packages/api/settings-controller/tsconfig.json",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "676959155838acf3e5dc641388a4811bff351125"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "ad57a15b9e3c6ce6c7cbc73bc05932075103638c"
+      }
+    },
+    {
+      "path": "packages/api/workspace-controller/README.i18n.yaml",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "2c139343c711c7de511edf50375abec2361b7e05"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "b14e619f86df5ad4e515ec03c6428c132b745331"
+      }
+    },
+    {
+      "path": "packages/api/workspace-controller/README.md",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "b1ca97465625817c28615cbff1badb564ccc29fe"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "26cea86c0f3880e7855b29e90f182208a4619fba"
+      }
+    },
+    {
+      "path": "packages/api/workspace-controller/README.zh.md",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "7f7dbd49c0ef0ebbcb49dfeb6d736dc03e96565c"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "524d25e440dd9b3f73a4cdedccf5ed059196c08b"
+      }
+    },
+    {
+      "path": "packages/api/workspace-controller/package.json",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "dfa24fae41debab830a11bad1a2bec6b53c57e5a"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "72d40b583a115a0da0a9d0f403275f76456b0998"
+      }
+    },
+    {
+      "path": "packages/api/workspace-controller/src/cloud-archive.ts",
+      "category": "addition",
+      "upstream": null,
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "e980dff5dde258eb005173b1ee515e1b95d9226a"
+      }
+    },
+    {
+      "path": "packages/api/workspace-controller/src/cloud-backup.ts",
+      "category": "addition",
+      "upstream": null,
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "85660d1783156e212f7eb9d53878ac1c98d5a058"
+      }
+    },
+    {
+      "path": "packages/api/workspace-controller/src/commands.ts",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "c3a63f0cff71a0209d13f82e2a2744fb677de922"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "691f3275364c12ff385dcf4424cc194ad2c92546"
+      }
+    },
+    {
+      "path": "packages/api/workspace-controller/src/data-migration.ts",
+      "category": "addition",
+      "upstream": null,
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "97e76b910ae0a93441e4133e742054da9b3effbc"
+      }
+    },
+    {
+      "path": "packages/api/workspace-controller/src/directory-picker.ts",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "41f7db97f46f825cebd5b26c648dbe42fc81bed4"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "371197a2ed88717c454452df801a1e3e330fe547"
+      }
+    },
+    {
+      "path": "packages/api/workspace-controller/src/index.ts",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "928f52f88351ff04f41b66c07ea686322f1b5fa7"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "95fefe405ca26709ebba1da261c477c5be062567"
+      }
+    },
+    {
+      "path": "packages/api/workspace-controller/src/portable-attachments.ts",
+      "category": "addition",
+      "upstream": null,
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "e6e512228183cc6188b3ccdcb33510703061401a"
+      }
+    },
+    {
+      "path": "packages/api/workspace-controller/src/types.ts",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "ffaef0070f49ea1bcd9f797dfc32088b64ca2112"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "6391b8ebdbbe2823186dbd9a5fcbf85a1dba90bf"
+      }
+    },
+    {
+      "path": "packages/api/workspace-controller/tests/data-migration.host.spec.ts",
+      "category": "addition",
+      "upstream": null,
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "4320cc63a376a54ea5e16ff8e194abbda6da890a"
+      }
+    },
+    {
+      "path": "packages/api/workspace-controller/tests/directory-picker.host.spec.ts",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "307de96dc4f4a463bbb21102d0a5f6017ba87ba6"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "a23f9d6bebafb797a45a15e6953777dace8522ae"
+      }
+    },
+    {
+      "path": "packages/api/workspace-controller/tests/model.client.spec.ts",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "ade48b44b0332c5d0488556229b455b244349c35"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "e7555fd407bca81bc8c105ae9520732bf2d489af"
+      }
+    },
+    {
+      "path": "packages/api/workspace-controller/tests/workspace-controller.host.spec.ts",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "95cbffb3f98053c1974a225f937fc053702acdef"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "d95070d66cd4f5d591b2dfa361f4d37f6fbe4419"
+      }
+    },
+    {
+      "path": "packages/api/workspace-controller/tsconfig.host.json",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "17fda7ee3857c30c9a21f5dc39cc70282811bfb2"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "bc1fae7714621d08764830ac7a7cf6a2cfa2011f"
+      }
+    },
+    {
+      "path": "packages/boot/app-boot/README.i18n.yaml",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "ff61bc8512273a2a153045a342339801c9643931"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "933a715e5fe710197f57ae5c3bddafbee5784275"
+      }
+    },
+    {
+      "path": "packages/boot/app-boot/src/index.ts",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "0881307284fc90885efb1af3e8ef160e35503bfd"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "b05a53c081c09cb1146efbd0a4e0de0229225d0b"
+      }
+    },
+    {
+      "path": "packages/boot/app-boot/src/managed-profile.ts",
+      "category": "addition",
+      "upstream": null,
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "1cefb1b49c76046fa9b8bd09b0bb7fd61b683132"
+      }
+    },
+    {
+      "path": "packages/boot/app-boot/src/profile-context.ts",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "328b543e00678640f021e338d49ffb0926c05aa0"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "fc2d278246355ceb13fa9028786b6e105b127aee"
+      }
+    },
+    {
+      "path": "packages/boot/app-boot/src/profile.ts",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "305e74aaff7a2baa8db9669f4378ab95b41c6afa"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "4b1a95459cd1f7c0a57deee59c1f52bc5b33b2d3"
+      }
+    },
+    {
+      "path": "packages/boot/plugin-manager/README.i18n.yaml",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "8dbbf1d7b8e74e50b701996c74be4aa8bd4ec93b"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "1ca25ed7a80859b418171bf292a37da5f2da3d0f"
+      }
+    },
+    {
+      "path": "packages/boot/plugin-manager/README.md",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "1de9c9d78e421d44eb006f1ab7fd82656f006a2a"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "e4051033a53bce02fc9f7b4ad9baee2e3112a68a"
+      }
+    },
+    {
+      "path": "packages/boot/plugin-manager/README.zh.md",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "f7502aab64738ad1feccf58b84ff945213df2eff"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "995694b500544c4fa2d7d22197ef2e7d0721b0fe"
+      }
+    },
+    {
+      "path": "packages/boot/plugin-manager/package.json",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "c96579daf004ef4e9d86bc3537ab0b3a0ea5d8a5"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "d2c1201333e2e9620fa1269512aeb6320c0e8370"
+      }
+    },
+    {
+      "path": "packages/boot/plugin-manager/src/index.ts",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "876adf97504036bedf398dc6f23a2b590eb8ab79"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "748b19ce89237887f5eda5b315a1ee2b97b1e43e"
+      }
+    },
+    {
+      "path": "packages/boot/plugin-manager/src/managed-mcp.ts",
+      "category": "addition",
+      "upstream": null,
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "47d5da6554a82970f3a8426534cea5a436d3ca3f"
+      }
+    },
+    {
+      "path": "packages/boot/plugin-manager/src/managed-sync.ts",
+      "category": "addition",
+      "upstream": null,
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "6da0b1d985e5f0a7c313fb22356f1cd8457c2ad5"
+      }
+    },
+    {
+      "path": "packages/boot/plugin-manager/src/managed-version.ts",
+      "category": "addition",
+      "upstream": null,
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "d5288ac587be7c627300c16ee5d1a8611e4bec8c"
+      }
+    },
+    {
+      "path": "packages/boot/plugin-manager/src/operations.ts",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "883e79713ef2b056bd8a4d7ecb1765bf267f32e1"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "380e6c0b36349e4ade4b100edeaf6b7a52d5f490"
+      }
+    },
+    {
+      "path": "packages/boot/plugin-manager/src/types.ts",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "7743b4f35faec6cfab9f9b9fc457da1d5a1e5b43"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "d6f63dcc8bd5c56b2384eb4c96ac467ab18bd16e"
+      }
+    },
+    {
+      "path": "packages/boot/plugin-manager/tests/managed-mcp.spec.ts",
+      "category": "addition",
+      "upstream": null,
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "a940c2c16e63116c2623c85cd47eeae323f5c51c"
+      }
+    },
+    {
+      "path": "packages/boot/plugin-manager/tests/managed-search.spec.ts",
+      "category": "addition",
+      "upstream": null,
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "e11c6e5a9892bebb675a41cd34dd63d9cc5682bf"
+      }
+    },
+    {
+      "path": "packages/boot/plugin-manager/tests/managed-version.spec.ts",
+      "category": "addition",
+      "upstream": null,
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "ec33876d867d780b38c69d10d76a2f401a8f4627"
+      }
+    },
+    {
+      "path": "packages/boot/plugin-manager/tests/managed-voice.spec.ts",
+      "category": "addition",
+      "upstream": null,
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "f1dee6db6239286843a6845ac4e1db3dca9cdaf8"
+      }
+    },
+    {
+      "path": "packages/boot/plugin-manager/tests/manager.spec.ts",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "16fbed965076d00b23bde688b1db5ec3e7ebe9b7"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "3544777cf5c4662b289a3aad614cf5d50006806b"
+      }
+    },
+    {
+      "path": "packages/boot/plugin-manager/tests/operations.spec.ts",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "d63f3374ab8974732f035e63e86dc9ea06a5b246"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "0124a2a510ec97294611f76b748e22ab96543252"
+      }
+    },
+    {
+      "path": "packages/boot/plugin-manager/tsconfig.json",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "ba181795a1c9e7e20b280da2f11559b4ab071463"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "a2b5c1a6e63c91a88afb8b83d863ae05dd7d5e27"
+      }
+    },
+    {
+      "path": "packages/bundle/base/README.i18n.yaml",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "cad307b9e5bb92a35a1de731fac22383df1565c5"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "a0bb55a3d5bbdd3994184d5c6e8610a30b039200"
+      }
+    },
+    {
+      "path": "packages/bundle/base/README.md",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "98f4b148bf0f0304c412b6964be53c4b2e76287c"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "a0cf73ff82260f6026cf0408897432300d37341d"
+      }
+    },
+    {
+      "path": "packages/bundle/base/README.zh.md",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "2ed43b780bdee0056e17dcad8d720b003f70b3f1"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "7c0aaec3de7353915732f0e619371a873e65b047"
+      }
+    },
+    {
+      "path": "packages/bundle/base/cordis.patch.yml",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "48d7ff6e4b26f979b2f7cc9ae6ce1c5c00e0b602"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "9ac60abbe3bfde99e76016e7c59f259fd929261d"
+      }
+    },
+    {
+      "path": "packages/bundle/base/package.json",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "9bac1d952d13d6fa8e2a63567ca0201f0a45b63e"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "1e50b2dd596a5769b155d868ba500c4ca5061b38"
+      }
+    },
+    {
+      "path": "packages/bundle/web-app/README.md",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "9fd7cda152a2ca50eca253c54feb97b01d35e0ff"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "19a315b9d6ad90b0e827d07c73a549c73ee10384"
+      }
+    },
+    {
+      "path": "packages/bundle/web-app/README.zh.md",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "e07e0556c1bd8b0869253add1ae591ce1c060ee0"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "8375e1773353e3900500776b7d0a91c6eb35e509"
+      }
+    },
+    {
+      "path": "packages/bundle/web-app/cordis.patch.yml",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "5ed86cceea0fc0a9baf3091f45dcb0e688d99b2c"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "96c44356572528bd87941f1cfeb42669bf049ada"
+      }
+    },
+    {
+      "path": "packages/bundle/web-app/package.json",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "291cc0e58f2a9f0e2ce59b9bb714d1dbfd72344a"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "620a959aa69edd2150a51daa45b76793a41b177f"
+      }
+    },
+    {
+      "path": "packages/bundle/web-app/src/index.ts",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "76c212e4e6d885d9384da033d4c855e428348095"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "8499f406d4585fc5eaf4a71b26b229c7de6b9d49"
+      }
+    },
+    {
+      "path": "packages/bundle/web-app/src/startup.ts",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "9faad244ddb0f7e431c672ba413146da731793af"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "139111e4a0c36bfb54841d0652b8066776802ff7"
+      }
+    },
+    {
+      "path": "packages/bundle/web-app/tests/managed-configuration-surfaces.spec.ts",
+      "category": "addition",
+      "upstream": null,
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "e3ac9b58da004fbeb84e974d2b25ed7907c37701"
+      }
+    },
+    {
+      "path": "packages/client/ui-brand-official/README.md",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "f8687047ca3b2a88d4fb2ae36a27819852df5ee9"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "9a27292ef30a0cbe0c6064fe13f7b8b7f64602f8"
+      }
+    },
+    {
+      "path": "packages/client/ui-brand-official/README.zh.md",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "e23b0c59720bbd45285f057aa8edf967e3f019c2"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "ae14abb32b12532398763f01bafb424dd3ac5b78"
+      }
+    },
+    {
+      "path": "packages/client/ui-brand-official/package.json",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "822b612aff1abb1edb8215789a48f4be33f8d089"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "e5a70a99f358704d400c91ffad39d9c9d926ae67"
+      }
+    },
+    {
+      "path": "packages/client/ui-brand-official/src/client/Brand.tsx",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "9ac6dd7ce2e537c0f8bcf72d413fa776261917cb"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "4e09d3477c0243c488b1639591c729066a913fc1"
+      }
+    },
+    {
+      "path": "packages/client/ui-brand-official/src/client/index.ts",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "332a5f6007c7e83a3d8465ab4ee52a868111c682"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "8e55e9df8984c6aaef9c74b7a98581d15923fcbf"
+      }
+    },
+    {
+      "path": "packages/client/ui-brand-official/tests/browser-plugin.client.spec.tsx",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "47e32068f6497583fdf8c4f2ebedb354c075c207"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "d52abeea5151a59392d1aaf1b2646ff0b8170aab"
+      }
+    },
+    {
+      "path": "packages/client/ui-chat/src/client/chat/MessageItem.tsx",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "e1875f5ce2c19c3ee6ac47dfc6bd2f80f5cc0ad6"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "7fd1702a0ebb4c3efcb334d6fe2b8fabef0ba4ec"
+      }
+    },
+    {
+      "path": "packages/client/ui-chat/src/client/locale.ts",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "9638f554e0ff5e05125eb6fdbeee8f1b7f910470"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "23330f076ccd57d6176150c26b6bc8a4717372ea"
+      }
+    },
+    {
+      "path": "packages/client/ui-chat/tests/chat-view.client.spec.tsx",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "dc70093fc5efb8d5308280b6269ccc02da3da86a"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "0c237ea5c53fa1b6bad66f69c807c335c7d007fb"
+      }
+    },
+    {
+      "path": "packages/client/ui-conversation/README.md",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "4823aa0a1ba5975c4efc8b6bdddd7ca8c57c068f"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "8256be8647a199d1ca73e6437457615640ff8c2b"
+      }
+    },
+    {
+      "path": "packages/client/ui-conversation/src/client/apply.ts",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "f4a5ff4780741e7447d2dd4c9473c9cde22a0ce7"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "b28f4466064dfecd762244e68107c874ebbd1a76"
+      }
+    },
+    {
+      "path": "packages/client/ui-conversation/src/client/image-labels.ts",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "feca6914124f59ebbbfe5d55cd66abb525de04b7"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "b969bddffa06a6747ca1cef2be392d5cdde90a28"
+      }
+    },
+    {
+      "path": "packages/client/ui-conversation/src/client/locales.ts",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "aab47353169880c9fb1c1bd94a121ef658c2a3a5"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "a79671c265bdb527c0aebb175a44475bd09f7c43"
+      }
+    },
+    {
+      "path": "packages/client/ui-conversation/src/client/skeleton/EmptyHero.tsx",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "40df87269b5f9b434dbe561b03f3d368d0d53301"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "b4ab99b750ec42e3a77681ef3a73994bab459a66"
+      }
+    },
+    {
+      "path": "packages/client/ui-conversation/src/client/skeleton/HeroShell.module.css",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "d47e0bfe2f42e20f25c9f1150f774060b98334d0"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "24a798b416823820f5f1b6d4cfb753175f6d595b"
+      }
+    },
+    {
+      "path": "packages/client/ui-conversation/tests/apply-inject.client.spec.tsx",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "be25e250d36c36f313758091630f6cd202556732"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "c8473d692391df3b5c83f940660093db1a07c137"
+      }
+    },
+    {
+      "path": "packages/client/ui-conversation/tests/image-labels.client.spec.ts",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "0244c134db2249abae93ee0c42939e519c5afede"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "b314ed8710f83dfb9dd97ded10e4af2be12e1a68"
+      }
+    },
+    {
+      "path": "packages/client/ui-conversation/tests/skeleton.client.spec.tsx",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "90a9bab13716758cb96b8dfb7a7be557b89de3b0"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "07e71898745fc7eee6adb1500f967c757b63b08e"
+      }
+    },
+    {
+      "path": "packages/client/ui-managed-account/README.i18n.yaml",
+      "category": "extension",
+      "upstream": null,
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "a499f76c96205be8545480515614aef2acb1b1a5"
+      }
+    },
+    {
+      "path": "packages/client/ui-managed-account/README.md",
+      "category": "extension",
+      "upstream": null,
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "25e554409ddaded213ccfc285038c3b3435f8bd5"
+      }
+    },
+    {
+      "path": "packages/client/ui-managed-account/README.zh.md",
+      "category": "extension",
+      "upstream": null,
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "9d155d966a37488e053e82074138ed0c6a2f61e3"
+      }
+    },
+    {
+      "path": "packages/client/ui-managed-account/package.json",
+      "category": "extension",
+      "upstream": null,
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "6d50292cc3ed40c1da32d3dbaa8ce56d60f1ceac"
+      }
+    },
+    {
+      "path": "packages/client/ui-managed-account/src/client/CloudBackupPanel.tsx",
+      "category": "extension",
+      "upstream": null,
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "686dbaca29f218ff2afdc48353fb544a507aae2c"
+      }
+    },
+    {
+      "path": "packages/client/ui-managed-account/src/client/ConnectorCards.tsx",
+      "category": "extension",
+      "upstream": null,
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "287bc05c81224587f8aeca35f0da38454d644637"
+      }
+    },
+    {
+      "path": "packages/client/ui-managed-account/src/client/Connectors.module.css",
+      "category": "extension",
+      "upstream": null,
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "d921ac31443c7875f42e274cbc90c0a395021709"
+      }
+    },
+    {
+      "path": "packages/client/ui-managed-account/src/client/DataMigrationDialog.module.css",
+      "category": "extension",
+      "upstream": null,
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "50225beaa3c49506a4022fbf67e3cb4f56c42016"
+      }
+    },
+    {
+      "path": "packages/client/ui-managed-account/src/client/DataMigrationDialog.tsx",
+      "category": "extension",
+      "upstream": null,
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "693332fe5e2c96cf45f4d74a212834b9aaa24569"
+      }
+    },
+    {
+      "path": "packages/client/ui-managed-account/src/client/ManagedAccountMenu.module.css",
+      "category": "extension",
+      "upstream": null,
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "aea745640474487d3b2fdb4157da4ab11248f087"
+      }
+    },
+    {
+      "path": "packages/client/ui-managed-account/src/client/ManagedAccountMenu.tsx",
+      "category": "extension",
+      "upstream": null,
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "9adeb437a3b9a73b3044fe03ef510a2c13d8e73e"
+      }
+    },
+    {
+      "path": "packages/client/ui-managed-account/src/client/ManagedSignInDialog.module.css",
+      "category": "extension",
+      "upstream": null,
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "ea879d1863b501e2abb7ee4232502794f56e7831"
+      }
+    },
+    {
+      "path": "packages/client/ui-managed-account/src/client/ManagedSignInDialog.tsx",
+      "category": "extension",
+      "upstream": null,
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "c28323d81919067d6bd48ee328ed77acccc31c5b"
+      }
+    },
+    {
+      "path": "packages/client/ui-managed-account/src/client/connectors.tsx",
+      "category": "extension",
+      "upstream": null,
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "b412452e7c37db6ce64ac7da51414acf0d692cfe"
+      }
+    },
+    {
+      "path": "packages/client/ui-managed-account/src/client/index.ts",
+      "category": "extension",
+      "upstream": null,
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "a8b9c5c57a342d62bbf8c1fa7b5d5e23b0815910"
+      }
+    },
+    {
+      "path": "packages/client/ui-managed-account/src/client/locales.ts",
+      "category": "extension",
+      "upstream": null,
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "92c38592913bb7430fa682250445dfe7bbc2251e"
+      }
+    },
+    {
+      "path": "packages/client/ui-managed-account/src/css-modules.d.ts",
+      "category": "extension",
+      "upstream": null,
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "8811db126498ec8fac4acff5c3f137ffb839fec5"
+      }
+    },
+    {
+      "path": "packages/client/ui-managed-account/src/index.ts",
+      "category": "extension",
+      "upstream": null,
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "fe065d0cf6ce18fd1cd0e783f5f382fcd2d7a1b9"
+      }
+    },
+    {
+      "path": "packages/client/ui-managed-account/tests/cloud-backup.client.spec.tsx",
+      "category": "extension",
+      "upstream": null,
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "96b3649d18bf873b9342dd3c8ba122bed2582932"
+      }
+    },
+    {
+      "path": "packages/client/ui-managed-account/tests/connectors.client.spec.tsx",
+      "category": "extension",
+      "upstream": null,
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "ac2f85f6abaf0b3b9fac1527469bb4e9b9c3e361"
+      }
+    },
+    {
+      "path": "packages/client/ui-managed-account/tests/data-migration.client.spec.tsx",
+      "category": "extension",
+      "upstream": null,
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "e04fb74af21a0d4905fd6d3c2bda5f8ec306783f"
+      }
+    },
+    {
+      "path": "packages/client/ui-managed-account/tests/expected/cloud-backup-zh.txt",
+      "category": "extension",
+      "upstream": null,
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "75e2140e7a0afe828514209e50f3315b09a9c658"
+      }
+    },
+    {
+      "path": "packages/client/ui-managed-account/tests/expected/data-migration-zh.txt",
+      "category": "extension",
+      "upstream": null,
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "8c2b54b327b706f30e6d8fceb2c8afa55198bd26"
+      }
+    },
+    {
+      "path": "packages/client/ui-managed-account/tests/expected/signin-en.txt",
+      "category": "extension",
+      "upstream": null,
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "7c753dc09731a13321dabfbcac08a852166b45a7"
+      }
+    },
+    {
+      "path": "packages/client/ui-managed-account/tests/expected/signin-zh.txt",
+      "category": "extension",
+      "upstream": null,
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "f55c14d6cb83549505d5d47d7c5ba85f7ddeba42"
+      }
+    },
+    {
+      "path": "packages/client/ui-managed-account/tests/managed-account-menu.client.spec.tsx",
+      "category": "extension",
+      "upstream": null,
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "968d22bfa1d353c333bfd22350b77852bc2fa242"
+      }
+    },
+    {
+      "path": "packages/client/ui-managed-account/tests/managed-signin.client.spec.tsx",
+      "category": "extension",
+      "upstream": null,
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "0d20b3f545e88bf6b71cb25f2f6985af86271444"
+      }
+    },
+    {
+      "path": "packages/client/ui-managed-account/tests/manual-auth-registration.client.spec.ts",
+      "category": "extension",
+      "upstream": null,
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "c4d087ad4495d5290774d556ba76740afd31fdc2"
+      }
+    },
+    {
+      "path": "packages/client/ui-managed-account/tsconfig.json",
+      "category": "extension",
+      "upstream": null,
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "af8d49e1c0b6f7ea826b2f5bf8da74b82ca0e31b"
+      }
+    },
+    {
+      "path": "packages/client/ui-managed-account/tsdown.config.ts",
+      "category": "extension",
+      "upstream": null,
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "067cfdf01876559467d555b2ee967cb8efcedef7"
+      }
+    },
+    {
+      "path": "packages/client/ui-model-selection/README.i18n.yaml",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "10481b46f896706773961edfbc4a6697757a40cf"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "e1bcc46c89189919335d8c5cc528f16a91216c9c"
+      }
+    },
+    {
+      "path": "packages/client/ui-model-selection/README.md",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "37253cf04242275f22d646da0e65cfd44f4fefbf"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "9679ef0973eab17548252ca184f1b6473d858710"
+      }
+    },
+    {
+      "path": "packages/client/ui-model-selection/README.zh.md",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "4e339e6a6c6db8c3125e6ccc19c0fc3af9947f88"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "5a1af3abc67cb07b8b31d09f6a55bcb43a4b2d5b"
+      }
+    },
+    {
+      "path": "packages/client/ui-model-selection/src/client/ModelSelect.module.css",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "b3a60fb6ece3a56754509e83ea7e750a87641715"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "e3b70fd14408a80f8e285ec04a8b7b132db59653"
+      }
+    },
+    {
+      "path": "packages/client/ui-model-selection/src/client/ModelSelect.tsx",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "b9c899356313a5a8ca6c282fe01533de9c04302d"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "4f9d6df76f8fc81de5b3d28f59ff2b4591ae8e72"
+      }
+    },
+    {
+      "path": "packages/client/ui-model-selection/src/client/catalog.ts",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "d5073d2ab068384d18ca2de6e2655ea584928512"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "2ce635b2305f836eca773462067bfd3b5ffecae9"
+      }
+    },
+    {
+      "path": "packages/client/ui-model-selection/src/client/index.ts",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "d2e25be7c0d59c9e8de74601ed617ec3bb01ad7a"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "9254654dc337153b49f7b0f9b931619d95c13b51"
+      }
+    },
+    {
+      "path": "packages/client/ui-model-selection/src/client/locales.ts",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "2e573796ea5c4e89cb45eea08b9f144f6149a3c2"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "98e1231bb401cec16b223c1bd1bcb8a45b81ee93"
+      }
+    },
+    {
+      "path": "packages/client/ui-model-selection/src/client/service.ts",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "d92c2c08b3809c83642ad8d060fd371f68cf2d69"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "86d01b7867912c532c93333936343d7afdd24dbb"
+      }
+    },
+    {
+      "path": "packages/client/ui-model-selection/tests/catalog.client.spec.ts",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "f800266de2c9a3546abadef24483a2685b4696d1"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "8e39429d042bcce9b282b42e18bc13a23667057f"
+      }
+    },
+    {
+      "path": "packages/client/ui-model-selection/tests/model-select.client.spec.tsx",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "4a5ee43b9112c4997cd5dffee4e082c99df90218"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "4b9f6e29c60ee04de90df7e63d96328df8236847"
+      }
+    },
+    {
+      "path": "packages/client/ui-model-selection/tests/recovery.client.spec.ts",
+      "category": "addition",
+      "upstream": null,
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "40a70cb514a2e16537209f6972c76d5c02364ad9"
+      }
+    },
+    {
+      "path": "packages/client/ui-plugin-manager/README.i18n.yaml",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "f43285aabc508c8705151d86aa3ff48d9f04243c"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "2043c7411001a40440a4ab655666aa3d8e1cddec"
+      }
+    },
+    {
+      "path": "packages/client/ui-plugin-manager/README.md",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "a7e212adfc0b0ee03e4e8aa77fdf12cfa52205bf"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "708e66229551988b6eac81991e70155a76ff15c1"
+      }
+    },
+    {
+      "path": "packages/client/ui-plugin-manager/README.zh.md",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "be30b1af3624e6c5fa40fa6caf98f6d3e5bee323"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "527ee40ebb852afacf2a7e010db3b1000f47d433"
+      }
+    },
+    {
+      "path": "packages/client/ui-plugin-manager/src/client/ManagedUpdateNotice.module.css",
+      "category": "addition",
+      "upstream": null,
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "be75c992b8479f92608ef4dae83e1b708672a89f"
+      }
+    },
+    {
+      "path": "packages/client/ui-plugin-manager/src/client/ManagedUpdateNotice.tsx",
+      "category": "addition",
+      "upstream": null,
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "5cc1a2d6d802226aa5784e14a151fb1ba090b5bf"
+      }
+    },
+    {
+      "path": "packages/client/ui-plugin-manager/src/client/index.ts",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "476e3dc400e10533627e5436104be23c5540285b"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "622f798d39519ad592319a3525426d91316bf512"
+      }
+    },
+    {
+      "path": "packages/client/ui-plugin-manager/src/client/locales.ts",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "30116aa2bff7d3a499c6566077578389c22d0dbd"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "e90bf50e809ab1fb8bcb145acfcd3912970bcdcc"
+      }
+    },
+    {
+      "path": "packages/client/ui-plugin-manager/src/client/managed-updates.ts",
+      "category": "addition",
+      "upstream": null,
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "e38634d917c49e426250586a3fbd1c6847a26eb9"
+      }
+    },
+    {
+      "path": "packages/client/ui-plugin-manager/tests/browser-plugin.client.spec.tsx",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "d58a3fb0bd8c76c8f1f224261f1ecdd97c9650da"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "3efa62f4c1e4306d922b55f0ee5d068e1ba3389f"
+      }
+    },
+    {
+      "path": "packages/client/ui-plugin-manager/tests/expected/managed-update-notice.txt",
+      "category": "addition",
+      "upstream": null,
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "879428ee2e8030460397b4d2fc0b56b724a817f1"
+      }
+    },
+    {
+      "path": "packages/client/ui-plugin-manager/tests/managed-updates.client.spec.tsx",
+      "category": "addition",
+      "upstream": null,
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "702e3a49ccd724e84d7e06bf90eea0033c593038"
+      }
+    },
+    {
+      "path": "packages/client/ui-primitives/README.md",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "332845471056e718d49d79a077b76a02c79bafe2"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "f1d244dcbfb0a2dbe610e38b4d08b9c0a7a98dfd"
+      }
+    },
+    {
+      "path": "packages/client/ui-primitives/README.zh.md",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "598b561e79e4a935f7f033002e68b91c3a3d84de"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "7ff75de6937d0ad231622e4709e3f722868943a5"
+      }
+    },
+    {
+      "path": "packages/client/ui-primitives/src/BrandWordmark.tsx",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "a9df992179c7cc8f0792142f2dde66dbbb3b5464"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "1bc51aa431f3e572bbf22dfba0049469937afd3f"
+      }
+    },
+    {
+      "path": "packages/client/ui-primitives/src/FishLogo.tsx",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "8621f17273c0d192feb14a988816c8052360b908"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "b4f5f6322fac6fa006121c57234421397689597e"
+      }
+    },
+    {
+      "path": "packages/client/ui-primitives/src/MascotLogo.tsx",
+      "category": "addition",
+      "upstream": null,
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "fe5a9708caeeaa3fcfeb9f67986d8099ddb71584"
+      }
+    },
+    {
+      "path": "packages/client/ui-primitives/src/bhss-mascot.svg",
+      "category": "addition",
+      "upstream": null,
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "26ebc549419996730b3652e6cfd96ecfceb179cd"
+      }
+    },
+    {
+      "path": "packages/client/ui-primitives/src/code-file-icon-artwork.manifest.json",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "b38a0325cf43501f3c399107b24c7afd8d744436"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "b348cd8f3b764fd074cd7d5df44a261f00b14f90"
+      }
+    },
+    {
+      "path": "packages/client/ui-primitives/src/index.ts",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "b8ec3702985311fc1d3d8704aae6101ea83feeb8"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "4f265ceadaa0addd1516fe84ade05e421bf2bdf4"
+      }
+    },
+    {
+      "path": "packages/client/ui-primitives/tests/icons.client.spec.tsx",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "62f67def95ba26f7a8ef7e057ba069dbb8ea6d95"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "dbd4c75da61195197cf4d06aee4997207f943ef2"
+      }
+    },
+    {
+      "path": "packages/client/ui-settings-account/src/client/locales.ts",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "2e4b40474dae35058a2f81c160b4303ca4548749"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "c285607e31f49caa163cdfbcb9c23e0c936c46b2"
+      }
+    },
+    {
+      "path": "packages/client/ui-settings-models/src/client/index.ts",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "df5503765033193b8d56a7470a4cfe011b7307e2"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "620e8ac9e3abb46d719715ee5e356c14d29f3142"
+      }
+    },
+    {
+      "path": "packages/client/ui-settings-models/src/client/locales.ts",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "9c8a44d9e04b2b47f619687ca9e406145ca12a59"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "f9b1959cf855f7b9648d0ae54e78f9c278f8a0e3"
+      }
+    },
+    {
+      "path": "packages/client/ui-settings-models/src/index.ts",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "d73e39dc5ed26bab129213c1f1fb1af6e144c90f"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "5f6a6d01a5e223e4aa3662c2f3f9773ce197c30e"
+      }
+    },
+    {
+      "path": "packages/client/ui-settings-models/src/onboarding-config.ts",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "2213ea3a93ea253a7d5a5b640b4b907daae61a3a"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "780492a4de6d6b8ff968831a29f3191e76025387"
+      }
+    },
+    {
+      "path": "packages/client/ui-settings-models/tests/apply.client.spec.ts",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "3c6b1b903f350f0bea2c58e8a9020f1fec886b7e"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "0a166bfdfc6187bed3dfb810de519bb51056202c"
+      }
+    },
+    {
+      "path": "packages/client/ui-settings-models/tests/welcome-notice.client.spec.tsx",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "17f5f3c9221df1dda6ce337c7e07a082a2171452"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "f37bcb58da55e248e2f7a447b46fd2417b81e556"
+      }
+    },
+    {
+      "path": "packages/client/ui-settings-subagent/README.md",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "66761cc1ca16ecd26e33e84d402a2de186ef1e4f"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "af2fadebdd5b9e5cdb0e64732c6c587bdae5c8e7"
+      }
+    },
+    {
+      "path": "packages/client/ui-settings-subagent/src/client/SubagentModelSelectionFields.module.css",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "58a90f4e4e0d5a75a6c5b5bd7c067027bb5edde5"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "2d26ea45fcc678c041a8bb055d3b0d85ecff57ef"
+      }
+    },
+    {
+      "path": "packages/client/ui-settings-subagent/src/client/SubagentModelSelectionFields.tsx",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "39d733f68833ba35564e710fc5d076ab59a82031"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "7c7d8610e2d9ce44fc5bd1d8e7edf1ec668289b1"
+      }
+    },
+    {
+      "path": "packages/client/ui-settings-subagent/src/client/subagent-model-selection-card-controller.ts",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "3ea37e993eff726793b31c3e5d53427384a8ba44"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "9f90d6a46d7015fd30f2b4133fe76b10190f0317"
+      }
+    },
+    {
+      "path": "packages/client/ui-sidebar-documentpreview/src/client/office/locales.ts",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "5e83803eaef03a5d898363c58a187bfe82e5c1e7"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "4520ad6f95e4f19544778e2f7b3c2f6662755eb8"
+      }
+    },
+    {
+      "path": "packages/client/ui-sidebar/src/client/SidebarRoot.module.css",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "144070ba3fef79d03382197a7a7e206f535c8ec6"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "4ba63bbac809ffad4b9ca1de3f6557097f562a37"
+      }
+    },
+    {
+      "path": "packages/client/ui-sidebar/src/client/SidebarRoot.tsx",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "12bcbe8ca868412645dd15eb9aea53c861d203e8"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "5e536a639712e2f746cbb2b2cbbf4bb4869c53f5"
+      }
+    },
+    {
+      "path": "packages/client/ui-sidebar/src/client/contract/slots.ts",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "d94b5935ed224c2b5596ea2920d432a8e9fd0876"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "b1819662cbd63e1919179420444b3d2a54e2fa5b"
+      }
+    },
+    {
+      "path": "packages/client/ui-sidebar/src/client/locales.ts",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "bdd1486333420c0bc078574b9572a2e839c1b6a3"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "7d2a597fd084344462eb5b13fc0b0832a7b0dac7"
+      }
+    },
+    {
+      "path": "packages/client/ui-theme/README.md",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "f8db4c3c353aa9b6854c05288316babd198475d7"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "53d8b2df412f0491899d94d2ce95acb561d21913"
+      }
+    },
+    {
+      "path": "packages/client/ui-theme/README.zh.md",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "135878213908ea11093d267c361cf2f80b4d768a"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "4db1dfbab2a956c9ba9c1b0d6b9f5257757a5993"
+      }
+    },
+    {
+      "path": "packages/client/ui-theme/src/styles/base.css",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "4c801b8d4dddd3c7a1e619ad8ee0d58eb3a55b11"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "565f857cf2d8a5ce1ea0076304af15f3ee2b296a"
+      }
+    },
+    {
+      "path": "packages/client/ui-workspace/README.md",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "7dcff13bc1767051c301174240979873444d4291"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "fc0cc4a09b89030a070b25a43781acba821aa6f7"
+      }
+    },
+    {
+      "path": "packages/client/ui-workspace/README.zh.md",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "1b3e83c71f700976799ff5b93b6fe4c60f896583"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "af1f5fe133b8e5e5b099ffc509860cbfba7a68a8"
+      }
+    },
+    {
+      "path": "packages/client/ui-workspace/src/client/navigation.ts",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "8d5f58828a66075f71005e73ef787d18caec4995"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "b526854405424a3ec1d141688c7f4a1d6e475295"
+      }
+    },
+    {
+      "path": "packages/client/ui-workspace/tests/host-home-staleness.client.spec.tsx",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "f10a6765b3cf6964a6c81adec3130e772c560d59"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "496cedaa1e85a2f3e6c26fa14044834308e9bed5"
+      }
+    },
+    {
+      "path": "packages/client/ui-workspace/tests/rename-assembly.client.spec.tsx",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "3113616ada96e2e10a22f109bac4d9cb0aea41df"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "f9ae3af11de094c73828557a1d02d273c0659a42"
+      }
+    },
+    {
+      "path": "packages/client/ui-workspace/tests/workspaces-service.client.spec.ts",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "b74a51b3cafe0d7e3ce666c981197e3cc521550a"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "87583cc1d1c85df356b19c2c1ab640a281b9ac6a"
+      }
+    },
+    {
+      "path": "packages/client/web/README.md",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "2cedd1748973e13ad1b9a3b0ef89c0101d4ffb09"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "18670b50cde253e73d75e6c8ac4a5903aad08b79"
+      }
+    },
+    {
+      "path": "packages/client/web/README.zh.md",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "882c338339b725f82aae4d931ab85a6d14650b42"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "924a8f67f4cd75f125342045856bae9f2bf48e9b"
+      }
+    },
+    {
+      "path": "packages/client/web/src/boot-page.module.css",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "f154c4276157a2762ace729b1bfb7db404f0d57c"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "4331208be9bbc214bba574ffe81fc3b8dfe2b527"
+      }
+    },
+    {
+      "path": "packages/client/web/src/boot-page.ts",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "23b27ad4bc40582b11437ff7cdcc9f1296f355ad"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "488c5791f389dfe7f57d11839fd03a5e0fc92f5c"
+      }
+    },
+    {
+      "path": "packages/client/web/src/boot.ts",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "743394a46de1186bf568666ce3157db8f5300776"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "82637a354d0778a32146bf21994eb9da588bfcfa"
+      }
+    },
+    {
+      "path": "packages/client/web/tests/boot-page.client.spec.ts",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "33612e8a47386d5f2b01c4e0e8d375db4a59ad38"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "4e26e2b0be4ca5d5715e8c4e93e94f42dea99a7e"
+      }
+    },
+    {
+      "path": "packages/client/web/tests/boot.client.spec.ts",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "e5e632941ae201eb5a908df14c1fcb1ec585cd5b"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "4780a85347499fc2ae3f09247ce616b6e4806ebd"
+      }
+    },
+    {
+      "path": "packages/compaction/compaction-basic/README.i18n.yaml",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "92b7b5e331159aa6203f500e8dcf9aae27ba47eb"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "17648cdfabd3068d39a971289fccf323153645fb"
+      }
+    },
+    {
+      "path": "packages/compaction/compaction-basic/README.md",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "e0a7d90fecf308fa9f83bf87c2bfb5c4ff13f2e3"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "c3d04d463f32bd363b9d313051d70948f8b769df"
+      }
+    },
+    {
+      "path": "packages/compaction/compaction-basic/README.zh.md",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "32d4f528e46206c5939dda038b710e01ce912d99"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "51cbfd39af3598f6c4e86487eda3be8f2ef65300"
+      }
+    },
+    {
+      "path": "packages/compaction/compaction-basic/src/index.ts",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "163cec3810e9d3a335efe6c1264eac5a00c107c2"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "0d1a47e1ae25a05997553d8034a77a254809ce7d"
+      }
+    },
+    {
+      "path": "packages/compaction/compaction-basic/src/region.ts",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "7b3d77d299881fa47b8dfdab7fae0a92cd7d462c"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "ef3f1f485330f352dd3a323376b237236da1643b"
+      }
+    },
+    {
+      "path": "packages/compaction/compaction-basic/tests/compaction-basic.spec.ts",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "6d6b7c56bfebc0c9fbea8a63dd416071e972d360"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "5f0da838e049ee183fbdf1d4e93b1d347d475714"
+      }
+    },
+    {
+      "path": "packages/core/agent-loop/src/agent.ts",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "98114f53cda2d481b30435d5159e5ea130792c52"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "a6105b1aba9f45332471d2b1e91b20447f213aae"
+      }
+    },
+    {
+      "path": "packages/core/agent/src/runtime-types.ts",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "2118507b8cc617a920e7ceae9f98d06daa2d4780"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "b8ee44da0122c1722a5832492f42bc43febe1b05"
+      }
+    },
+    {
+      "path": "packages/credentials/credentials/src/index.d.ts",
+      "category": "addition",
+      "upstream": null,
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "b98b5753c153bf681ebe420bb42d851ee47d96cd"
+      }
+    },
+    {
+      "path": "packages/credentials/credentials/src/index.d.ts.map",
+      "category": "addition",
+      "upstream": null,
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "5d49154ac7219012e146245d6ecaeb8f8e7552a6"
+      }
+    },
+    {
+      "path": "packages/credentials/credentials/src/index.js",
+      "category": "addition",
+      "upstream": null,
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "c2df2dc3633494566328bc7c44f277dd4c89820b"
+      }
+    },
+    {
+      "path": "packages/credentials/credentials/src/index.js.map",
+      "category": "addition",
+      "upstream": null,
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "45a87cf91d0093df3329f7e764fcf8e28a45359d"
+      }
+    },
+    {
+      "path": "packages/credentials/credentials/src/types.d.ts",
+      "category": "addition",
+      "upstream": null,
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "433e8ef359261af0450f0a89980535d722c55bf7"
+      }
+    },
+    {
+      "path": "packages/credentials/credentials/src/types.d.ts.map",
+      "category": "addition",
+      "upstream": null,
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "33dc25d70acf856d0ceba76a8a9887c2158d3daa"
+      }
+    },
+    {
+      "path": "packages/credentials/credentials/src/types.js",
+      "category": "addition",
+      "upstream": null,
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "68618c071d9c396210f6f836fe66be90261a40ff"
+      }
+    },
+    {
+      "path": "packages/credentials/credentials/src/types.js.map",
+      "category": "addition",
+      "upstream": null,
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "caecc6f8e5c5cce4bc0eec6c674b572b3b81575b"
+      }
+    },
+    {
+      "path": "packages/experimental/voice-input-bundle/README.i18n.yaml",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "ddc89c0e444fd31ad16c017857c3279d839f6a5d"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "946d1c7cc6db728d9ae2aeacb75cdd4b26450759"
+      }
+    },
+    {
+      "path": "packages/experimental/webworker-packer/bin.js",
+      "category": "patch",
+      "upstream": {
+        "mode": "100755",
+        "kind": "blob",
+        "oid": "f4f70f0c4efd836de8c1e1be8a3e147c784b3501"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "f4f70f0c4efd836de8c1e1be8a3e147c784b3501"
+      }
+    },
+    {
+      "path": "packages/feedback/command-feedback/README.md",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "92d8511c181c2955c3db967ba95284b5b9d76c5e"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "08d646e7d91788da4717a79af723a745f8d7c5f7"
+      }
+    },
+    {
+      "path": "packages/feedback/command-feedback/src/index.ts",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "61fb97cf619484c82a18af55597c70a79f52d22e"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "4bf26dcf14b8e4461fd7c556788052977d804a7e"
+      }
+    },
+    {
+      "path": "packages/feedback/command-feedback/tests/command-feedback.spec.ts",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "4e5401c09edc9a570a460544c64402fa2e399041"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "e6c2893d681dde21037bb77fa097226c267683d5"
+      }
+    },
+    {
+      "path": "packages/guard/sensitive-word-filter/package.json",
+      "category": "extension",
+      "upstream": null,
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "8ff07e112f82ec185528e0dc29fdafd6b74db674"
+      }
+    },
+    {
+      "path": "packages/guard/sensitive-word-filter/src/index.ts",
+      "category": "extension",
+      "upstream": null,
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "1eda3d15592defaecb73f5aadc0ffc707f43bf71"
+      }
+    },
+    {
+      "path": "packages/guard/sensitive-word-filter/tests/policy.spec.ts",
+      "category": "extension",
+      "upstream": null,
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "31949731173a0f033eb41eeeb301dee729369f20"
+      }
+    },
+    {
+      "path": "packages/guard/sensitive-word-filter/tsconfig.json",
+      "category": "extension",
+      "upstream": null,
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "422f7e076ef333c8cb97f3bd1d45f183d0a8de87"
+      }
+    },
+    {
+      "path": "packages/guard/sensitive-word-filter/tsdown.config.ts",
+      "category": "extension",
+      "upstream": null,
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "b96f82ebb6c80ecf6f28028e0fa1c3ae654e3949"
+      }
+    },
+    {
+      "path": "packages/llm/llm-deepseek/tests/runtime.spec.ts",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "4d657ec2638e9950daa5287443ce456caf51d580"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "edd4a21a7975128615b41729e98be7af14e27972"
+      }
+    },
+    {
+      "path": "packages/llm/llm-managed-backend/README.i18n.yaml",
+      "category": "extension",
+      "upstream": null,
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "f29beaaec3144f228d4ba66b4b160c8d001245a6"
+      }
+    },
+    {
+      "path": "packages/llm/llm-managed-backend/README.md",
+      "category": "extension",
+      "upstream": null,
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "4b5ed64efa9bf032679fcb7d06e021d42d2f3ec1"
+      }
+    },
+    {
+      "path": "packages/llm/llm-managed-backend/README.zh.md",
+      "category": "extension",
+      "upstream": null,
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "68e68ab07c3aeea22e8092567e8d3ac878af8715"
+      }
+    },
+    {
+      "path": "packages/llm/llm-managed-backend/package.json",
+      "category": "extension",
+      "upstream": null,
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "2c127d98a6028a54f07d806aa063a6494a455652"
+      }
+    },
+    {
+      "path": "packages/llm/llm-managed-backend/src/billing.ts",
+      "category": "extension",
+      "upstream": null,
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "2e6d23c790f3e613233f8c72ecca79db2d78fedc"
+      }
+    },
+    {
+      "path": "packages/llm/llm-managed-backend/src/config-sync.ts",
+      "category": "extension",
+      "upstream": null,
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "7ed87d4114e666bb6151f44df1c6fc776d3c7349"
+      }
+    },
+    {
+      "path": "packages/llm/llm-managed-backend/src/index.ts",
+      "category": "extension",
+      "upstream": null,
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "8617184a61f630c5ec5375bd7b1d0d456abd3713"
+      }
+    },
+    {
+      "path": "packages/llm/llm-managed-backend/src/persistent-session.ts",
+      "category": "extension",
+      "upstream": null,
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "888570d3c9646e49989fa01b9ad42f21b0b68ca5"
+      }
+    },
+    {
+      "path": "packages/llm/llm-managed-backend/src/upload-sync.ts",
+      "category": "extension",
+      "upstream": null,
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "cf98c02c505f1a7d95243d7ed61870fcf90eaf33"
+      }
+    },
+    {
+      "path": "packages/llm/llm-managed-backend/tests/adapter.spec.ts",
+      "category": "extension",
+      "upstream": null,
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "17ab1ffc07d073f0994f61091d70e47bf8194f1f"
+      }
+    },
+    {
+      "path": "packages/llm/llm-managed-backend/tests/billing.spec.ts",
+      "category": "extension",
+      "upstream": null,
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "3bf7ff87c54dcf7456a181b98798f9bf60c5fdd0"
+      }
+    },
+    {
+      "path": "packages/llm/llm-managed-backend/tests/config-sync.remote.spec.ts",
+      "category": "extension",
+      "upstream": null,
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "51fd8769eae57bb6373cb7405898d39fd5e8105c"
+      }
+    },
+    {
+      "path": "packages/llm/llm-managed-backend/tests/config-sync.spec.ts",
+      "category": "extension",
+      "upstream": null,
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "82f75b5f672e8dfb7e100987a8807b19aa441050"
+      }
+    },
+    {
+      "path": "packages/llm/llm-managed-backend/tests/custom-models-composition.spec.ts",
+      "category": "extension",
+      "upstream": null,
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "59dd0aed599c7345a83c709e37a5b721d3371832"
+      }
+    },
+    {
+      "path": "packages/llm/llm-managed-backend/tests/internal-model.spec.ts",
+      "category": "extension",
+      "upstream": null,
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "9e87e2b7067699b0eb95660c673f38af6f828929"
+      }
+    },
+    {
+      "path": "packages/llm/llm-managed-backend/tests/loader-composition.spec.ts",
+      "category": "extension",
+      "upstream": null,
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "2cccf97101078f0efb2b87c0895256b06ba8d96b"
+      }
+    },
+    {
+      "path": "packages/llm/llm-managed-backend/tests/persistent-session.spec.ts",
+      "category": "extension",
+      "upstream": null,
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "62e9c82346f4e4b2fe4860da49edf116aa6ec634"
+      }
+    },
+    {
+      "path": "packages/llm/llm-managed-backend/tests/upload-sync.spec.ts",
+      "category": "extension",
+      "upstream": null,
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "668703b41e36090eeae39d8170dd252fd1d49ffb"
+      }
+    },
+    {
+      "path": "packages/llm/llm-managed-backend/tsconfig.json",
+      "category": "extension",
+      "upstream": null,
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "6a9f4c44b48cec61176ba758813f333bb818c314"
+      }
+    },
+    {
+      "path": "packages/llm/llm-managed-backend/tsdown.config.ts",
+      "category": "extension",
+      "upstream": null,
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "058761f66b0713863855e617d5e5687818cbfdd3"
+      }
+    },
+    {
+      "path": "packages/llm/llm-pi-ai/README.i18n.yaml",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "c5fbc218d7cb4f020d91832ca2e844357603211f"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "43f54b415a8763171dec758561f1cff5b1bb140c"
+      }
+    },
+    {
+      "path": "packages/llm/llm-pi-ai/README.md",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "7b1708b957202369382d8a93b2bbcefd31565f67"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "0edc02890a0484938d71d9fce8e93d8939ca8713"
+      }
+    },
+    {
+      "path": "packages/llm/llm-pi-ai/README.zh.md",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "ed780ad235b1d8df2b821be6a0595ecd8b8e951b"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "acc0256c95541f56f8e16e76c4151c39b495276e"
+      }
+    },
+    {
+      "path": "packages/llm/llm-pi-ai/src/adapter.ts",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "de9f3e0e427118edb03f069ebbd9c7d67f736822"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "f289c8d98ab2512ccc405180dee8f612d620b54a"
+      }
+    },
+    {
+      "path": "packages/llm/llm-pi-ai/src/index.ts",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "389acba7cca27ad8c5b7f5f7873a7e2bbdea1fe5"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "ad7405ed1ecc6661e37c57275d3637ef27430adf"
+      }
+    },
+    {
+      "path": "packages/llm/llm-pi-ai/src/stream.ts",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "30e9c79412a300adc8a373b1a5e2caa77cb69ad6"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "77860d27d9f85b243f624607cbc086f4154bb980"
+      }
+    },
+    {
+      "path": "packages/llm/llm-pi-ai/tests/adapter.spec.ts",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "1081125a7e291e5ba2044f815f5cda0a9e9abeac"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "239189025918fd73060bde74dcccdea6fb981225"
+      }
+    },
+    {
+      "path": "packages/llm/llm-pi-ai/tests/convert.spec.ts",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "4ca36d762a1889129f6546badb35d7788b04525b"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "6f61c5c1bbc0a3770dc62f2c443824933b8fba31"
+      }
+    },
+    {
+      "path": "packages/llm/llm-pi-ai/tests/loader-composition.spec.ts",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "e9d1699c342917d8cd07fd772f672c8f17aa5d23"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "f5cdec3afa2425ecfd7760f7d9f705d57564eecf"
+      }
+    },
+    {
+      "path": "packages/llm/llm/README.md",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "04de24592379dcb0d815f3b033ca2f9f22e2ff6a"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "dda5582fb923d2b8501c8f51bd8aa5c4480679eb"
+      }
+    },
+    {
+      "path": "packages/llm/llm/src/error.ts",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "477735d17867bf3266f4e9fd4f7c5c90d45775f9"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "93ddd262fff927e9758608e091714e4bc1ea8365"
+      }
+    },
+    {
+      "path": "packages/llm/llm/src/index.ts",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "5f633619ff3f5d0a27578ae241af8fdab5061272"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "57968a4bb07fe271ba4d73e342b1034f5d7db334"
+      }
+    },
+    {
+      "path": "packages/llm/llm/src/types.ts",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "dcd66d28686987ed00f375ff513bd8de7ec8b8ec"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "6859012892726c2d0b64299678cd7d46cc80f5b9"
+      }
+    },
+    {
+      "path": "packages/llm/llm/tests/service.spec.ts",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "b55a3c6b735cf78fafa5b76b018f48de26bd02bf"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "4c8ee4652ac7c57efb50119d690bdadf7488445e"
+      }
+    },
+    {
+      "path": "packages/llm/token-meter/README.i18n.yaml",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "d0008ecc2f7b7e22ee9f49f91ec1fa06beaa83be"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "9d613f348a3e4e01099c5f24f8f81cff401d5ee0"
+      }
+    },
+    {
+      "path": "packages/llm/token-meter/README.md",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "e6d957bd14560d967fb221b147d87d7db42197ea"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "d7ad3cdfba5c16f6c7ddf0f6085f60e78611b1b3"
+      }
+    },
+    {
+      "path": "packages/llm/token-meter/README.zh.md",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "526be7b2e399bcf6f4638ece9a7315044fa48c55"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "1e07d03bd629f8607a13848599689d4cac201f6b"
+      }
+    },
+    {
+      "path": "packages/llm/token-meter/package.json",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "3a3be58bc1d65c257f7e322f90281f9afb36caa0"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "91d94992a9b68b155e2f8d456231b2a5b06021bc"
+      }
+    },
+    {
+      "path": "packages/llm/token-meter/src/progress-policy.ts",
+      "category": "addition",
+      "upstream": null,
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "bd5e3243d7a34823fd27c05aa0aad56cd52c9961"
+      }
+    },
+    {
+      "path": "packages/llm/token-meter/src/usage-projection.ts",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "2238316fabf27e3d9d71a1031305b82e6cb40b59"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "acb7c3bc22cafb0ddab61facb8a063742c8232cc"
+      }
+    },
+    {
+      "path": "packages/llm/token-meter/tests/progress-policy.spec.ts",
+      "category": "addition",
+      "upstream": null,
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "a9a224ff804612f5055455140014c43ddd113e20"
+      }
+    },
+    {
+      "path": "packages/llm/token-meter/tsconfig.json",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "51e81f5e71c1ef3647801d7e4f4456c19e938521"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "5e970f9d9eee4587cfd9540f33c6783ab6b669eb"
+      }
+    },
+    {
+      "path": "packages/mcp/mcp-client/README.md",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "d9f81a79b8c54b1437d051f46a72196fd84742c9"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "7c4e7de65dce951aa3a380985094dd3116cf5cb2"
+      }
+    },
+    {
+      "path": "packages/mcp/mcp-client/README.zh.md",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "d6f3e9337c80e5535bb1239dfb7752f3485dbde3"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "e3a647892845163a7da6171d96db15d407e9a83b"
+      }
+    },
+    {
+      "path": "packages/mcp/mcp-client/src/connection.ts",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "9a4ec9123aea0e416178b45da6e788bade46274f"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "f4b95fb518ebbcfb9ad98124669f602c59b85fd6"
+      }
+    },
+    {
+      "path": "packages/mcp/mcp-client/src/index.ts",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "3f89532b91d915cad20d65fa06ae52ace088958d"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "1131a3ae11081c7711d2532ac8c457419cbd31b2"
+      }
+    },
+    {
+      "path": "packages/mcp/mcp-client/src/transport.ts",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "52030772febd9e55e9e6ffbe2e54a4ea3cec0aca"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "e68be428d05ea0ee26237908fdc0df52d9d0c45e"
+      }
+    },
+    {
+      "path": "packages/mcp/mcp-client/tests/http-shutdown.spec.ts",
+      "category": "addition",
+      "upstream": null,
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "fe6e52153929daa338d75292b0ef621bb4636fb1"
+      }
+    },
+    {
+      "path": "packages/session/session-persistence-jsonl/README.md",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "5846404961caaef7a91fb4dda562655d15fd2be9"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "2c12c85476d573d851ea90cce67c39344d2da7f8"
+      }
+    },
+    {
+      "path": "packages/session/session-persistence-jsonl/README.zh.md",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "b7dd646e57b75fe47f3683d2b230dace628f8eee"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "0e76a237ae10b40880bc4f25fffd4232d47a712e"
+      }
+    },
+    {
+      "path": "packages/session/session-persistence-jsonl/src/index.ts",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "1a89b76d29e920772175950e25ffe943f4014b90"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "a9411fc0aadc63e746c93299df9bbe0869a021c6"
+      }
+    },
+    {
+      "path": "packages/session/session-persistence-jsonl/tests/jsonl.spec.ts",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "114b7f364e764e8a9881b3d851a4eb0d42aaf867"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "9bce94428337c83927c749d467926ff3d8ff015c"
+      }
+    },
+    {
+      "path": "packages/session/session-projection-cache/README.md",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "0ba9c5a47fbf2006be1593cb1805adb5bf9fbc59"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "bedb92f8b8b0573767dc99d2fdd29656830992ba"
+      }
+    },
+    {
+      "path": "packages/session/session-projection-cache/README.zh.md",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "d697b0520c0edf89572e9994b62e987111481a77"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "771e05631f9c4e61c209be7368c8cf8d993b0fb8"
+      }
+    },
+    {
+      "path": "packages/session/session-projection-cache/src/index.ts",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "34726fc3b81388f2f8c78e604287307f37d8f18d"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "9e2ed791d288e69006f5759a4bd143936a8491b0"
+      }
+    },
+    {
+      "path": "packages/session/session-projection-cache/tests/cache.spec.ts",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "87860844eebf9ad5e9777b6e6bb1d6d995540d9d"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "4535d6028406260f1200caf0286278545ce26ec5"
+      }
+    },
+    {
+      "path": "packages/session/session-telemetry-otel/README.md",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "35dc351bd56fdce396eb4c89c321008eb14796ce"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "32e6eb17cc53f43fbca9f991c5a24f330ba0a48a"
+      }
+    },
+    {
+      "path": "packages/session/session-telemetry-otel/src/index.ts",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "48792dbe674335dd022a2f37953d5a0150d072b3"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "9c83f1fb2a6cb09775eddc8cf5b346a1b995dc41"
+      }
+    },
+    {
+      "path": "packages/session/session-telemetry-otel/tests/otel.spec.ts",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "72a8e5ef104a9b9d7aaa8835b4b1c5b6cf2ed599"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "3ada7c572ade7fde04ab97da5da5ed72638d7247"
+      }
+    },
+    {
+      "path": "packages/skill/skill-office/README.i18n.yaml",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "9b4d9c7f15a334de2f866aa0ecd4d4878f69316f"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "b78de2d795016c1dc4bece3ffbe25e5e1e2bf7da"
+      }
+    },
+    {
+      "path": "packages/skill/skill-office/README.md",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "18cb08a027a447bbb66e35061d25fe853f51977a"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "484815aa4e97163e1c0719783b2a6953782febff"
+      }
+    },
+    {
+      "path": "packages/skill/skill-office/README.zh.md",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "432043c5a06116f3f2928c995301ff032cda75bb"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "fae87feb6ae44d1fb5f79cb1538ef6d457b95e3f"
+      }
+    },
+    {
+      "path": "packages/skill/skill-office/assets/office-xlsx/SKILL.md",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "f4d6180afc255e9e7f2bf3216e482bce54cc7dcf"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "040a8dd58cf26bf4ea2d2f1e8212e7e72d751d7f"
+      }
+    },
+    {
+      "path": "packages/skill/skill-office/assets/office-xlsx/analysis.md",
+      "category": "addition",
+      "upstream": null,
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "841ec4596f850830ffab4cba6caf41b9be513419"
+      }
+    },
+    {
+      "path": "packages/skill/skill-office/assets/scripts/analyze_xlsx.py",
+      "category": "addition",
+      "upstream": null,
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "22d93323bc0ec400142647d85defa16c978509f5"
+      }
+    },
+    {
+      "path": "packages/skill/skill-office/assets/scripts/inspect_xlsx.py",
+      "category": "addition",
+      "upstream": null,
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "74a7879f0b73ebe1b2ec68156c2e7009e84cd182"
+      }
+    },
+    {
+      "path": "packages/skill/skill-office/assets/scripts/session_usage.py",
+      "category": "addition",
+      "upstream": null,
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "659964008e6a1b2ca3c9c97b492a9134624c2a81"
+      }
+    },
+    {
+      "path": "packages/skill/skill-office/src/index.ts",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "b1dcd2894cdd8c5f8a3ee85a3d52bae2e64475c1"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "fb4f1d741a10422b94d0b6d6aeef5e064fef3aee"
+      }
+    },
+    {
+      "path": "packages/skill/skill-office/tests/analyze_xlsx_test.py",
+      "category": "addition",
+      "upstream": null,
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "37e62edb0b619d33f5f2d3ecdf2fc33ca086edb4"
+      }
+    },
+    {
+      "path": "packages/skill/skill-office/tests/inspect_xlsx_test.py",
+      "category": "addition",
+      "upstream": null,
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "5652cf045605a213d83d110dc427debd0da2b1eb"
+      }
+    },
+    {
+      "path": "packages/skill/skill-office/tests/session_usage_test.py",
+      "category": "addition",
+      "upstream": null,
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "ddc9ef65ad74ba6b3b56cfb211dda485ab5c64ab"
+      }
+    },
+    {
+      "path": "packages/subagent/subagent/README.md",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "adffd0edfdc55177afee0390c8d1c2f7fbee7999"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "4a66bf6440c069bd2aa98a23f25178d6a8ede221"
+      }
+    },
+    {
+      "path": "packages/subagent/subagent/src/continuation.ts",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "87fae7096a7dcaf05601f0c62f40ab28717005da"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "e77c48e2cd343f170acb0b3ae02cda9be87df148"
+      }
+    },
+    {
+      "path": "packages/subagent/subagent/src/control.ts",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "670566ef0ad7f6d93eb4d682db0a5fb35b768a13"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "2ca5cf0442b6b0d5ca98afcbb958cb2bfa1fc3d9"
+      }
+    },
+    {
+      "path": "packages/subagent/subagent/tests/continuation.spec.ts",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "2fdea25a1a6f70661a24df4746df13dfde72fd12"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "57b4e3695a45a506b4c5d569d740c61c38d41cd1"
+      }
+    },
+    {
+      "path": "packages/test-support/client-runtime/src/assembly/remote-default-responses.ts",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "2ad61c31e988421a91d81e493b801b8e4a95153b"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "aed1d25e04f0d3d1fe3975bb1ac69d51274484a3"
+      }
+    },
+    {
+      "path": "packages/util/atomic-write/README.i18n.yaml",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "31a0a8a4b980ada916bd5aeb1d1cc7012942644e"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "22195bddf723dbb4869ca7f36cc1d9ccb88cbbcc"
+      }
+    },
+    {
+      "path": "packages/util/atomic-write/README.md",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "fa2a77c8ba11e1dd80fecef6da09fa32a608b523"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "465fa70a136eb02ce5a8fca29cf7de94538daa79"
+      }
+    },
+    {
+      "path": "packages/util/atomic-write/README.zh.md",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "020d379c876733d5de11c63887de8d3168eac3b3"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "8b0194aa7fdd3583208a7b23deef01e87e331011"
+      }
+    },
+    {
+      "path": "packages/util/atomic-write/src/index.ts",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "f52eab9624bcf69b7752634a9cf0b2bd6e1c2d64"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "61751de91db89528e9eaecc92aa20760be79aca3"
+      }
+    },
+    {
+      "path": "packages/util/atomic-write/tests/atomic-write.spec.ts",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "b3628f73930808b2c362a9b47d2893aedd3999fd"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "2fa507549d5542ebac4f10776bee06305c3e7779"
+      }
+    },
+    {
+      "path": "packages/web/web-search-deepseek/README.md",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "6ac35d899ebfc281a3d830bd6050be46309f4ec9"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "ef2ea5659d571fcc483d4824c5f7d94e4d9068ee"
+      }
+    },
+    {
+      "path": "packages/web/web-search-deepseek/README.zh.md",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "7693a7470872b59065e66cdf2d71e41bb9a1e016"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "7f2ba4f562104f2d12d015b7123d366f6e8dc8c2"
+      }
+    },
+    {
+      "path": "packages/web/web-search-deepseek/package.json",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "f92130d3d8d14433a95172469a824f6bc18782c7"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "7749915c7203c392d51de2799c8a9774722b8819"
+      }
+    },
+    {
+      "path": "packages/web/web-search-deepseek/src/index.ts",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "f404a404adceb2c43ba7f3bdcdee8caf0d723074"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "8f05e7e7e6f7e4420da6fb51cdb015d0791ddfcc"
+      }
+    },
+    {
+      "path": "packages/web/web-search-deepseek/src/provider.ts",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "562c0f36a8c07030bc5a3a62294a3a6ef9e1b956"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "3f80d41950c75037de2a104e1a5daeaa1d18acf1"
+      }
+    },
+    {
+      "path": "packages/web/web-search-deepseek/tests/deepseek.spec.ts",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "77654ea851cc9cd7a8811c5373b5ede13f449e48"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "8cd900d9d6a0b855e5cc8b9fa5a85ff990af69a3"
+      }
+    },
+    {
+      "path": "packages/web/web-search-deepseek/tsconfig.json",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "998420ec9ed4138d7b17f085556c1ca8475a5a9a"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "6261db9b7f78b47724954d8d287a093be8bf7a3d"
+      }
+    },
+    {
+      "path": "packages/workspace/workspace/README.md",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "59b314a7302c5cf83314d08f6e8bdfe2dccba37f"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "28668dfaea2797cc32eb6a14c19f45579e442eb1"
+      }
+    },
+    {
+      "path": "packages/workspace/workspace/README.zh.md",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "78d563ee59048d5b1b6f976ac26f64907174645d"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "dd06c0dfa5da3e11f50c5d6562dcec28c10ea1be"
+      }
+    },
+    {
+      "path": "packages/workspace/workspace/src/directory-policy.ts",
+      "category": "addition",
+      "upstream": null,
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "ba2ad7140a13f8123a0b9cd544f1924cdfa4baeb"
+      }
+    },
+    {
+      "path": "packages/workspace/workspace/src/index.ts",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "00eaf0030c478ad04acb4cde6c0f313cbb3eefa2"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "619e8e3873b5dfe01e6f1f4d367ce7493bf6ee01"
+      }
+    },
+    {
+      "path": "packages/workspace/workspace/tests/directory-policy.spec.ts",
+      "category": "addition",
+      "upstream": null,
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "f90ae71c3f2674a2966e5844775950e823bdb986"
+      }
+    },
+    {
+      "path": "packages/workspace/workspace/tests/workspace.spec.ts",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "ef3116b3d7bb0ae627781fb125ff2d5019b0b516"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "97d17000838ff7cc9e38509b3194369e3468d94a"
+      }
+    },
+    {
+      "path": "pnpm-lock.yaml",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "232cfc6a3afe9c3e6b94fbef18302128f6f731b9"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "90cd5544b40d751a9da68294578b1010b20530d4"
+      }
+    },
+    {
+      "path": "pnpm-workspace.yaml",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "96ef53fef047c9ed3295c303f7e268e5c02b0a5c"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "68f12cd89c8fa9f5936f39e7e7e1f780af7a5104"
+      }
+    },
+    {
+      "path": "scripts/check-expected-filenames.sh",
+      "category": "patch",
+      "upstream": {
+        "mode": "100755",
+        "kind": "blob",
+        "oid": "bf10e2e6b62b7dd0325fe7204c1da13dc343a809"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "bf10e2e6b62b7dd0325fe7204c1da13dc343a809"
+      }
+    },
+    {
+      "path": "scripts/check-vendor-manifest.sh",
+      "category": "patch",
+      "upstream": {
+        "mode": "100755",
+        "kind": "blob",
+        "oid": "5e59a90e10a8ba5a9e5ac63ef4ce42bfa1c34c0f"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "5e59a90e10a8ba5a9e5ac63ef4ce42bfa1c34c0f"
+      }
+    },
+    {
+      "path": "scripts/client-build-environment.client.spec.ts",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "fc239867a3972371917607665bc1c637b7d7dbe6"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "2b6fd8c05e7a2d1fb9a7b876bd18481d3657fd0d"
+      }
+    },
+    {
+      "path": "scripts/client-build-environment.ts",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "57f12ef13bd6a4ec077408e88a77b991857d5269"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "e8a73f6066f00a3af6da2d5c19b5a3d566bacd91"
+      }
+    },
+    {
+      "path": "scripts/dev-web.spec.ts",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "df1274c57cc53403b25f01785197c313e39bb8ce"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "0f123848032d9f30059c923ec7b4c7ac0fc63a71"
+      }
+    },
+    {
+      "path": "scripts/merge-translation-pairing-driver.sh",
+      "category": "patch",
+      "upstream": {
+        "mode": "100755",
+        "kind": "blob",
+        "oid": "c1fffaff204b097d08ab4ab0624bc5a27a3a5785"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "c1fffaff204b097d08ab4ab0624bc5a27a3a5785"
+      }
+    },
+    {
+      "path": "scripts/prepare-ci-bubblewrap.sh",
+      "category": "patch",
+      "upstream": {
+        "mode": "100755",
+        "kind": "blob",
+        "oid": "5b19d8ad6ff6d2f4d9a9bcff23bcc8db2eb40a9d"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "5b19d8ad6ff6d2f4d9a9bcff23bcc8db2eb40a9d"
+      }
+    },
+    {
+      "path": "scripts/primary-runtime/prepare.ts",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "a156a7564ab5e7691cc719f7abf1f0d08c10fb0e"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "0e609d54497c14b7516ca0640a0ed160189e8a9b"
+      }
+    },
+    {
+      "path": "scripts/wine-windows-gates.sh",
+      "category": "patch",
+      "upstream": {
+        "mode": "100755",
+        "kind": "blob",
+        "oid": "964ca380236c8e8498dba14a7e325cd70dcc09cd"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "964ca380236c8e8498dba14a7e325cd70dcc09cd"
+      }
+    },
+    {
+      "path": "snapshots/acp/escalation-approved/system-prompt.expected.md",
+      "category": "patch",
+      "upstream": {
+        "mode": "120000",
+        "kind": "blob",
+        "oid": "bb85c10476f74cedd0285da78a06cdd6246ae8f9"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "bb85c10476f74cedd0285da78a06cdd6246ae8f9"
+      }
+    },
+    {
+      "path": "snapshots/acp/escalation-approved/tool-schemas.expected.json",
+      "category": "patch",
+      "upstream": {
+        "mode": "120000",
+        "kind": "blob",
+        "oid": "c77f354b59928be0fc5371c4a14aee8e85a10a25"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "c77f354b59928be0fc5371c4a14aee8e85a10a25"
+      }
+    },
+    {
+      "path": "snapshots/acp/image-compaction/system-prompt.expected.md",
+      "category": "patch",
+      "upstream": {
+        "mode": "120000",
+        "kind": "blob",
+        "oid": "7d5e489c58e4975138807a6955d21cce9eca8138"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "7d5e489c58e4975138807a6955d21cce9eca8138"
+      }
+    },
+    {
+      "path": "snapshots/session/agent-instructions/workspace/AGENTS.md",
+      "category": "patch",
+      "upstream": {
+        "mode": "120000",
+        "kind": "blob",
+        "oid": "83624c92b714a954e3b43d12785ceb222f3f4828"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "83624c92b714a954e3b43d12785ceb222f3f4828"
+      }
+    },
+    {
+      "path": "snapshots/session/agent-instructions/workspace/nested/AGENTS.md",
+      "category": "patch",
+      "upstream": {
+        "mode": "120000",
+        "kind": "blob",
+        "oid": "83624c92b714a954e3b43d12785ceb222f3f4828"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "83624c92b714a954e3b43d12785ceb222f3f4828"
+      }
+    },
+    {
+      "path": "snapshots/session/office-skills-no-renderer/system-prompt.expected.md",
+      "category": "patch",
+      "upstream": {
+        "mode": "120000",
+        "kind": "blob",
+        "oid": "4ca0dd39b2abbfbf8d5bbb8ba56efdc36a0621f7"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "4ca0dd39b2abbfbf8d5bbb8ba56efdc36a0621f7"
+      }
+    },
+    {
+      "path": "snapshots/session/office-skills-no-renderer/tool-schemas.expected.json",
+      "category": "patch",
+      "upstream": {
+        "mode": "120000",
+        "kind": "blob",
+        "oid": "11d7ccbf24f03aa14f119900c72e2691ccd338aa"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "11d7ccbf24f03aa14f119900c72e2691ccd338aa"
+      }
+    },
+    {
+      "path": "snapshots/session/office-skills/system-prompt.expected.md",
+      "category": "patch",
+      "upstream": {
+        "mode": "120000",
+        "kind": "blob",
+        "oid": "4ca0dd39b2abbfbf8d5bbb8ba56efdc36a0621f7"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "4ca0dd39b2abbfbf8d5bbb8ba56efdc36a0621f7"
+      }
+    },
+    {
+      "path": "snapshots/session/office-skills/tool-schemas.expected.json",
+      "category": "patch",
+      "upstream": {
+        "mode": "120000",
+        "kind": "blob",
+        "oid": "11d7ccbf24f03aa14f119900c72e2691ccd338aa"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "11d7ccbf24f03aa14f119900c72e2691ccd338aa"
+      }
+    },
+    {
+      "path": "snapshots/web/changed-files-turn/workspace.expected/app.local",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "3bf90408b4ed9d90c35a8d33b62f7b29503d65de"
+      },
+      "aigc": null
+    },
+    {
+      "path": "snapshots/web/lifecycle-chrome/plan-active-zh.expected.md",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "c01c19bc4bb281e8d0e3185a8c9720cf2cdfd953"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "ca712f5ef9d7a3a0307b1cb9918e840214a9a9b3"
+      }
+    },
+    {
+      "path": "tsconfig.base.json",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "8b15b0bb7c670733382211ae3d7f7de83ffb3990"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "156eb1521e5c4a0da9bcd1ee98f6ab4ae50a5ec2"
+      }
+    },
+    {
+      "path": "tsconfig.client.json",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "a5a8570a51210b8efb6c3217097efe62c8ef3716"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "1564b8a5fc5e3cf0447b16d5ce7fe1f1f4902401"
+      }
+    },
+    {
+      "path": "tsconfig.host.json",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "c551469419336a48fb0afdabb95d0728f8f076c6"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "747cf0ed40898fef898a37e851a057e191b598b9"
+      }
+    },
+    {
+      "path": "vendor/CLAUDE.md",
+      "category": "patch",
+      "upstream": {
+        "mode": "120000",
+        "kind": "blob",
+        "oid": "47dc3e3d863cfb5727b87d785d09abf9743c0a72"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "47dc3e3d863cfb5727b87d785d09abf9743c0a72"
+      }
+    },
+    {
+      "path": "vendor/cordis/bin.js",
+      "category": "patch",
+      "upstream": {
+        "mode": "100755",
+        "kind": "blob",
+        "oid": "e5ee5224f7b2cd12e636dabb0da6b1d12b0c1c86"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "e5ee5224f7b2cd12e636dabb0da6b1d12b0c1c86"
+      }
+    },
+    {
+      "path": "vitest.config.ts",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "6c0a46e4f3b4e9776f93ed07259095e19dd56860"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "c307568d917cbc6d90eb380d68bae132640c3890"
+      }
+    },
+    {
+      "path": "website/public/favicon.svg",
+      "category": "patch",
+      "upstream": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "653b77e15709ae8d100f5478d41d08636b4ae0c1"
+      },
+      "aigc": {
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "d20ad0c8d1a777e26fa8aa47d4fc6fe23b587bcd"
+      }
+    }
+  ]
+}

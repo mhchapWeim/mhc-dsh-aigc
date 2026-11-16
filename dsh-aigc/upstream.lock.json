@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "repository": "https://github.com/deepseek-ai/deepseek-harness.git",
+  "sourceDirectory": "deepseek-harness",
+  "companionDirectories": [
+    "plugins/dsh-plugin-internal-model",
+    "plugins/dsh-plugin-managed-search",
+    "plugins/dsh-plugin-managed-voice-input"
+  ],
+  "baseline": {
+    "tag": "dsh-v0.1.7-alpha.2",
+    "commit": "00102833dfaee1da9f48a3a8eae9d34005a75218"
+  },
+  "candidate": {
+    "tag": "dsh-v0.2.2-rc.3",
+    "commit": "38a6a5c965aa99ab525161efb7cc5cf1fe62fced"
+  },
+  "checkpoint": "aigc-dsh-baseline-20261116"
+}

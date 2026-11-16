@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "profiles": {
+    "contracts": ["install", "managed-models", "managed-plugins", "managed-account", "managed-desktop", "data-compatibility"],
+    "release": ["install", "managed-models", "managed-plugins", "managed-account", "managed-desktop", "data-compatibility", "typecheck", "build", "outbound", "installer"]
+  },
+  "gates": {
+    "install": {"argv": ["pnpm", "install", "--frozen-lockfile"]},
+    "managed-models": {
+      "argv": ["pnpm", "exec", "vitest", "run", "packages/llm/llm-managed-backend/tests", "packages/guard/sensitive-word-filter/tests", "--maxWorkers=2"],
+      "requiredPaths": ["packages/llm/llm-managed-backend/tests/billing.spec.ts", "packages/llm/llm-managed-backend/tests/custom-models-composition.spec.ts", "packages/llm/llm-managed-backend/tests/config-sync.spec.ts", "packages/llm/llm-managed-backend/tests/persistent-session.spec.ts", "packages/guard/sensitive-word-filter/tests"]
+    },
+    "managed-plugins": {
+      "argv": ["pnpm", "exec", "vitest", "run", "packages/boot/plugin-manager/tests/managed-", "--maxWorkers=2"],
+      "requiredPaths": ["packages/boot/plugin-manager/tests/managed-version.spec.ts", "packages/boot/plugin-manager/tests/managed-mcp.spec.ts", "packages/boot/plugin-manager/tests/managed-search.spec.ts", "packages/boot/plugin-manager/tests/managed-voice.spec.ts"]
+    },
+    "managed-account": {
+      "argv": ["pnpm", "exec", "vitest", "run", "packages/client/ui-managed-account/tests", "packages/bundle/web-app/tests/managed-configuration-surfaces.spec.ts", "--maxWorkers=2"],
+      "requiredPaths": ["packages/client/ui-managed-account/tests/managed-signin.client.spec.tsx", "packages/bundle/web-app/tests/managed-configuration-surfaces.spec.ts"]
+    },
+    "managed-desktop": {
+      "argv": ["pnpm", "exec", "vitest", "run", "apps/desktop/tests/managed-", "apps/desktop/tests/mandatory-update-policy.spec.ts", "--maxWorkers=2"],
+      "requiredPaths": ["apps/desktop/tests/managed-distribution.spec.ts", "apps/desktop/tests/managed-backend-package.spec.ts", "apps/desktop/tests/mandatory-update-policy.spec.ts"]
+    },
+    "data-compatibility": {
+      "argv": ["pnpm", "exec", "vitest", "run", "packages/api/workspace-controller/tests/data-migration.host.spec.ts", "packages/credentials/credentials/tests/credentials.spec.ts", "packages/session/session-format-v3-to-v4/tests", "--maxWorkers=2"],
+      "requiredPaths": ["packages/api/workspace-controller/tests/data-migration.host.spec.ts", "packages/credentials/credentials/tests/credentials.spec.ts", "packages/session/session-format-v3-to-v4/tests"]
+    },
+    "typecheck": {"argv": ["pnpm", "run", "typecheck"]},
+    "build": {"argv": ["pnpm", "run", "build"]},
+    "outbound": {"argv": ["pnpm", "run", "security:outbound:enforce"], "requiredPaths": ["apps/desktop/outbound-policy.json"]},
+    "installer": {"argv": ["pnpm", "--filter", "@deepseek-ai/dsh-desktop", "run", "test:installer"]}
+  }
+}

@@ -1,0 +1,59 @@
+name: DSH upstream candidate
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Immutable upstream release tag'
+        required: true
+        default: 'dsh-v0.2.2-rc.3'
+      commit:
+        description: 'Verified full upstream commit SHA'
+        required: true
+        default: '38a6a5c965aa99ab525161efb7cc5cf1fe62fced'
+      profile:
+        type: choice
+        description: 'Checks to run after a conflict-free merge'
+        options: [contracts, release]
+        default: contracts
+
+permissions:
+  contents: read
+
+jobs:
+  candidate:
+    runs-on: windows-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - uses: pnpm/action-setup@v4
+        with:
+          version: '11.28.5'
+      - name: Prepare pinned candidate
+        shell: pwsh
+        env:
+          TARGET_TAG: ${{ inputs.tag }}
+          TARGET_COMMIT: ${{ inputs.commit }}
+        run: python dsh-aigc/upgrade.py prepare --tag $env:TARGET_TAG --commit $env:TARGET_COMMIT --name ci
+      - name: Verify candidate
+        shell: pwsh
+        env:
+          VERIFY_PROFILE: ${{ inputs.profile }}
+        run: python dsh-aigc/upgrade.py verify ci --profile $env:VERIFY_PROFILE
+      - name: Upload merge and compatibility evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dsh-upstream-evidence
+          if-no-files-found: warn
+          path: |
+            .cache/dsh-upgrades/candidates/ci/REPORT.md
+            .cache/dsh-upgrades/candidates/ci/state.json
+            .cache/dsh-upgrades/candidates/ci/verification-*.json
+            .cache/dsh-upgrades/candidates/ci/*.log
