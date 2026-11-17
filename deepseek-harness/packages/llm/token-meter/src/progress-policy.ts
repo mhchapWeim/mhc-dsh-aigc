@@ -72,18 +72,18 @@ const progressProjection = {
  * @param ctx - Context with the token meter and agent event declarations.
  * @param config - Optional advisory cadence; omission disables both triggers.
  */
-export function apply(ctx: Context, config: Config = {}): void {
+export async function apply(ctx: Context, config: Config = {}): Promise<void> {
   for (const value of [config.everySteps, config.everyTokens]) {
     if (value !== undefined && (!Number.isSafeInteger(value) || value < 1)) {
       throw new Error('task-progress-policy: cadences must be positive safe integers')
     }
   }
-  ctx.sessionProjections.register(progressProjection)
+  const progress = await ctx.sessionProjections.register(progressProjection)
   ctx.on('agent/pre-step', async ({ agent, turn, step, signal }, next): Promise<PreStepDecision> => {
     const decision = await next()
     if (decision.kind === 'reject' || signal.aborted) return decision
     if (config.everySteps === undefined && config.everyTokens === undefined) return decision
-    const state = ctx.sessionProjections.stateOf(agent.session, 'taskProgress')
+    const state = progress.stateOf(agent.session)
     if (state === undefined) throw new Error('task-progress-policy: missing taskProgress projection')
     if (state.turn !== turn) return decision
     const totals = state.usage.totals

@@ -1,3 +1,5 @@
+import { executeToolFixture } from '@deepseek-ai/dsh-tool-testkit'
+import * as NativeToolExecutor from '@deepseek-ai/dsh-tool-executor-native'
 /** Real Loader composition and real MCP SDK; only the organization policy is an external fixture. */
 import {mkdtemp,writeFile,rm} from 'node:fs/promises'
 import {tmpdir} from 'node:os'
@@ -42,12 +44,14 @@ it('automatically registers authorized tools, calls the real MCP SDK and removes
     await writeFile(config,JSON.stringify([
       {id:'prompt',name:'cordis:prompt'},
       {id:'tools',name:'cordis:tools'},
+      {id:'executor',name:'cordis:executor'},
       {id:'credentials',name:'cordis:credentials',config:{path:join(dir,'credentials.yaml'),watch:false}},
       {id:'connectors',name:'cordis:connectors'},
     ]))
     const ctx=await boot('test',config,[],ctx=>{
       ctx.loader.builtins.prompt=SystemPrompt
       ctx.loader.builtins.tools=ToolRuntime
+      ctx.loader.builtins.executor=NativeToolExecutor
       ctx.loader.builtins.credentials=CredentialsLocal
       ctx.loader.builtins.connectors={name:'test-managed-mcp',apply(inner:Context){installManagedMcpSync(inner,{pollMs:25,requestTimeoutMs:1000},value=>{latest=value})}}
       ctx.provide('managedBackend',{endpoint:'https://organization.test'})
@@ -57,14 +61,14 @@ it('automatically registers authorized tools, calls the real MCP SDK and removes
     await ctx.credentials.modifyRecord(key,async()=>({kind:'api-key',key:'user-token'}))
     const name=`mcp__org_${id.replace(/-/gu,'').slice(0,28)}__ping`
     await vi.waitFor(()=>expect(latest[0]?.status).toBe('Ready'),{timeout:10000})
-    const result=await ctx.tools.execute({signal:new AbortController().signal,callId:ToolCallId('managed-mcp-call'),name,arguments:{}})
+    const result=await executeToolFixture(ctx, {signal:new AbortController().signal,callId:ToolCallId('managed-mcp-call'),name,arguments:{}})
     expect(result.content).toEqual([{type:'text',text:'pong'}])
     expect(fixture.authorization).toContain('Bearer employee-mcp-token')
     expect(exchanges).toBe(1)
     await ctx.credentials.modifyRecord(credentialKey('llm-managed-backend','billing-pending'),async()=>({kind:'grant',payload:[]}))
     expect(latest[0]?.status).toBe('Ready')
     expect(ctx.tools.get(name)).toBeDefined()
-    const repeated=await ctx.tools.execute({signal:new AbortController().signal,callId:ToolCallId('managed-mcp-after-billing'),name,arguments:{}})
+    const repeated=await executeToolFixture(ctx, {signal:new AbortController().signal,callId:ToolCallId('managed-mcp-after-billing'),name,arguments:{}})
     expect(repeated.content).toEqual([{type:'text',text:'pong'}])
     expect(exchanges).toBe(1)
     authorized=false

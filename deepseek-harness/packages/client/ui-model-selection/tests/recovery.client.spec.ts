@@ -10,7 +10,7 @@ it('reloads a failed AIGC catalog on browser recovery even while the local Host 
   const modelCatalog = vi.fn().mockResolvedValueOnce({ ok: true, value: { ...value, failures: [{ id: 'managed', name: 'Managed', message: 'offline' }] } })
     .mockResolvedValue({ ok: true, value })
   new TestRemote(ctx, { session: { modelCatalog } })
-  new ModelDirectoryResolver(ctx, { blockReason: () => 'unavailable' })
+  new ModelDirectoryResolver(ctx)
   try {
     await vi.waitFor(() => expect(modelCatalog).toHaveBeenCalledTimes(1))
     window.dispatchEvent(new Event('online'))

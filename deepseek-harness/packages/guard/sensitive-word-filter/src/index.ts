@@ -158,10 +158,10 @@ export function apply(ctx: Context, config: Config): void {
     return next()
   })
 
-  ctx.on('agent/pre-step', async ({ messages, signal, provider }, next): Promise<PreStepDecision> => {
+  ctx.on('agent/pre-step', async ({ messages, signal, modelSelection }, next): Promise<PreStepDecision> => {
     const text = messages.filter(message => message.source.kind === 'user').flatMap(message => message.content)
       .flatMap(block => block.type === 'text' ? [block.text] : []).join('\n')
-    const verdict = isCustom(provider) ? rules.inspectLocal(text) : await decide(text, signal)
+    const verdict = isCustom(modelSelection.provider) ? rules.inspectLocal(text) : await decide(text, signal)
     if (verdict === 'match' || (verdict === 'unavailable' && failureMode === 'closed')) return { kind: 'reject' }
     return next()
   })

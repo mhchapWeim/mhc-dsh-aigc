@@ -1,0 +1,86 @@
+{
+  "baseline": {
+    "tag": "dsh-v0.1.7-alpha.2",
+    "commit": "00102833dfaee1da9f48a3a8eae9d34005a75218"
+  },
+  "target": {
+    "tag": "dsh-v0.2.2-rc.3",
+    "commit": "38a6a5c965aa99ab525161efb7cc5cf1fe62fced"
+  },
+  "integrationCommit": "38eb2b7a23c0140b2921e17e8c68bee12163c078",
+  "tree": "210ad3503a249698e6cdcb5bdc2ff29625171fed",
+  "verification": {
+    "schemaVersion": 1,
+    "tree": "210ad3503a249698e6cdcb5bdc2ff29625171fed",
+    "target": {
+      "tag": "dsh-v0.2.2-rc.3",
+      "commit": "38a6a5c965aa99ab525161efb7cc5cf1fe62fced"
+    },
+    "gatesSha256": "269740af2ac56b10a9670ab3fb6cac048ad0555f9c97dd5979da5f8beef794f7",
+    "companionsSha256": "35bbff345039038ecf7db7d82c05b2c8c9577f2441cf5f1541ab7a49d8d37060",
+    "profile": "release",
+    "results": [
+      {
+        "id": "install",
+        "exitCode": 0,
+        "log": "install.log"
+      },
+      {
+        "id": "host-libraries",
+        "exitCode": 0,
+        "log": "host-libraries.log"
+      },
+      {
+        "id": "managed-models",
+        "exitCode": 0,
+        "log": "managed-models.log"
+      },
+      {
+        "id": "runtime-adapters",
+        "exitCode": 0,
+        "log": "runtime-adapters.log"
+      },
+      {
+        "id": "managed-plugins",
+        "exitCode": 0,
+        "log": "managed-plugins.log"
+      },
+      {
+        "id": "managed-account",
+        "exitCode": 0,
+        "log": "managed-account.log"
+      },
+      {
+        "id": "managed-desktop",
+        "exitCode": 0,
+        "log": "managed-desktop.log"
+      },
+      {
+        "id": "data-compatibility",
+        "exitCode": 0,
+        "log": "data-compatibility.log"
+      },
+      {
+        "id": "typecheck",
+        "exitCode": 0,
+        "log": "typecheck.log"
+      },
+      {
+        "id": "build",
+        "exitCode": 0,
+        "log": "build.log"
+      },
+      {
+        "id": "outbound",
+        "exitCode": 0,
+        "log": "outbound.log"
+      },
+      {
+        "id": "installer",
+        "exitCode": 0,
+        "log": "installer.log"
+      }
+    ],
+    "passed": true
+  }
+}

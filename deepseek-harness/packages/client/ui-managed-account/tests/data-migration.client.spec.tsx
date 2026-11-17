@@ -53,7 +53,7 @@ it('offers local data repair without organization authentication', async () => {
   const data = actions()
   let openData: (() => void) | undefined
   window.__DSH_DATA_MIGRATION__ = { subscribe(listener) { openData = listener; return () => {} } }
-  render(<ManagedAccountMenu {...({} as GlobalStandardProps)} wide openSettings={vi.fn()} openOnboarding={vi.fn()}
+  render(<ManagedAccountMenu {...({} as GlobalStandardProps)} wide settingsOpen={false} openSettings={vi.fn()} openOnboarding={vi.fn()}
     status={vi.fn(async () => ({ enabled: true as const, user: null }))} login={vi.fn()} casStart={vi.fn()} casPoll={vi.fn()} logout={vi.fn()}
     data={data} t={key => zh[key]} />)
   await act(async () => { openData?.() })

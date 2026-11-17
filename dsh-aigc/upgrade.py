@@ -70,6 +70,47 @@ def safe_relative(value):
     return path
 
 
+def contained_symlink(name, target):
+    """Accept only a relative link whose resolved path remains inside the runtime tree."""
+    safe_relative(name)
+    if (not target or "\\" in target or ":" in target or "\0" in target or "\n" in target
+            or "\r" in target or target.startswith("/") or PurePosixPath(target).is_absolute()):
+        raise UpgradeError(f"Symlink target must stay relative: {name}")
+    parts = []
+    for part in (*(PurePosixPath(name).parent.parts), *PurePosixPath(target).parts):
+        if part == "..":
+            if not parts:
+                raise UpgradeError(f"Symlink escapes runtime directory: {name}")
+            parts.pop()
+        elif part not in (".", ""):
+            if part.lower() == ".git":
+                raise UpgradeError(f"Symlink enters git metadata: {name}")
+            parts.append(part)
+    if not parts:
+        raise UpgradeError(f"Symlink escapes runtime directory: {name}")
+    return target
+
+
+def symlink_target(oid, cwd):
+    raw = git("cat-file", "blob", oid, cwd=cwd).stdout
+    try:
+        text = raw.decode("utf-8")
+    except UnicodeError as error:
+        raise UpgradeError(f"Symlink target is not UTF-8: {oid}") from error
+    return text
+
+
+def accept_promoted_entry(name, entry, cwd):
+    if entry is None:
+        return
+    if entry["mode"] in ("100644", "100755"):
+        return
+    if entry["mode"] == "120000" and entry["kind"] == "blob":
+        contained_symlink(name, symlink_target(entry["oid"], cwd))
+        return
+    raise UpgradeError(f"Changed links and submodules require explicit handling: {name}")
+
+
 def load_lock():
     lock = read_json(CONFIG / "upstream.lock.json")
     if lock.get("schemaVersion") != 1:
@@ -537,16 +578,41 @@ def extract_archive(archive, destination, allowed_files=None):
                 with stream.extractfile(member) as incoming, file.open("wb") as outgoing:
                     shutil.copyfileobj(incoming, outgoing)
                 file.chmod(member.mode & 0o777)
+            elif member.issym():
+                contained_symlink(name, member.linkname or "")
+                file.parent.mkdir(parents=True, exist_ok=True)
+                if file.is_symlink() or file.exists():
+                    file.unlink()
+                os.symlink(member.linkname, file)
             else:
                 raise UpgradeError(f"Archive links require explicit handling: {name}")
 
 
+def remove_leaf(file):
+    """Remove a file or symlink without following it into another directory."""
+    if file.is_symlink() or file.is_file():
+        file.unlink()
+        return True
+    return False
+
+
 def replace_source_file(incoming, destination):
     destination.parent.mkdir(parents=True, exist_ok=True)
-    if destination.is_dir():
-        destination.rmdir()  # Only an empty directory may be replaced; preserve untracked data.
     temporary = destination.with_name(destination.name + ".aigc-upgrade-tmp")
-    shutil.copy2(incoming, temporary)
+    if incoming.is_symlink():
+        if temporary.is_symlink() or temporary.exists():
+            temporary.unlink()
+        os.symlink(os.readlink(incoming), temporary)
+    else:
+        if destination.is_dir():
+            destination.rmdir()  # Only an empty directory may be replaced; preserve untracked data.
+        shutil.copy2(incoming, temporary)
+    if destination.is_symlink():
+        destination.unlink()
+    elif destination.is_dir():
+        destination.rmdir()
+    elif destination.exists():
+        destination.unlink()
     temporary.replace(destination)
 
 
@@ -572,11 +638,10 @@ def apply_source_changes(destination, staging, old, new, changed, backup):
     def rollback():
         for name in sorted(changed, key=lambda name: len(PurePosixPath(name).parts), reverse=True):
             file = destination / name
-            if name not in old and file.is_file():
-                file.unlink()
+            if name not in old and remove_leaf(file):
                 prune_empty_parents(file, destination)
             temporary = file.with_name(file.name + ".aigc-upgrade-tmp")
-            if temporary.is_file():
+            if temporary.is_symlink() or temporary.is_file():
                 temporary.unlink()
         for name in sorted(changed):
             if name in old and (backup / name).is_file():
@@ -590,8 +655,7 @@ def apply_source_changes(destination, staging, old, new, changed, backup):
         for name in sorted(set(old) - set(new), key=lambda name: len(PurePosixPath(name).parts), reverse=True):
             if name in changed:
                 file = destination / name
-                if file.is_file():
-                    file.unlink()
+                if remove_leaf(file):
                     prune_empty_parents(file, destination)
         for name in sorted(changed):
             if name in new:
@@ -635,11 +699,10 @@ def promote(args):
         file = destination / name
         if not file.resolve().is_relative_to(destination):
             raise UpgradeError(f"Local link escapes runtime directory: {name}")
-        if name not in old and file.is_file():
+        if name not in old and (file.is_symlink() or file.is_file()):
             raise UpgradeError(f"New upstream file would overwrite an untracked local file: {name}")
-        if any(entry is not None and entry["mode"] not in ("100644", "100755")
-               for entry in (old.get(name), new.get(name))):
-            raise UpgradeError(f"Changed links and submodules require explicit handling: {name}")
+        accept_promoted_entry(name, old.get(name), ROOT)
+        accept_promoted_entry(name, new.get(name), source)
     git("-c", "rerere.enabled=true", "rerere", cwd=source)
     commit = output(upstream("commit-tree", tree, "-p", state["overlay"], "-p", state["target"]["commit"],
                               "-m", f"Integrate {state['target']['tag']} with AIGC controls"))

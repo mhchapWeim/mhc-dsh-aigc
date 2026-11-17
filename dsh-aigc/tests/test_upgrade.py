@@ -2,6 +2,7 @@
 import importlib.util
 import io
 import json
+import os
 from pathlib import Path
 import subprocess
 import tarfile
@@ -95,6 +96,39 @@ class SafetyTests(unittest.TestCase):
                 with self.subTest(name=name), self.assertRaises(upgrade.UpgradeError):
                     upgrade.extract_archive(archive, root / "output")
             self.assertFalse((root.parent / "escape").exists())
+
+    def test_relative_symlink_stays_inside_and_absolute_or_escaping_links_stop(self):
+        upgrade.contained_symlink("snapshots/sdk/account-provider-signout/system-prompt.expected.md",
+                                  "../text-turn/system-prompt.expected.md")
+        upgrade.contained_symlink("snapshots/sdk/account-provider-signout/tool-schemas.expected.json",
+                                  "../../session/text-turn/tool-schemas.expected.json")
+        for target in ("/tmp/outside", "D:/outside", "../../outside", "..\\escape", "a:link"):
+            with self.subTest(target=target), self.assertRaises(upgrade.UpgradeError):
+                upgrade.contained_symlink("pkg/link.md", target)
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            archive = root / "links.tar"
+            with tarfile.open(archive, "w") as stream:
+                kept = tarfile.TarInfo("pkg/link.md")
+                kept.type = tarfile.SYMTYPE
+                kept.linkname = "../other/file.md"
+                stream.addfile(kept)
+            try:
+                upgrade.extract_archive(archive, root / "staged")
+            except OSError as error:
+                if getattr(error, "winerror", None) == 1314:
+                    self.skipTest("symlink privilege unavailable")
+                raise
+            self.assertEqual(os.readlink(root / "staged" / "pkg" / "link.md"), "../other/file.md")
+            escaping = root / "escape.tar"
+            with tarfile.open(escaping, "w") as stream:
+                outside = tarfile.TarInfo("pkg/link.md")
+                outside.type = tarfile.SYMTYPE
+                outside.linkname = "../../outside"
+                stream.addfile(outside)
+            with self.assertRaises(upgrade.UpgradeError):
+                upgrade.extract_archive(escaping, root / "rejected")
+            self.assertFalse((root / "outside").exists())
 
 
 class GitIntegrationTests(unittest.TestCase):

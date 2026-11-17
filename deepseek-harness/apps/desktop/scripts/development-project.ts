@@ -16,6 +16,8 @@ import { dirname, join } from 'node:path'
 import { createDevelopmentProjectMetadata } from '../src/project-manager.ts'
 import type { DesktopRelease } from '../src/release.ts'
 import { DESKTOP_RUNTIME_FILE, type DesktopRuntimeDescriptor } from '../src/runtime-tree.ts'
+import type { DesktopAutoUpdateTarget } from './desktop-auto-update-environment.mjs'
+import { desktopTargetPlatform } from './desktop-build-paths.mjs'
 
 interface PackageManifest {
   readonly name?: string
@@ -35,6 +37,8 @@ export interface DevelopmentProjectOptions {
   readonly dependencyDir: string
   /** Release identity written into the disposable project metadata. */
   readonly release: DesktopRelease
+  /** Build target whose prepared payload the disposable project runs against. */
+  readonly target: DesktopAutoUpdateTarget
 }
 
 function readManifest(path: string): PackageManifest {
@@ -65,21 +69,27 @@ function linkDirectory(source: string, destination: string): void {
   symlinkSync(realpathSync(source), destination, process.platform === 'win32' ? 'junction' : 'dir')
 }
 
+function hasPackageManifest(path: string): boolean {
+  return existsSync(join(path, 'package.json'))
+}
+
 function mirrorDependencyLinks(sourceRoot: string, destinationRoot: string): string[] {
   const names: string[] = []
   for (const entry of readdirSync(sourceRoot, { withFileTypes: true })) {
     if (entry.name === '.bin') continue
     const source = join(sourceRoot, entry.name)
     if (entry.name.startsWith('@') && (entry.isDirectory() || entry.isSymbolicLink())) {
-      mkdirSync(join(destinationRoot, entry.name), { recursive: true })
       for (const scoped of readdirSync(source, { withFileTypes: true })) {
         if (!scoped.isDirectory() && !scoped.isSymbolicLink()) continue
-        linkDirectory(join(source, scoped.name), join(destinationRoot, entry.name, scoped.name))
+        const packageDir = join(source, scoped.name)
+        if (!hasPackageManifest(packageDir)) continue
+        mkdirSync(join(destinationRoot, entry.name), { recursive: true })
+        linkDirectory(packageDir, join(destinationRoot, entry.name, scoped.name))
         names.push(`${entry.name}/${scoped.name}`)
       }
       continue
     }
-    if (entry.isDirectory() || entry.isSymbolicLink()) {
+    if ((entry.isDirectory() || entry.isSymbolicLink()) && hasPackageManifest(source)) {
       linkDirectory(source, join(destinationRoot, entry.name))
       names.push(entry.name)
     }
@@ -115,7 +125,7 @@ function mirrorWorkspaceDependencies(roots: readonly string[], destinationRoot: 
 
 /**
  * Replace one disposable project with links to the current built workspace.
- * @param options - Project destination, CLI package, and release identity.
+ * @param options - Project destination, CLI package, release identity, and build target.
  * @returns the absolute project directory supplied by the caller.
  */
 export function prepareDevelopmentProject(options: DevelopmentProjectOptions): string {
@@ -159,7 +169,7 @@ export function prepareDevelopmentProject(options: DevelopmentProjectOptions): s
     return typeof manifest.version === 'string' ? [{ name, version: manifest.version, path: `node_modules/${name}` }] : []
   })
   const runtime: DesktopRuntimeDescriptor = { schemaVersion: 1, release: options.release,
-    platform: process.platform, arch: process.arch, sharedPackages, files: [] }
+    ...desktopTargetPlatform(options.target), sharedPackages, files: [] }
   writeFileSync(join(options.projectDir, DESKTOP_RUNTIME_FILE), `${JSON.stringify(runtime, undefined, 2)}\n`)
   return options.projectDir
 }

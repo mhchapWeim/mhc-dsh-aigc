@@ -13,7 +13,7 @@ it('keeps the signed-in identity during a temporary backend outage and recovers 
   const identity = { enabled: true as const, user: { id: 'user-1', username: 'wh00028' }, models: [], workspaceId: 'w', workspacePath: 'C:\\workspace' }
   const status = vi.fn().mockResolvedValueOnce(identity).mockRejectedValueOnce(new Error('offline')).mockResolvedValue(identity)
   const injected: ManagedSignInInjected = { status, login: vi.fn(), casStart: vi.fn(), casPoll: vi.fn(), logout: vi.fn(), t: key => zh[key] }
-  render(<ManagedAccountMenu {...({} as GlobalStandardProps)} wide openSettings={vi.fn()} openOnboarding={vi.fn()} {...injected} />)
+  render(<ManagedAccountMenu {...({} as GlobalStandardProps)} wide settingsOpen={false} openSettings={vi.fn()} openOnboarding={vi.fn()} {...injected} />)
   await screen.findByRole('button', { name: 'wh00028' })
   fireEvent(window, new Event('focus'))
   await screen.findByText(zh.unreachable)
@@ -31,7 +31,7 @@ it('opens AIGC authentication from the application menu and keeps enterprise aut
     status: vi.fn(async () => ({ enabled: true as const, user: null })), login: vi.fn(), casStart,
     casPoll: vi.fn(), logout: vi.fn(), t: key => zh[key],
   }
-  render(<ManagedAccountMenu {...({} as GlobalStandardProps)} wide openSettings={vi.fn()} openOnboarding={vi.fn()} {...injected} />)
+  render(<ManagedAccountMenu {...({} as GlobalStandardProps)} wide settingsOpen={false} openSettings={vi.fn()} openOnboarding={vi.fn()} {...injected} />)
   fireEvent.click(screen.getByRole('button', { name: zh.signedOut }))
   expect(screen.getByRole('menuitem', { name: '企业用户认证' })).toBeTruthy()
   expect(screen.queryByRole('menuitem', { name: 'AIGC认证' })).toBeNull()
@@ -57,7 +57,7 @@ it('starts SSO directly from the outer menu without displaying credential inputs
       return { enabled: true as const, user: { id: 'user-1', username: 'wh00028' }, models: [], workspaceId: 'ws', workspacePath: 'C:/ws' }
     }), logout: vi.fn(), t: key => zh[key],
   }
-  render(<ManagedAccountMenu {...({} as GlobalStandardProps)} wide openSettings={vi.fn()} openOnboarding={vi.fn()} {...injected} />)
+  render(<ManagedAccountMenu {...({} as GlobalStandardProps)} wide settingsOpen={false} openSettings={vi.fn()} openOnboarding={vi.fn()} {...injected} />)
   await act(async () => { await vi.advanceTimersByTimeAsync(0) })
   fireEvent.click(screen.getByRole('button', { name: zh.signedOut }))
   fireEvent.click(screen.getByRole('menuitem', { name: '企业用户认证' }))
@@ -82,7 +82,7 @@ it('shows the organization user in the original account position and signs out t
     login: vi.fn(), casStart: vi.fn(), casPoll: vi.fn(), logout,
     t: key => zh[key],
   }
-  render(<ManagedAccountMenu {...({} as GlobalStandardProps)} wide openSettings={openSettings}
+  render(<ManagedAccountMenu {...({} as GlobalStandardProps)} wide settingsOpen={false} openSettings={openSettings}
     openOnboarding={vi.fn()} {...injected} />)
   const launcher = await screen.findByRole('button', { name: 'wh00028' })
   expect(screen.getByRole('status').textContent).toBe(zh.noModels)
@@ -105,7 +105,7 @@ it('opens data migration from the desktop application menu and removes the accou
     data: { status: vi.fn(async () => ({ workspaces: [], sessions: [], migrations: [] })), preview: vi.fn(), commit: vi.fn(), repair: vi.fn(), remove: vi.fn(), forgetMissing: vi.fn() },
   }
   try {
-    const view = render(<ManagedAccountMenu {...({} as GlobalStandardProps)} wide openSettings={vi.fn()} openOnboarding={vi.fn()} {...injected} />)
+    const view = render(<ManagedAccountMenu {...({} as GlobalStandardProps)} wide settingsOpen={false} openSettings={vi.fn()} openOnboarding={vi.fn()} {...injected} />)
     fireEvent.click(screen.getByRole('button', { name: zh.signedOut }))
     expect(screen.queryByRole('menuitem', { name: zh.dataTitle })).toBeNull()
     await act(async () => { openData?.() })
@@ -120,7 +120,7 @@ it('does not start authentication on mount, focus refresh, or remount', async ()
     status: vi.fn(async () => ({ enabled: true as const, user: null })), login: vi.fn(),
     casStart: vi.fn(), casPoll: vi.fn(), logout: vi.fn(), t: key => zh[key],
   }
-  const props = { ...({} as GlobalStandardProps), wide: true, openSettings: vi.fn(), openOnboarding: vi.fn(), ...injected }
+  const props = { ...({} as GlobalStandardProps), wide: true, settingsOpen: false, openSettings: vi.fn(), openOnboarding: vi.fn(), ...injected }
   const first = render(<ManagedAccountMenu {...props} />)
   await waitFor(() => expect(injected.status).toHaveBeenCalledOnce())
   fireEvent(window, new Event('focus'))
@@ -140,7 +140,7 @@ it('keeps the remaining ring stable during reservation and deducts only settled 
     .mockResolvedValueOnce({ ...identity, billing: { ...identity.billing, reserved: 400000, remaining: 400000 } })
     .mockResolvedValue({ ...identity, billing: { ...identity.billing, used: 290000, remaining: 710000 } })
   const injected: ManagedSignInInjected = { status, login: vi.fn(), casStart: vi.fn(), casPoll: vi.fn(), logout: vi.fn(), t: key => zh[key] }
-  render(<ManagedAccountMenu {...({} as GlobalStandardProps)} wide openSettings={vi.fn()} openOnboarding={vi.fn()} {...injected} />)
+  render(<ManagedAccountMenu {...({} as GlobalStandardProps)} wide settingsOpen={false} openSettings={vi.fn()} openOnboarding={vi.fn()} {...injected} />)
   await screen.findByRole('meter')
   expect(screen.getByRole('meter').getAttribute('aria-valuenow')).toBe('80')
   expect(screen.queryByRole('region', { name: zh.quotaDetails })).toBeNull()

@@ -107,7 +107,8 @@ export function installManagedMcpSync(ctx: Context, options: {pollMs:number;requ
                 }
                 const connection = mountManagedMcp(scope, {
                   transport:'streamable-http',serverName:`org_${item.id.replace(/-/gu,'').slice(0,28)}`,
-                  url:assertionExchange ? item.url! : `${endpoint}${item.gatewayPath!}`,headers:{},toolCallTimeoutMs:item.timeoutSeconds*1000,failOnStartupError:false,
+                  url:assertionExchange ? item.url! : `${endpoint}${item.gatewayPath!}`,
+                  closeTimeoutMs:options.requestTimeoutMs,expandTemplates:false,headers:{},toolCallTimeoutMs:item.timeoutSeconds*1000,failOnStartupError:false,
                   requestHeaders:async () => {
                     if (generation !== identityGeneration || lifetime.signal.aborted) throw new Error('Organization identity changed')
                     return {authorization:`Bearer ${assertionExchange ? await mcpToken() : await organizationToken()}`}

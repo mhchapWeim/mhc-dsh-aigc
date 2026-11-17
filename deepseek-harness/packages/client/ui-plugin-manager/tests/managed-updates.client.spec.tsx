@@ -10,7 +10,13 @@ afterEach(cleanup)
 const updates = [{ packageName: 'dsh-plugin-internal-model', version: '1.0.9' }]
 const t: ComponentProps<typeof ManagedUpdateNotice>['t'] = key => key in zh ? zh[key as keyof typeof zh] : key
 const unused = () => { throw new Error('Notice does not read session state') }
-const standard = { usePanelInfo: unused, useSessions: unused, useSessionStatus: unused, useSessionRetainInfo: unused, useWorkspaces: unused, useResource: unused }
+const standard = {
+  usePanelInfo: unused, useSessions: unused, useSessionStatus: unused, useSessionRetainInfo: unused, useWorkspaces: unused, useResource: unused,
+  useRemoteAccess: unused as ComponentProps<typeof ManagedUpdateNotice>['useRemoteAccess'],
+  useSessionAccess: unused as ComponentProps<typeof ManagedUpdateNotice>['useSessionAccess'],
+  useContextMenu: unused as ComponentProps<typeof ManagedUpdateNotice>['useContextMenu'],
+  useWorkspaceAccess: unused as ComponentProps<typeof ManagedUpdateNotice>['useWorkspaceAccess'],
+}
 
 it('shows only restart-required updates and leaves a persistent reminder after dismissal', async () => {
   const useManagedUpdates: ComponentProps<typeof ManagedUpdateNotice>['useManagedUpdates'] = selector => selector({ updates })

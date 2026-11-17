@@ -1,4 +1,5 @@
 !include "LogicLib.nsh"
+!include "${__FILEDIR__}\restart-banner.nsh"
 !include "FileFunc.nsh"
 !define INSTALLER_SOURCE_DIR "${__FILEDIR__}\..\installer"
 !define /ifndef INSTALLER_BUILD_DIR "${__FILEDIR__}\..\.desktop-build\targets\win-x64\installer-ui"
@@ -10,7 +11,7 @@ ManifestDPIAware true
 !endif
 
 !macro customHeader
-  !define /ifndef INSTALLER_STRINGS_FILE "${INSTALLER_SOURCE_DIR}\strings.nsh"
+  !define /ifndef INSTALLER_STRINGS_FILE "${INSTALLER_BUILD_DIR}\strings.nsh"
   !include "${INSTALLER_STRINGS_FILE}"
   !ifdef BUILD_UNINSTALLER
     BrandingText " "
@@ -28,6 +29,9 @@ ManifestDPIAware true
     !include "${INSTALLER_SOURCE_DIR}\pages.nsh"
     !include "${INSTALLER_SOURCE_DIR}\lifecycle.nsh"
     !include "${INSTALLER_SOURCE_DIR}\diagnostics.nsh"
+    Function InstallerCheckAppRunning
+      !insertmacro customCheckAppRunning
+    FunctionEnd
   !endif
 !macroend
 
@@ -48,14 +52,20 @@ ManifestDPIAware true
     SetErrorLevel 2
     Quit
   ${EndIf}
+  ; NSIS consumes /D= before .onInit. setInstallModePerUser reads parameters
+  ; again and misses that switch, so keep the directory NSIS already applied.
+  StrCpy $1 $INSTDIR
   !insertmacro setInstallModePerUser
   StrCpy $hasPerMachineInstallation 0
   StrCpy $hasPerUserInstallation 1
-  ; Fresh installs and upgrades share the organization default; explicit /D remains supported.
+  ReadRegStr $2 HKCU "${INSTALL_REGISTRY_KEY}" InstallLocation
+  ; Fresh installs use the organization default. An explicit /D= wins, and an
+  ; upgrade without /D= reopens the registered location.
   StrCpy $INSTDIR "${DSH_INSTALLER_DEFAULT_DIRECTORY}"
-  !insertmacro GetDParameter $1
   ${If} $1 != ""
     StrCpy $INSTDIR $1
+  ${ElseIf} $2 != ""
+    StrCpy $INSTDIR $2
   ${EndIf}
   StrCpy $InstallerPath $INSTDIR
   StrCpy $InstallerTheme "auto"
@@ -79,6 +89,12 @@ ManifestDPIAware true
   File "/oname=$PLUGINSDIR\brand-dark.bmp" "${INSTALLER_BUILD_DIR}\brand-dark.bmp"
   File "/oname=$PLUGINSDIR\brand-dark-2x.bmp" "${INSTALLER_BUILD_DIR}\brand-dark-2x.bmp"
   File "/oname=$PLUGINSDIR\window-frame.dll" "${INSTALLER_BUILD_DIR}\window-frame.dll"
+  ${If} ${Silent}
+  ${AndIf} ${isUpdated}
+  ${AndIf} ${isForceRun}
+    !insertmacro ShowRestartBanner
+  ${EndIf}
+  Call InstallerCheckAppRunning
   ${If} ${Silent}
     Call InstallerPreflight
     ${If} $InstallerError != ""
@@ -132,7 +148,7 @@ ManifestDPIAware true
   Pop $0
 !macroend
 
-!macro customInstallerDirectoryFailed Stage
+!macro dshRecordDirectoryDiagnostics Stage
   !ifdef DSH_INSTALLER_DIAGNOSTICS_ENABLED
   System::Call 'kernel32::GetLastError() i.s'
   Pop $InstallerFailureCode
@@ -254,6 +270,37 @@ ManifestDPIAware true
   ${EndIf}
 !macroend
 
+!macro customInstallerDirectoryFailed
+  Push $0
+  Push $1
+  Push $2
+  Push $3
+  Push $4
+  Push $5
+  Push $6
+  ${GetTime} "" "L" $0 $1 $2 $3 $4 $5 $6
+  StrCpy $0 "$dshDirectoryLogDirectory\directory-failure-$2$1$0-$4$5$6.log"
+  StrCpy $1 1
+  ${If} ${Silent}
+    StrCpy $1 0
+  ${EndIf}
+  StrCpy $3 "$(INSTALLER_DIRECTORY_HINT)"
+  ${If} $dshRestoreError != 0
+    StrCpy $3 "$(INSTALLER_DIRECTORY_RESTORE_HINT)"
+  ${EndIf}
+  System::Call '$PLUGINSDIR\window-frame.dll::InstallerReportDirectoryFailure(p $HWNDPARENT, i $dshDirectoryError, w "$dshDirectorySource", w "$dshDirectoryDestination", i $dshRestoreError, w "$dshOldDirectory", w "$PLUGINSDIR\directory-operations.log", w r0, i r1, w "$(^SetupCaption)", w "$(INSTALLER_DIRECTORY_FAILED)", w r3, w "$(INSTALLER_EXTRACT_COPY)", w "$(INSTALLER_EXTRACT_EXPAND)", w "$(INSTALLER_EXTRACT_COLLAPSE)", w "$(INSTALLER_EXTRACT_SAVED)", w "$(INSTALLER_EXTRACT_UNSAVED)", w "$(INSTALLER_EXTRACT_COPIED)") i.r2 ?c'
+  ${If} $2 == 1
+    DetailPrint $0
+  ${EndIf}
+  Pop $6
+  Pop $5
+  Pop $4
+  Pop $3
+  Pop $2
+  Pop $1
+  Pop $0
+!macroend
+
 !ifndef BUILD_UNINSTALLER
   !include "${__FILEDIR__}\installer-directories.nsh"
 !endif
@@ -266,6 +313,11 @@ ManifestDPIAware true
   ${EndIf}
   !insertmacro InstallerPublishStage 4
   !insertmacro dshFinishDirectories
+  ${If} $RestartStatusJob != ""
+  ${AndIf} $RestartStatusJob != 0
+    System::Call 'kernel32::CloseHandle(p $RestartStatusJob)'
+    StrCpy $RestartStatusJob 0
+  ${EndIf}
   ; Standard uninstall-entry metadata read by inventory tools; the upstream template records it only under its private key.
   WriteRegStr SHELL_CONTEXT "${UNINSTALL_REGISTRY_KEY}" InstallLocation "$INSTDIR"
   ${If} $0 == 1

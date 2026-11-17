@@ -8,12 +8,17 @@
     "plugins/dsh-plugin-managed-voice-input"
   ],
   "baseline": {
-    "tag": "dsh-v0.1.7-alpha.2",
-    "commit": "00102833dfaee1da9f48a3a8eae9d34005a75218"
+    "tag": "dsh-v0.2.2-rc.3",
+    "commit": "38a6a5c965aa99ab525161efb7cc5cf1fe62fced"
   },
   "candidate": {
     "tag": "dsh-v0.2.2-rc.3",
     "commit": "38a6a5c965aa99ab525161efb7cc5cf1fe62fced"
   },
-  "checkpoint": "aigc-dsh-baseline-20261116"
+  "checkpoint": "aigc-dsh-baseline-20261116",
+  "integration": {
+    "commit": "38eb2b7a23c0140b2921e17e8c68bee12163c078",
+    "tree": "210ad3503a249698e6cdcb5bdc2ff29625171fed",
+    "sourceCommit": "1c08e17c3082801316fd851a199478719d76ed6e"
+  }
 }

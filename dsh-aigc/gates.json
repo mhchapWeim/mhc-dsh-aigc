@@ -1,11 +1,19 @@
 {
   "schemaVersion": 1,
   "profiles": {
-    "contracts": ["install", "managed-models", "managed-plugins", "managed-account", "managed-desktop", "data-compatibility"],
-    "release": ["install", "managed-models", "managed-plugins", "managed-account", "managed-desktop", "data-compatibility", "typecheck", "build", "outbound", "installer"]
+    "contracts": ["install", "host-libraries", "managed-models", "runtime-adapters", "managed-plugins", "managed-account", "managed-desktop", "data-compatibility"],
+    "release": ["install", "host-libraries", "managed-models", "runtime-adapters", "managed-plugins", "managed-account", "managed-desktop", "data-compatibility", "typecheck", "build", "outbound", "installer"]
   },
   "gates": {
     "install": {"argv": ["pnpm", "install", "--frozen-lockfile"]},
+    "host-libraries": {
+      "argv": ["pnpm", "exec", "tsx", "scripts/compile-referenced-projects.ts", "host-libraries"],
+      "requiredPaths": ["scripts/compile-referenced-projects.ts"]
+    },
+    "runtime-adapters": {
+      "argv": ["pnpm", "exec", "vitest", "run", "packages/llm/llm-pi-ai/tests/adapter.spec.ts", "packages/llm/token-meter/tests/progress-policy.spec.ts", "packages/api/session-controller/tests/session-models.host.spec.ts", "packages/mcp/mcp-client/tests/reconnect.spec.ts", "packages/util/atomic-write/tests/atomic-write.spec.ts", "--maxWorkers=2"],
+      "requiredPaths": ["packages/llm/llm-pi-ai/tests/adapter.spec.ts", "packages/llm/token-meter/tests/progress-policy.spec.ts", "packages/api/session-controller/tests/session-models.host.spec.ts", "packages/mcp/mcp-client/tests/reconnect.spec.ts", "packages/util/atomic-write/tests/atomic-write.spec.ts"]
+    },
     "managed-models": {
       "argv": ["pnpm", "exec", "vitest", "run", "packages/llm/llm-managed-backend/tests", "packages/guard/sensitive-word-filter/tests", "--maxWorkers=2"],
       "requiredPaths": ["packages/llm/llm-managed-backend/tests/billing.spec.ts", "packages/llm/llm-managed-backend/tests/custom-models-composition.spec.ts", "packages/llm/llm-managed-backend/tests/config-sync.spec.ts", "packages/llm/llm-managed-backend/tests/persistent-session.spec.ts", "packages/guard/sensitive-word-filter/tests"]

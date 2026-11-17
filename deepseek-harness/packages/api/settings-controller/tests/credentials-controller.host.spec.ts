@@ -18,7 +18,7 @@ import { MemoryStorageBackend } from '../../../storage/storage-domain/tests/help
 class LeakyCredentials extends MemoryCredentials {
   override describe(): Promise<CredentialInfo> {
     return Promise.resolve(
-      { configured: true, source: 'memory', writable: true, value: 'sk-leaked' } as CredentialInfo,
+      { configured: true, source: 'memory', writable: true, masked: '•'.repeat(9), value: 'sk-leaked', preview: 'sk…ed' } as CredentialInfo,
     )
   }
 }
@@ -33,7 +33,7 @@ class LiteralRejectingCredentials extends MemoryCredentials {
 /** A store whose provider-owned policy rejects an otherwise valid write. */
 class RejectingCredentials extends MemoryCredentials {
   override set(): Promise<void> {
-    return Promise.reject(new Error('a read-only source shadows this reference'))
+    return Promise.reject(new Error('the stored document no longer parses'))
   }
 }
 
@@ -116,8 +116,9 @@ describe('the credentials Remote namespace a configuration surface calls', () =>
   it('answers only the fields the view declares, whatever a provider returns', async () => {
     const controller = await boot({}, LeakyCredentials)
     const described = await controller.describe(['DEEPSEEK_API_KEY'])
-    expect(described.DEEPSEEK_API_KEY).toEqual({ configured: true, source: 'memory', writable: true })
+    expect(described.DEEPSEEK_API_KEY).toEqual({ configured: true, source: 'memory', writable: true, masked: '•'.repeat(9) })
     expect(JSON.stringify(described)).not.toContain('sk-leaked')
+    expect(JSON.stringify(described)).not.toContain('sk…ed')
   })
 
   it('stores and removes through the same references the batch describes', async () => {
@@ -135,7 +136,7 @@ describe('the credentials Remote namespace a configuration surface calls', () =>
     const failure = await controller.set('DEEPSEEK_API_KEY', 'sk-live').catch((error: unknown) => error)
     const { code, message, details } = remoteErrorOf(failure) ?? {}
     expect(code).toBe('credential/rejected')
-    expect(message).toContain('read-only source')
+    expect(message).toContain('no longer parses')
     expect(details).toEqual({ ref: 'DEEPSEEK_API_KEY' })
   })
 
@@ -195,7 +196,7 @@ describe('managed login profile binding', () => {
     const test = await fixture('WH00028', false, false, true)
     try {
       const root = join(test.home, 'wanzaiwork')
-      const initial = await test.ctx.workspaceRegistry.initializeDefault(async () => ({ path: root, title: 'Default workspace' }))
+      const initial = await test.ctx.workspaceRegistry.initializeDefault(async () => root)
       const state = source === 'local' ? await test.controller.managedLogin('wh00028', 'password')
         : await test.controller.managedCasPoll('b'.repeat(64))
       expect(state).toMatchObject({ workspacePath: root })

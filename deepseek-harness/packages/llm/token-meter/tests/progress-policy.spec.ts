@@ -58,6 +58,7 @@ describe('task progress policy through Loader', () => {
         const agent = { session: current } as Agent
         return agentEvents(ctx, agent).waterfall('agent/pre-step', {
           messages: [], turn, step, signal: new AbortController().signal,
+          modelSelection: { provider: 'test', model: 'test' },
         }, () => Promise.resolve({ kind: 'enter' as const, messages: [] }))
       }
       const first = await compose(session, 1, 2)
@@ -90,7 +91,7 @@ describe('task progress policy through Loader', () => {
   it.each([0, -1, 1.5, Number.NaN])('rejects an invalid cadence %s', async (everySteps) => {
     const ctx = new Context()
     try {
-      expect(() => { Policy.apply(ctx, { everySteps }) }).toThrow('positive safe integers')
+      await expect(Policy.apply(ctx, { everySteps })).rejects.toThrow('positive safe integers')
     } finally {
       await ctx.fiber.dispose()
     }

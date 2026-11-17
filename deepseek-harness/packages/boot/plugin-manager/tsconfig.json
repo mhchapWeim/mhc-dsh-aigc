@@ -24,6 +24,9 @@
       "path": "../app-boot"
     },
     {
+      "path": "../../util/official-bundles"
+    },
+    {
       "path": "../../util/atomic-write"
     },
     {
@@ -73,6 +76,15 @@
     },
     {
       "path": "../../mcp/mcp-client"
+    },
+    {
+      "path": "../../util/plugin-detail"
+    },
+    {
+      "path": "../../util/timeout"
+    },
+    {
+      "path": "../../client/connection/tsconfig.host.json"
     }
   ]
 }

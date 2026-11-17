@@ -20,7 +20,7 @@ it.each(['mount', 'host'])('quiesces %s shutdown while a managed MCP HTTP probe 
   const connection = mountManagedMcp(ctx, {
     transport: 'streamable-http', serverName: 'shutdown-probe',
     url: `http://127.0.0.1:${address.port}/mcp`, headers: {},
-    toolCallTimeoutMs: 60_000, failOnStartupError: false,
+    toolCallTimeoutMs: 60_000, closeTimeoutMs: 5_000, expandTemplates: false, failOnStartupError: false,
   })
   let timer: ReturnType<typeof setTimeout> | undefined
   try {

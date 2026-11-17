@@ -6,6 +6,7 @@ import { pathToFileURL } from 'node:url'
 import { afterEach, expect, it, vi } from 'vitest'
 import * as tar from 'tar'
 import { Context } from '@deepseek-ai/cordis'
+import RemoteAccessService from '@deepseek-ai/dsh-api-remote-access'
 import Loader from '@deepseek-ai/cordis-plugin-loader'
 import Include from '@deepseek-ai/cordis-plugin-include'
 import TypertRegistry from '@deepseek-ai/dsh-typert-registry'
@@ -13,7 +14,7 @@ import SessionStore, { SessionId, SessionSeq, SESSION_FORMAT_VERSION } from '@de
 import SessionProjectionRegistry from '../../../session/session-projection/src/index.ts'
 import SessionProjectionCache from '../../../session/session-projection-cache/src/index.ts'
 import { titleProjectionDefinition } from '../../../session/session-title/src/index.ts'
-import JsonlSessionPersistence from '@deepseek-ai/dsh-session-persistence-jsonl'
+import * as JsonlSessionPersistence from '@deepseek-ai/dsh-session-persistence-jsonl'
 import Storage from '@deepseek-ai/dsh-storage'
 import { DomainFacility } from '@deepseek-ai/dsh-storage-domain'
 import WorkspaceRegistry from '@deepseek-ai/dsh-workspace'
@@ -117,8 +118,9 @@ async function fixture(looseLogs = false) {
   const facility = new DomainFacility(ctx, { backend: 'memory', routes: {} })
   ctx.storage.mount('domain', facility); ctx.provide('storageDomain', facility)
   await ctx.plugin(SessionProjectionRegistry)
-  ctx.sessionProjections.register(titleProjectionDefinition)
+  await ctx.sessionProjections.register(titleProjectionDefinition)
   await ctx.plugin(SessionProjectionCache, { writeEveryEvents: 100, writeIntervalMs: 60_000 })
+  await ctx.plugin(RemoteAccessService)
   await ctx.plugin(WorkspaceRegistry, { allowedRoot })
   const source = await ctx.workspaceRegistry.create(sourcePath)
   const id = SessionId('old-history')

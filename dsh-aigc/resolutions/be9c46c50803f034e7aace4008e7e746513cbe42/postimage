@@ -1,0 +1,88 @@
+# Bilingual-pair consistency record for README.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write apps/desktop/README.md
+/:
+  en: 10b2a2c16a13bda6
+  zh: 6967d0d5c8d8a2d5
+/desktop:
+  en: 2888ff30553916db
+  zh: e7156ea3db4d71c4
+/desktop/summary:
+  en: 02c923f538905b05
+  zh: e3179d84ba068034
+/desktop/table-of-contents:
+  en: 128697d9b59b2b65
+  zh: cd4cd60e738bba78
+/desktop/application-overview:
+  en: 51cd87c0264d58e8
+  zh: d3b5e6bb8b726f7f
+/desktop/organization-authorized-voice-input:
+  en: 56c6dbca5a606815
+  zh: 17549177bbd5bc3f
+/desktop/local-failure-diagnostics:
+  en: 2744d96e64d2ffb6
+  zh: 2011df7975356a2e
+/desktop/terminal-command:
+  en: 5f2d25a1d8472647
+  zh: 2acb5c5d7d1917e2
+/desktop/closing-the-window-and-quitting:
+  en: bb35a022c37955c9
+  zh: ab2ef22d398d83a0
+/desktop/key-technical-decisions:
+  en: 943b9925132daaca
+  zh: a39c0afcb58c1d3c
+/desktop/key-technical-decisions/bundled-workspace-dependencies:
+  en: 9eb34500d71cbc0a
+  zh: 90e6a98d4c2c0f14
+/desktop/bundled-command-runtime:
+  en: 372297005b57a08b
+  zh: 074a635ac17e4362
+/desktop/installation-ownership:
+  en: 04f7fdb34fdfcce6
+  zh: ba9fd11ebe0e4561
+/desktop/installation-ownership/runtime-and-plugin-activation:
+  en: 4951cd3ee659eb33
+  zh: 96bdd6358dad587a
+/desktop/installation-ownership/host-environment:
+  en: b90ea0732bb79541
+  zh: 7b71ccb253a65e1d
+/desktop/develop:
+  en: faf7676ba18bbf2f
+  zh: f1d7b75ad348c548
+/desktop/develop/startup-onboarding:
+  en: 197ddf38da5e1663
+  zh: 64d7baa66ad2fc58
+/desktop/develop/welcome-window-appearance:
+  en: 617a89aeb28131b9
+  zh: 4d84bd5d86501c86
+/desktop/package:
+  en: ac31ebdd9de54f34
+  zh: 921e534d5c4b3a16
+/desktop/windows-installer-interface:
+  en: 919043fbc540d8fd
+  zh: a5bf0df71fc17c11
+/desktop/updates:
+  en: 8b0b9efeb83727ef
+  zh: 5ee95de48ceab392
+/desktop/updates/local-desktop-settings:
+  en: dbe57394894b7368
+  zh: a3bb788c2ce631a4
+/desktop/updates/mandatory-update-policy:
+  en: 182a9c6705213e13
+  zh: 681762f83490f4c6
+/desktop/updates/local-updater-qualification:
+  en: db5e898140a73d53
+  zh: 80a9d58c74b4bb24
+/desktop/low-level-development-overrides:
+  en: 8264b135871e8978
+  zh: 0939aafb1b2961fc
+/desktop/known-limitations:
+  en: b1eeadfefb338056
+  zh: 28683fbdf1e98685
+/desktop/dev-note:
+  en: ebcaa7c1f4cdcd38
+  zh: 52bbcc793ed8d95f
+/desktop/dev-note/internal-aigc-updates-without-a-signing-device:
+  en: a1fb30e8041ef272
+  zh: 1a8b27908557014b
