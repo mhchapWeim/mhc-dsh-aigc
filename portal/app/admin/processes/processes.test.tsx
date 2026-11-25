@@ -24,7 +24,7 @@ vi.mock("../../lib/api-client", () => ({
     .mockResolvedValue({
       users: [{ value: "person", label: "测试人员", employeeNo: "wh001" }],
       departments: [],
-      roles: [],
+      roles: [{ value: "workflow-admin", label: "流程管理员" }],
     }),
 }));
 vi.mock("../../components/delete-confirm", () => ({
@@ -122,6 +122,7 @@ it("creates an empty named draft before opening the editor", async () => {
     version: 0,
     definition: { name: "维修审批", nodes: [], edges: [] },
     isPublished: false,
+    requestType: "publication",
   });
 });
 
@@ -223,4 +224,41 @@ it("assigns a user task through the searchable directory and toggles inbox notif
   expect(notification).toHaveAttribute("aria-checked", "true");
   await user.click(notification);
   expect(notification).toHaveAttribute("aria-checked", "false");
+});
+
+it("offers application-owner assignment on access flows and saves the fallback role", async () => {
+  const user = userEvent.setup();
+  api.list.mockResolvedValue([{
+    ...draft,
+    requestType: "access",
+    definitionJson: JSON.stringify({
+      name: "访问申请",
+      nodes: [
+        { id: "start", type: "start", name: "开始", x: 40, y: 80 },
+        { id: "review", type: "userTask", name: "访问审核", x: 220, y: 80, assignmentType: "role", assignee: "workflow-admin" },
+        { id: "end", type: "end", name: "结束", x: 420, y: 80 },
+      ],
+      edges: [],
+    }),
+  }]);
+  render(<ProcessDesigner versionId="draft" />);
+  await user.click(await screen.findByRole("button", { name: "访问审核" }));
+  await user.click(screen.getByRole("combobox", { name: "分配方式" }));
+  expect(screen.getByRole("option", { name: "应用负责人（缺省转平台审核员）" })).toBeInTheDocument();
+  await user.click(screen.getByRole("option", { name: "应用负责人（缺省转平台审核员）" }));
+  expect(screen.getByRole("combobox", { name: "兜底审核角色" })).toHaveTextContent("流程管理员");
+  await user.click(screen.getByRole("button", { name: "保存草稿" }));
+  await waitFor(() => expect(api.update).toHaveBeenCalled());
+  const saved = api.update.mock.calls.at(-1)![1].definition.nodes.find((node: { id: string }) => node.id === "review");
+  expect(saved.assignmentType).toBe("appOwner");
+  expect(saved.fallbackRole).toBe("workflow-admin");
+});
+
+it("hides application-owner assignment on publication flows", async () => {
+  const user = userEvent.setup();
+  render(<ProcessDesigner versionId="draft" />);
+  await screen.findByRole("button", { name: "开始" });
+  await user.click(screen.getByRole("button", { name: "添加用户任务" }));
+  await user.click(screen.getByRole("combobox", { name: "分配方式" }));
+  expect(screen.queryByRole("option", { name: "应用负责人（缺省转平台审核员）" })).not.toBeInTheDocument();
 });

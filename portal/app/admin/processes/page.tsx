@@ -41,6 +41,7 @@ export default function ProcessManagementPage() {
   const [name, setName] = useState("");
   const [key, setKey] = useState("");
   const [busy, setBusy] = useState(false);
+  const [requestType, setRequestType] = useState<"publication" | "access">("publication");
   const [useIntegrationTemplate, setUseIntegrationTemplate] = useState(false);
   const [confirmDisable, setConfirmDisable] =
     useState<BackendProcessDefinition | null>(null);
@@ -91,6 +92,7 @@ export default function ProcessManagementPage() {
         version: 0,
         definition,
         isPublished: false,
+        requestType: source?.requestType === "access" || requestType === "access" ? "access" : "publication",
       });
       router.push(`/admin/processes/${created.id}`);
     } catch (e) {
@@ -113,7 +115,7 @@ export default function ProcessManagementPage() {
     }
   };
   return (
-    <div className="admin-page page-enter process-management">
+    <div className="admin-page page-enter process-management admin-stack">
       <div className="page-title">
         <div>
           <h1>
@@ -397,8 +399,15 @@ export default function ProcessManagementPage() {
                 onChange={(e) => setKey(e.target.value)}
                 placeholder="例如：equipment-repair"
               />
-              <small>2–80 位小写字母、数字或连字符，创建后不可修改。</small>
+              <small>2–80 位小写字母、数字或连字符，创建后不可修改。访问申请可使用 application-access。</small>
             </label>
+            {!useIntegrationTemplate && <label>
+              <span>适用申请</span>
+              <select aria-label="适用申请" value={requestType} onChange={event => setRequestType(event.target.value as "publication" | "access")}>
+                <option value="publication">发布申请</option>
+                <option value="access">访问申请</option>
+              </select>
+            </label>}
             <label><span><input type="checkbox" checked={useIntegrationTemplate} onChange={event => setUseIntegrationTemplate(event.target.checked)} /> 使用代码审计与部署模板</span><small>生成 MQ 审计 → 部署审批 → MQ 部署流程；发布前需配置并启用对应服务。</small></label>
             {error && (
               <div className="model-form-error" role="alert">

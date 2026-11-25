@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { clearSession } from "../../lib/api-client";
+import { clearSession, getReviewableAccessRequests } from "../../lib/api-client";
 import {
   Bell,
   Download,
@@ -47,12 +47,14 @@ const sections = [
     icon: Grid2X2,
     items: [
       { href: "/admin", label: "工作台", icon: Grid2X2 },
-      { href: "/admin/publications", label: "发布申请", icon: FilePlus2 },
+      { href: "/admin/publications", label: "申请管理", icon: FilePlus2 },
       { href: "/admin/reviews", label: "发布审核", icon: ClipboardCheck },
       { href: "/admin/processes", label: "流程管理", icon: Network },
+      { href: "/admin/processes/bindings", label: "流程绑定", icon: Network },
+      { href: "/admin/gateway", label: "应用网关配置", icon: ShieldCheck },
       { href: "/admin/processes/integrations", label: "第三方服务", icon: Network },
       { href: "/admin/categories", label: "分类管理", icon: Tags },
-      { href: "/admin/registry", label: "注册中心", icon: Boxes },
+      { href: "/admin/registry", label: "应用管理", icon: Boxes },
     ],
   },
   {
@@ -121,7 +123,7 @@ const versionPages = [
   { href: '/admin/client-releases/status', label: '版本状态', icon: ScrollText },
 ];
 const items = [...sections.flatMap((section) => section.items).filter(item => item.href !== '/admin/client-releases'), ...versionPages];
-const matchesPath = (href: string, path: string) => href === path || ((href === '/admin/client-releases' || href === '/admin/users' || (href === '/admin/processes' && !path.startsWith('/admin/processes/integrations'))) && path.startsWith(href + '/'));
+const matchesPath = (href: string, path: string) => href === path || ((href === '/admin/client-releases' || href === '/admin/users' || (href === '/admin/processes' && !path.startsWith('/admin/processes/integrations') && !path.startsWith('/admin/processes/bindings'))) && path.startsWith(href + '/'));
 type StoredAdminUser = { id: string; name: string; employeeNo: string; roles: string[]; permissions: string[] };
 
 export function AdminShell({ children }: { children: React.ReactNode }) {
@@ -144,6 +146,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
   const platform = usePlatform();
   const { currentUserId, users, publicationRequests, dispatch } = platform;
   const [storedUser, setStoredUser] = useState<StoredAdminUser | null>(null);
+  const [assignedAccessReviews, setAssignedAccessReviews] = useState(false);
   useEffect(() => {
     const timer = window.setTimeout(() => {
       try { setCollapsed(localStorage.getItem('aigc-admin-sidebar') === 'collapsed'); } catch { /* Keep the default when browser storage is unavailable. */ }
@@ -152,6 +155,17 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
     }, 0);
     return () => window.clearTimeout(timer);
   }, []);
+  useEffect(() => {
+    if (!storedUser || storedUser.permissions.includes("publication.review")) {
+      setAssignedAccessReviews(false);
+      return;
+    }
+    let active = true;
+    getReviewableAccessRequests()
+      .then((items) => { if (active) setAssignedAccessReviews(items.length > 0); })
+      .catch(() => { if (active) setAssignedAccessReviews(false); });
+    return () => { active = false; };
+  }, [storedUser]);
   const currentUser = users.find((user) => user.id === currentUserId) ?? (storedUser ? {
     id: storedUser.id, name: storedUser.name, employeeNo: storedUser.employeeNo, email: '', department: '',
     role: storedUser.roles[0] ?? '', status: '启用' as const, lastLogin: '当前登录',
@@ -165,7 +179,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
     '/admin/click-reports': 'category.manage',
     '/admin/config-updates': 'model.manage',
     '/admin': 'admin.view', '/admin/publications': 'publication.create', '/admin/reviews': 'publication.review',
-    '/admin/processes': 'process.design', '/admin/users/sync': 'user.manage', '/admin/users': 'user.manage', '/admin/departments': 'department.manage',
+    '/admin/processes': 'process.design', '/admin/processes/bindings': 'process.design', '/admin/gateway': 'gateway.manage', '/admin/users/sync': 'user.manage', '/admin/users': 'user.manage', '/admin/departments': 'department.manage',
     '/admin/categories': 'category.manage', '/admin/roles': 'role.manage', '/admin/models': 'model.manage', '/admin/virtual-keys': 'model.manage', '/admin/audits': 'model.manage',
     '/admin/sensitive-words': 'model.manage', '/admin/uploads': 'model.manage',
     '/admin/announcements': 'announcement.manage', '/admin/client-releases': 'client-release.manage', '/admin/client-releases/status': 'client-release.manage',
@@ -176,8 +190,9 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
   const canAccess = (target: string) => (target === '/admin/dsh-backups' || target === '/admin/usage') ? Boolean(storedUser || currentUser) : storedUser
     ? storedUser.permissions.includes(permissionByPath[target] ?? 'admin.view')
     : canAccessAdminPath(platform, currentUser, target);
-  const canOpenReviews = canAccess('/admin/reviews');
-  const hasAccess = canAccess(path.startsWith('/admin/processes/') ? '/admin/processes' : path);
+  const canOpenReviews = canAccess('/admin/reviews') || assignedAccessReviews;
+  const pageKey = path.startsWith('/admin/processes/') && !path.startsWith('/admin/processes/bindings') ? '/admin/processes' : path;
+  const hasAccess = pageKey === '/admin/reviews' ? canOpenReviews : canAccess(pageKey);
   const active = path === '/admin/users/sync' ? { label: '用户同步' } : items.find((item) => matchesPath(item.href, path)) ?? items[0];
   return (
     <div className={`admin-app${collapsed ? " is-collapsed" : ""}`}>
@@ -232,11 +247,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
               </button>
               <div className="admin-nav-children" hidden={collapsed || expandedGroup !== section.label}>
               {section.items
-                .filter(
-                  (item) =>
-                    canAccess(item.href) &&
-                    (item.href !== "/admin/reviews" || canOpenReviews),
-                )
+                .filter((item) => item.href === "/admin/reviews" ? canOpenReviews : canAccess(item.href))
                 .map((item) => {
                   const Icon = item.icon;
                   const selected = matchesPath(item.href, path);
@@ -301,7 +312,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
         onBlur={event => { if (!event.currentTarget.contains(event.relatedTarget as Node | null)) hideFlyout(); }}
         onKeyDown={event => { if (event.key === 'Escape') { cancelHide(); setFlyout(null); } }}>
         <nav aria-label={`${flyout.label}子菜单`}><strong>{flyout.label}</strong>
-          {sections.find(section => section.label === flyout.label)?.items.filter(item => canAccess(item.href)).map(item => item.href === '/admin/client-releases' ? <div key={item.href} className="admin-version-nav"><span>版本管理</span>{versionPages.map(child => <Link key={child.href} href={child.href} aria-current={path === child.href ? 'page' : undefined} onClick={() => { cancelHide(); setFlyout(null); setMobileOpen(false); }}>{child.label}</Link>)}</div> : <Link
+          {sections.find(section => section.label === flyout.label)?.items.filter(item => item.href === '/admin/reviews' ? canOpenReviews : canAccess(item.href)).map(item => item.href === '/admin/client-releases' ? <div key={item.href} className="admin-version-nav"><span>版本管理</span>{versionPages.map(child => <Link key={child.href} href={child.href} aria-current={path === child.href ? 'page' : undefined} onClick={() => { cancelHide(); setFlyout(null); setMobileOpen(false); }}>{child.label}</Link>)}</div> : <Link
             key={item.href} href={item.href} aria-current={path === item.href ? 'page' : undefined}
             onClick={() => { cancelHide(); setFlyout(null); setMobileOpen(false); }}>
             <item.icon size={17} /><span>{item.label}</span>

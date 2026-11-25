@@ -486,15 +486,20 @@ it('keeps a working organization bundle authorized when the profile lock is cont
   expect(ctx.get('marketProbe')).toBe(true)
 })
 
-it('keeps hot configuration changes silent and announces verified code updates until logout', async () => {
-  const { ctx, dir, manager, bundle } = await fixture('live', false, undefined, { managedPollMs: 1000 })
+it('keeps the live bundle and reports other plugins while its verified update waits for the profile lock', async () => {
+  const { ctx, dir, manager, bundle } = await fixture('live', false, undefined, { managedPollMs: 1000, managedLockRetryMs: 1000 })
+  const diagnostics: string[] = []
+  ctx.logger.exporter({ levels: { default: 2 }, export(message) {
+    if (message.name === 'managed-plugins' && message.type === 'warn') diagnostics.push(String(message.args[0]))
+  } })
   await ctx.plugin(CredentialsLocal, { path: join(dir, 'credentials.yaml'), watch: false })
   const key = credentialKey('llm-managed-backend', 'user-session')
   await ctx.credentials.modifyRecord(key, async () => ({ kind: 'api-key', key: 'organization-token' }))
   let version = '1.0.0'
   let revision = 1
   let service = 'originalProbe'
-  const reports: { status: string }[] = []
+  const otherPluginId = '00000000-0000-4000-8000-000000000003'
+  const reports: { pluginId: string; status: string; revision: number; version: string }[] = []
   const notices: unknown[] = []
   ctx.on('plugin-manager/managed-updated', value => { notices.push(value) })
   const fetcher = vi.spyOn(globalThis, 'fetch').mockImplementation(async (url, options) => {
@@ -503,9 +508,12 @@ it('keeps hot configuration changes silent and announces verified code updates u
       id: '00000000-0000-4000-8000-000000000002', packageName: 'market-addon', revision, enabled: true,
       version, dshVersion: '0.1.7-alpha.2', sha256: createHash('sha256').update(archive).digest('hex'), size: archive.length,
       downloadPath: '/v1/plugins/package.tgz', configuration: { 'market-row': { service } },
+    }, {
+      id: otherPluginId, packageName: 'other-addon', revision, enabled: false,
+      version: null, dshVersion: null, sha256: null, size: null, downloadPath: null, configuration: {},
     }] })
     if (String(url).endsWith('.tgz')) return new Response(archive)
-    reports.push(JSON.parse(String(options?.body)) as { status: string })
+    reports.push(JSON.parse(String(options?.body)) as typeof reports[number])
     return new Response(null, { status: 204 })
   })
   const install = vi.spyOn(operations, 'runProfilePnpm').mockImplementation(async () => {
@@ -527,15 +535,30 @@ it('keeps hot configuration changes silent and announces verified code updates u
   await vi.waitFor(() => expect(ctx.get('configuredProbe')).toBe(true), { timeout: 5000 })
   expect(manager.managedUpdates()).toEqual([])
   expect(notices).toEqual([])
+  const lock = join(dir, 'package.json.lock')
+  await vi.waitFor(() => expect(reports.some(report => report.revision === revision && report.status === 'Active')).toBe(true))
+  writeFileSync(lock, `${process.pid}\n`, { flag: 'wx' })
   version = '2.0.0'; revision++
-  ctx.emit('credentials/record-updated', key)
-  await vi.waitFor(() => expect(manager.managedUpdates()).toEqual([{ packageName: 'market-addon', version: '2.0.0' }]), { timeout: 5000 })
-  await vi.waitFor(() => expect(reports.at(-1)?.status).toBe('RestartRequired'), { timeout: 5000 })
+  try {
+    ctx.emit('credentials/record-updated', key)
+    await vi.waitFor(() => expect(reports).toContainEqual(expect.objectContaining({
+      pluginId: otherPluginId, revision, status: 'Disabled',
+    })), { timeout: 5000 })
+    expect(ctx.get('configuredProbe')).toBe(true)
+    expect(isManagedBundleAuthorized(dir, 'market-addon')).toBe(true)
+    expect(install).toHaveBeenCalledTimes(1)
+    expect(diagnostics).toContain(`Profile write lock busy: plugin=market-addon phase=replace observedOwnerPid=${process.pid} retryMs=1000`)
+  } finally { rmSync(lock) }
+  await vi.waitFor(() => expect(reports).toContainEqual(expect.objectContaining({
+    revision, status: 'Active', version: '2.0.0',
+  })), { timeout: 5000 })
   expect(install).toHaveBeenCalledTimes(2)
+  expect(diagnostics).toContainEqual(expect.stringMatching(
+    /^Deferred profile write finished: plugin=market-addon phase=replace attempts=[1-9]\d* elapsedMs=\d+ outcome=Active$/u,
+  ))
   await ctx.credentials.deleteRecord(key)
-  await vi.waitFor(() => expect(manager.managedUpdates()).toEqual([]), { timeout: 5000 })
-  expect(notices.at(-1)).toEqual([])
-})
+  await vi.waitFor(() => expect(ctx.get('configuredProbe')).toBeUndefined(), { timeout: 5000 })
+}, 15000)
 
 it.each(['missing package', 'invalid manifest', 'not a bundle', 'missing patch', 'invalid patch'])(
   'boots with %s, lists its error, and permits deselection without enabling the broken bundle', async (failure) => {

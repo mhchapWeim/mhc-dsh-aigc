@@ -19,3 +19,20 @@ it('uses authenticated POST clicks on internal HTTP browsers without randomUUID'
   expect(new Headers(init.headers).get('Authorization')).toBe('Bearer test-token');
   expect(JSON.parse(String(init.body)).visitId).toMatch(/^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/);
 });
+
+it.each([
+  ['https://cas-sso.aigcplatform.boschhuayu-steering.com', '/.aigc/launch', 'https://cas-sso.aigcplatform.boschhuayu-steering.com/.aigc/launch'],
+  ['https://aigc.test', undefined, 'https://aigc.test/cas-sso'],
+])('posts the ticket to the requested gateway endpoint at %s', async (gatewayOrigin, launchPath, action) => {
+  vi.stubGlobal('fetch', vi.fn(async () => Response.json({ gatewayOrigin, launchPath, slug: 'cas-sso', ticket: 'test-ticket' })));
+  const submit = vi.spyOn(HTMLFormElement.prototype, 'submit').mockImplementation(function (this: HTMLFormElement) {
+    expect(this.action).toBe(action);
+    expect(this.method).toBe('post');
+    expect(this.rel).toBe('noopener');
+    expect(new FormData(this).get('ticket')).toBe('test-ticket');
+  });
+  const { submitPublishedLaunch } = await import('./api-client');
+  await submitPublishedLaunch('app');
+  expect(submit).toHaveBeenCalledOnce();
+  expect(document.querySelector('form')).toBeNull();
+});

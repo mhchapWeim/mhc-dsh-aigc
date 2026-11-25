@@ -1488,8 +1488,7 @@ input:focus-visible {
   color: var(--muted);
 }
 .table-search:focus-within {
-  border-color: var(--blue-500);
-  box-shadow: 0 0 0 3px rgba(56, 123, 224, 0.1);
+  box-shadow: 0 0 0 2px rgba(5, 145, 255, 0.1);
 }
 .table-search input {
   border: 0;
@@ -1768,8 +1767,7 @@ tbody tr:hover {
 }
 .entity-form input:focus,
 .entity-form textarea:focus {
-  border-color: var(--blue-500);
-  box-shadow: 0 0 0 3px rgba(56, 123, 224, 0.1);
+  box-shadow: 0 0 0 2px rgba(5, 145, 255, 0.1);
 }
 .entity-form input[type="color"] {
   height: 44px;
@@ -2331,8 +2329,7 @@ tbody tr:hover {
 }
 .property-form input:focus,
 .property-form textarea:focus {
-  border-color: var(--blue-500);
-  box-shadow: 0 0 0 3px rgba(56, 123, 224, 0.1);
+  box-shadow: 0 0 0 2px rgba(5, 145, 255, 0.1);
 }
 .delete-node {
   width: 100%;
@@ -3114,7 +3111,6 @@ tbody tr:hover {
 .entity-form textarea:focus,
 .property-form input:focus,
 .property-form textarea:focus {
-  border-color: var(--ant-primary);
   box-shadow: 0 0 0 2px rgba(5, 145, 255, 0.1);
 }
 .admin-route-transition {
@@ -3166,7 +3162,6 @@ tbody tr:hover {
   border-color: var(--ant-primary-hover, #4096ff);
 }
 .modern-select.is-open .modern-select__trigger {
-  border-color: var(--ant-primary, #1677ff);
   box-shadow: 0 0 0 2px rgba(5, 145, 255, 0.1);
 }
 .modern-select__trigger .is-placeholder {
@@ -3219,7 +3214,6 @@ tbody tr:hover {
 }
 .modern-select__search:focus-within,
 .directory-picker__search:focus-within {
-  border-color: #1677ff;
   box-shadow: 0 0 0 2px rgba(5, 145, 255, 0.1);
 }
 .modern-select__search input,
@@ -6967,6 +6961,22 @@ tbody tr:hover {
   overscroll-behavior: contain;
   scrollbar-gutter: stable;
 }
+:where(.portal-page) .access-request-form .modal-actions > .primary-action {
+  background: var(--blue-600);
+  color: var(--surface);
+  border: 1px solid transparent;
+}
+:where(.portal-page) .access-request-form .modal-actions > .primary-action:hover:not(:disabled) {
+  background: var(--blue-700);
+}
+.access-request-form .modal-actions > .primary-action:disabled {
+  background: var(--page);
+  color: var(--ink-soft);
+  border-color: var(--line);
+  box-shadow: none;
+  cursor: not-allowed;
+  opacity: 1;
+}
 .publication-url-note {
   margin: 2px 0 0;
   padding: 10px 12px;
@@ -7433,8 +7443,7 @@ tbody tr:hover {
   transition: border-color 0.16s, box-shadow 0.16s;
 }
 .entity-form .model-grant-search:focus-within {
-  border-color: var(--blue-500);
-  box-shadow: 0 0 0 3px rgba(56, 123, 224, 0.12);
+  box-shadow: 0 0 0 2px rgba(5, 145, 255, 0.1);
 }
 .model-grant-search > svg {
   flex: 0 0 auto;

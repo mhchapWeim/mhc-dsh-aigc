@@ -8,7 +8,7 @@ import { ModernSelect } from '../../components/modern-select';
 import { Modal } from '../../components/modal';
 import { usePlatform } from '../../components/platform-provider';
 import { canReviewPublication, type PublicationRequest, type PublicationStatus } from '../../lib/platform-state';
-import { completeWorkflowTask, getReviewablePublications, hasBackend, type BackendPublication } from '../../lib/api-client';
+import { completeWorkflowTask, getReviewableAccessRequests, getReviewablePublications, hasBackend, type AccessRequestItem, type BackendPublication } from '../../lib/api-client';
 import './reviews.css';
 
 type AuditSummary = NonNullable<BackendPublication['audit']>;
@@ -72,7 +72,10 @@ export default function PublicationReviewsPage() {
   useEffect(() => {
     if (!backendEnabled) return;
     const timer = window.setTimeout(() => {
-      loadBackend().catch((error: Error) => setBackendNotice(error.message));
+      loadBackend().catch((error: Error) => {
+        if (/权限/.test(error.message)) { setBackendRequests([]); return; }
+        setBackendNotice(error.message);
+      });
     }, 0);
     return () => window.clearTimeout(timer);
   }, [backendEnabled]);
@@ -117,7 +120,7 @@ export default function PublicationReviewsPage() {
     setDetail(null);
   };
 
-  return <div className="admin-page page-enter publication-page">
+  return <div className="admin-page page-enter publication-page admin-stack">
     <div className="page-title"><div><span className="section-kicker">WORKFLOW INBOX</span><h1>应用发布审核</h1><p>处理流程引擎分配给当前用户或候选用户组的发布任务。</p></div><span className="pending-chip"><Clock3 size={16}/><strong>{pendingCount}</strong> 项待我处理</span></div>
     <section className="review-rule-banner"><ShieldCheck size={20}/><div><strong>流程权限已启用</strong><p>只有当前节点的直接处理人或候选用户组成员可以执行审核；其他任务保持只读。</p></div><GitBranch size={22}/></section>
     <section className="admin-panel publication-list review-list" aria-label="发布审核列表">
@@ -223,5 +226,59 @@ export default function PublicationReviewsPage() {
           : <p className="review-detail__readonly"><ShieldCheck size={15}/>{detail.status === '审核中' ? '不在当前处理范围，仅可查看详情' : '该任务已处理完毕，仅可查看详情'}</p>}
       </div>
     </Modal>}
+    <AccessReviewQueue />
   </div>;
+}
+
+function AccessReviewQueue() {
+  const [items, setItems] = useState<AccessRequestItem[]>([]);
+  const [detail, setDetail] = useState<AccessRequestItem | null>(null);
+  const [comment, setComment] = useState('');
+  const [notice, setNotice] = useState('');
+  const [error, setError] = useState('');
+  const reload = () => getReviewableAccessRequests().then(setItems).catch(() => setItems([]));
+  useEffect(() => {
+    if (!hasBackend || !localStorage.getItem('aigc_hub_access_token')) return;
+    const timer = window.setTimeout(() => { void reload(); }, 0);
+    return () => window.clearTimeout(timer);
+  }, []);
+  if (!items.length && !detail) return null;
+  const decide = async (taskId: string, action: 'approve' | 'reject') => {
+    setError('');
+    try {
+      await completeWorkflowTask(taskId, action, comment);
+      setNotice(action === 'approve' ? '访问申请已处理' : '访问申请已驳回');
+      setDetail(null);
+      setItems(await getReviewableAccessRequests());
+    } catch (caught) { setError(caught instanceof Error ? caught.message : '处理失败'); }
+  };
+  return (
+    <section className="admin-panel table-panel">
+      <div className="table-meta"><span>访问申请待办</span></div>
+      {notice && <p role="status">{notice}</p>}
+      {error && <p className="model-form-error" role="alert">{error}</p>}
+      <div className="table-scroll">
+        <table className="data-grid">
+          <thead><tr><th>申请人</th><th>目标应用</th><th>分配</th><th>原因</th><th>操作</th></tr></thead>
+          <tbody>{items.map(item => (
+            <tr key={item.id}><td>{item.applicantName}<small>{item.applicantEmployeeNo}</small></td><td>{item.appName}</td><td>{item.assignment || '—'}</td><td>{item.reason}</td>
+              <td>
+                <button className="secondary-action" type="button" onClick={() => setDetail(item)}>详情</button>
+                <button className="primary-action" type="button" onClick={() => item.taskId && void decide(item.taskId, 'approve')}>通过</button>
+                <button className="secondary-action" type="button" onClick={() => item.taskId && void decide(item.taskId, 'reject')}>驳回</button>
+              </td>
+            </tr>
+          ))}</tbody>
+        </table>
+      </div>
+      <label><span>访问申请意见</span><textarea aria-label="访问申请意见" value={comment} onChange={event => setComment(event.target.value)} /></label>
+      {detail && <Modal title={`${detail.appName} · 访问申请`} onClose={() => setDetail(null)} footer={<><button type="button" onClick={() => setDetail(null)}>关闭</button>{detail.taskId && <button className="secondary-action" type="button" onClick={() => void decide(detail.taskId!, 'reject')}>驳回</button>}{detail.taskId && <button className="primary-action" type="button" onClick={() => void decide(detail.taskId!, 'approve')}>通过</button>}</>}>
+        <dl className="review-detail__grid">
+          <div><dt>申请人</dt><dd>{detail.applicantName || '—'}</dd></div>
+          <div><dt>分配</dt><dd>{detail.assignment || '—'}</dd></div>
+          <div className="is-span"><dt>申请原因</dt><dd className="is-wrap">{detail.reason}</dd></div>
+        </dl>
+      </Modal>}
+    </section>
+  );
 }

@@ -1,9 +1,10 @@
 import { apiRequest, type GrantOptions, type GrantSelection } from './api-client';
 
 export type PluginVersion = { id: string; version: string; dshVersion: string; sha256: string; size: number; createdAt: string };
+export type PluginPilotRelease = { versionId: string; userIds: string[] };
 export type ManagedPlugin = { id: string; packageName: string; name: string; description: string; isEnabled: boolean;
   publishedVersionId: string | null; revision: number; configuration: Record<string, Record<string, unknown>>;
-  hasServerSecret: boolean; grants: GrantSelection; versions: PluginVersion[] };
+  hasServerSecret: boolean; grants: GrantSelection; versions: PluginVersion[]; pilotReleases?: PluginPilotRelease[] };
 export type PluginReport = { userId: string; deviceId: string; pluginId: string; version: string; revision: number;
   status: string; error: string; updatedAt: string };
 export const getPlugins = () => apiRequest<ManagedPlugin[]>('/api/plugins');
@@ -28,7 +29,7 @@ export const getPluginReports = async (page = 1, pageSize = 5, search = ''): Pro
 };
 export const publishPlugin = (plugin: ManagedPlugin, serverSecret: string) => apiRequest<void>(`/api/plugins/${plugin.id}/policy`, {
   method: 'PUT', body: JSON.stringify({ name: plugin.name, isEnabled: plugin.isEnabled, versionId: plugin.publishedVersionId,
-    configuration: plugin.configuration, grants: plugin.grants, serverSecret }),
+    configuration: plugin.configuration, grants: plugin.grants, serverSecret, pilotReleases: plugin.pilotReleases }),
 });
 export const uploadPlugin = (file: File) => {
   const body = new FormData(); body.append('package', file);

@@ -1,4 +1,6 @@
+using System.Buffers.Text;
 using System.Net.Http.Headers;
+using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
@@ -22,8 +24,12 @@ public sealed record ChatModelResponse(string? Content, string? ToolName, JsonEl
     Guid? ModelId = null, string? ModelName = null);
 
 /// <summary>负责解析模型配置、调用兼容聊天接口并转换模型响应。</summary>
-public sealed class ChatModelClient(IHttpClientFactory clientFactory, ModelConfigurationService configurations)
+public sealed class ChatModelClient(IHttpClientFactory clientFactory, ModelConfigurationService configurations,
+    LiteLlmVirtualKeyService? virtualKeys = null)
 {
+    private const string ImageGenerationPath = "/images/generations";
+    private const string ChatCompletionPath = "/chat/completions";
+
     /// <summary>使用指定或默认模型完成一轮对话；未配置模型时返回明确提示。</summary>
     public async Task<ChatModelResponse> CompleteAsync(Guid userId, IReadOnlyList<ChatMessage> messages,
         IReadOnlyList<ChatToolDefinition> tools, Guid? modelId, CancellationToken ct)
@@ -34,28 +40,85 @@ public sealed class ChatModelClient(IHttpClientFactory clientFactory, ModelConfi
         return await SendAsync(model, messages, tools, ct);
     }
 
-    /// <summary>发送最小测试消息，验证指定模型配置能否正常返回内容。</summary>
+    /// <summary>按模型能力发送一次聊天或生图请求，验证指定配置。</summary>
     public async Task<string> TestAsync(Guid modelId, CancellationToken ct)
     {
         var model = await configurations.ResolveAsync(modelId, ct)
             ?? throw new WorkflowException("模型服务尚未配置");
+        var path = model.EndpointPath.TrimEnd('/');
+        if (path.EndsWith(ImageGenerationPath, StringComparison.OrdinalIgnoreCase))
+            return await TestImageAsync(model, path, ct);
+        if (model.ProviderKind == "LiteLLM" && virtualKeys is not null
+            && (await virtualKeys.CapabilitiesAsync(ct)).TryGetValue(model.ModelIdentifier, out var capability)
+            && string.Equals(capability.Mode, "image_generation", StringComparison.OrdinalIgnoreCase))
+        {
+            var imagePath = path.EndsWith(ChatCompletionPath, StringComparison.OrdinalIgnoreCase)
+                ? path[..^ChatCompletionPath.Length] + ImageGenerationPath : ImageGenerationPath;
+            return await TestImageAsync(model, imagePath, ct);
+        }
+
         var reply = await SendAsync(model,
             [new ChatMessage { Role = "user", Content = "连接测试：请仅回复 OK。" }], [], ct);
         return $"连接成功，{model.Name} 返回：{reply.Content}";
+    }
+
+    private async Task<string> TestImageAsync(ResolvedChatModel model, string path, CancellationToken ct)
+    {
+        using var request = CreateRequest(model, path);
+        request.Content = JsonContent.Create(new
+        {
+            model = model.ModelIdentifier, prompt = "纯白背景上的蓝色圆形"
+        });
+        using var http = CreateClient(model);
+        using var response = await http.SendAsync(request, ct);
+        if (!response.IsSuccessStatusCode)
+            throw new WorkflowException($"图像生成测试失败（HTTP {(int)response.StatusCode}）", 502);
+
+        try
+        {
+            using var document = await JsonDocument.ParseAsync(await response.Content.ReadAsStreamAsync(ct), cancellationToken: ct);
+            if (document.RootElement.ValueKind != JsonValueKind.Object
+                || !document.RootElement.TryGetProperty("data", out var images) || images.ValueKind != JsonValueKind.Array
+                || !images.EnumerateArray().Any(HasImage))
+                throw new WorkflowException("图像生成响应缺少有效图片", 502);
+        }
+        catch (JsonException)
+        {
+            throw new WorkflowException("图像生成响应不是有效 JSON", 502);
+        }
+        return $"连接成功，{model.Name} 已生成测试图片。";
+    }
+
+    private static bool HasImage(JsonElement item) =>
+        item.ValueKind == JsonValueKind.Object
+        && (item.TryGetProperty("url", out var url) && url.ValueKind == JsonValueKind.String
+            && Uri.TryCreate(url.GetString(), UriKind.Absolute, out var uri) && uri.Scheme is "http" or "https"
+            || item.TryGetProperty("b64_json", out var encoded) && encoded.ValueKind == JsonValueKind.String
+            && encoded.GetString() is { } value && !string.IsNullOrWhiteSpace(value) && Base64.IsValid(value));
+
+    private static HttpRequestMessage CreateRequest(ResolvedChatModel model, string path)
+    {
+        var request = new HttpRequestMessage(HttpMethod.Post, $"{model.BaseUrl.TrimEnd('/')}/{path.TrimStart('/')}");
+        if (!string.IsNullOrWhiteSpace(model.ApiKey))
+        {
+            if (model.AuthType == "Bearer") request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", model.ApiKey);
+            else if (model.AuthType == "Header") request.Headers.TryAddWithoutValidation(model.ApiKeyHeader, model.ApiKey);
+        }
+        return request;
+    }
+
+    private HttpClient CreateClient(ResolvedChatModel model)
+    {
+        var client = clientFactory.CreateClient(model.ProviderKind == "LiteLLM" ? "litellm-chat" : "");
+        client.Timeout = TimeSpan.FromSeconds(Math.Clamp(model.TimeoutSeconds, 10, 300));
+        return client;
     }
 
     /// <summary>构造请求、发送至模型服务，并解析文本回复或工具调用。</summary>
     private async Task<ChatModelResponse> SendAsync(ResolvedChatModel model,
         IReadOnlyList<ChatMessage> messages, IReadOnlyList<ChatToolDefinition> tools, CancellationToken ct)
     {
-        // 根据模型配置拼接接口地址，并按认证类型注入密钥。
-        var endpoint = $"{model.BaseUrl.TrimEnd('/')}/{model.EndpointPath.TrimStart('/')}";
-        using var request = new HttpRequestMessage(HttpMethod.Post, endpoint);
-        if (!string.IsNullOrWhiteSpace(model.ApiKey))
-        {
-            if (model.AuthType == "Bearer") request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", model.ApiKey);
-            else if (model.AuthType == "Header") request.Headers.TryAddWithoutValidation(model.ApiKeyHeader, model.ApiKey);
-        }
+        using var request = CreateRequest(model, model.EndpointPath);
         var payload = new Dictionary<string, object?>
         {
             // 系统提示约束工具调用和必填字段收集；历史消息随后一起传给模型。
@@ -84,8 +147,7 @@ public sealed class ChatModelClient(IHttpClientFactory clientFactory, ModelConfi
             payload["tool_choice"] = "auto";
         }
         request.Content = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json");
-        using var http = clientFactory.CreateClient(model.ProviderKind == "LiteLLM" ? "litellm-chat" : "");
-        http.Timeout = TimeSpan.FromSeconds(Math.Clamp(model.TimeoutSeconds, 10, 300));
+        using var http = CreateClient(model);
         using var response = await http.SendAsync(request, ct);
         var raw = await response.Content.ReadAsStringAsync(ct);
         // 将模型侧 HTTP 错误或缺少 choices 的响应转换为平台可识别的异常。

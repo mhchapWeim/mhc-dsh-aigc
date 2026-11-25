@@ -15,24 +15,27 @@ import { Modal } from "../../components/modal";
 import { ModernSelect } from "../../components/modern-select";
 import { DirectoryUserPicker } from "../../components/directory-user-picker";
 import { GiteaRepositoryPicker } from "../../components/gitea-repository-picker";
-import { getRequestTypes, type CodeSelection } from "../../lib/integrations";
 import { usePlatform } from "../../components/platform-provider";
 import { canResubmitPublication, type PublicationStatus } from "../../lib/platform-state";
+import { AccessRequestFormModal } from "../../components/access-request-form";
+import { AccessRequestDetailModal, accessStatusText } from "./access-requests";
+import "./requests.css";
 import {
+  getMyAccessRequests,
   getMyPublications,
   getPublicationOptions,
   getPublicationAccessOptions,
   hasBackend,
   resubmitPublication,
   submitPublication,
+  type AccessRequestItem,
   type BackendPublication,
   type PublicationOption,
   type PublicationAccessOptions,
 } from "../../lib/api-client";
 
 type FormState = {
-  processKey?: string;
-  codeSource?: CodeSelection;
+  codeSource?: import("../../lib/integrations").CodeSelection;
   appName: string;
   category: string;
   summary: string;
@@ -79,12 +82,19 @@ export default function PublicationRequestsPage() {
   const [backendNotice, setBackendNotice] = useState("");
   const [formError, setFormError] = useState("");
   const [backendEnabled, setBackendEnabled] = useState(false);
-  const [requestTypes, setRequestTypes] = useState<{ code: string; name: string; version: number }[]>([]);
+  const [picker, setPicker] = useState(false);
+  const [accessForm, setAccessForm] = useState(false);
+  const [accessItems, setAccessItems] = useState<AccessRequestItem[]>([]);
+  const [accessDetailId, setAccessDetailId] = useState<string | null>(null);
+  const [kindFilter, setKindFilter] = useState<"all" | "publication" | "access">("all");
   const loadBackend = async () => {
-    const [requests, options, access] = await Promise.all([getMyPublications(), getPublicationOptions(), getPublicationAccessOptions()]);
+    const [requests, options, access, mineAccess] = await Promise.all([
+      getMyPublications(), getPublicationOptions(), getPublicationAccessOptions(), getMyAccessRequests(),
+    ]);
     setBackendRequests(requests.items);
     setBackendCategories(options);
     setAccessOptions(access);
+    setAccessItems(mineAccess);
   };
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -94,7 +104,6 @@ export default function PublicationRequestsPage() {
   }, []);
   useEffect(() => {
     if (!backendEnabled) return;
-    getRequestTypes().then(setRequestTypes).catch((error: Error) => setBackendNotice(error.message));
     const timer = window.setTimeout(() => {
       loadBackend().catch((error: Error) => setBackendNotice(error.message));
     }, 0);
@@ -113,13 +122,37 @@ export default function PublicationRequestsPage() {
       }))
     : publicationRequests.filter((request) => request.applicantId === currentUserId),
     [backendRequests, currentUserId, publicationRequests]);
-  const pageCount = Math.max(1, Math.ceil(mine.length / pageSize));
-  const currentPage = Math.min(page, pageCount);
-  const visible = mine.slice(
-    (currentPage - 1) * pageSize,
-    currentPage * pageSize,
-  );
   const currentUser = users.find((user) => user.id === currentUserId);
+  const rows = useMemo(() => {
+    const publications = mine.map((request, index) => ({
+      id: request.id,
+      kind: "publication" as const,
+      title: request.appName,
+      summary: request.summary,
+      meta: `${request.category} · ${request.submittedAt}`,
+      status: request.status,
+      node: request.currentNodeName,
+      sort: backendRequests ? Date.parse(backendRequests.find(item => item.id === request.id)?.createdAt ?? "") || 0 : mine.length - index,
+      canResubmit: backendRequests ? request.status === "已退回" || request.status === "发布失败" : canResubmitPublication(currentUser, request),
+    }));
+    const accesses = accessItems.map(item => ({
+      id: item.id,
+      kind: "access" as const,
+      title: item.appName,
+      summary: item.reason,
+      meta: `${item.requestNo} · ${new Date(item.createdAt).toLocaleString("zh-CN")}`,
+      status: accessStatusText[item.status] ?? item.status,
+      node: item.currentNodeName,
+      sort: Date.parse(item.createdAt) || 0,
+      canResubmit: false,
+    }));
+    return [...publications, ...accesses]
+      .filter(row => kindFilter === "all" || row.kind === kindFilter)
+      .sort((left, right) => right.sort - left.sort);
+  }, [accessItems, backendRequests, currentUser, kindFilter, mine]);
+  const pageCount = Math.max(1, Math.ceil(rows.length / pageSize));
+  const currentPage = Math.min(page, pageCount);
+  const visible = rows.slice((currentPage - 1) * pageSize, currentPage * pageSize);
   const categoryOptions = backendRequests
     ? backendCategories.map((category) => ({ value: category.id, label: category.parentId ? `${backendCategories.find(x => x.id === category.parentId)?.name || ""} / ${category.name}` : category.name, description: category.description }))
     : categories.filter((category) => category.enabled).map((category) => ({
@@ -134,7 +167,7 @@ export default function PublicationRequestsPage() {
     if (backendEnabled) {
       try {
         await submitPublication({
-          processKey: form.processKey, codeSource: form.codeSource,
+          codeSource: form.codeSource,
           appName: form.appName, categoryId: form.category, summary: form.summary,
           repositoryUrl: form.repositoryUrl, branch: form.branch, commitSha: form.commitSha,
           version: form.version, environment: form.environment, accessMode: form.accessMode,
@@ -158,125 +191,107 @@ export default function PublicationRequestsPage() {
     catch (error) { setBackendNotice(error instanceof Error ? error.message : "重新提交失败"); }
   };
 
+  const openPublication = () => {
+    setPicker(false);
+    setFormError("");
+    setForm({ ...emptyForm(), category: categoryOptions[0]?.value ?? "智慧服务" });
+  };
+  const openAccess = () => {
+    setPicker(false);
+    if (!backendEnabled) {
+      setBackendNotice("访问申请需要连接中台服务后再提交");
+      return;
+    }
+    setAccessForm(true);
+  };
+
   return (
-    <div className="admin-page page-enter publication-page">
+    <div className="admin-page page-enter publication-page admin-stack">
       <div className="page-title">
         <div>
           <span className="section-kicker">APPLICATION DELIVERY</span>
-          <h1>应用发布申请</h1>
-          <p>提交应用资料并跟踪流程引擎中的审核进度。</p>
+          <h1>申请管理</h1>
+          <p>统一查看发布申请和访问申请。新建时先选择申请类型，审批流程由管理员绑定。</p>
         </div>
-        <button
-          className="primary-action"
-          type="button"
-          onClick={() => { setFormError(""); setForm({ ...emptyForm(), category: categoryOptions[0]?.value ?? "智慧服务" }); }}
-        >
+        <button className="primary-action" type="button" onClick={() => setPicker(true)}>
           <FilePlus2 size={18} />
-          新建发布申请
+          新建申请
         </button>
       </div>
       <section className="publication-summary" aria-label="申请概览">
         <div>
-          <strong>{mine.length}</strong>
+          <strong>{mine.length + accessItems.length}</strong>
           <span>我的申请</span>
         </div>
         <div>
-          <strong>
-            {mine.filter((request) => request.status === "审核中").length}
-          </strong>
+          <strong>{mine.filter((request) => request.status === "审核中").length + accessItems.filter((item) => item.status === "Reviewing").length}</strong>
           <span>审核中</span>
         </div>
         <div>
-          <strong>
-            {mine.filter((request) => request.status === "已通过").length}
-          </strong>
+          <strong>{mine.filter((request) => request.status === "已通过").length + accessItems.filter((item) => item.status === "Approved").length}</strong>
           <span>已通过</span>
         </div>
         <div>
           <GitBranch size={18} />
-          <span>由应用发布流程自动流转</span>
+          <span>发布与访问共用流程和待办</span>
         </div>
       </section>
-      <section
-        className="admin-panel publication-list"
-        aria-label="我的发布申请"
-      >
+      <div className="admin-panel request-filters">
+        <label>
+          申请类型
+          <select aria-label="申请类型" value={kindFilter} onChange={event => { setKindFilter(event.target.value as "all" | "publication" | "access"); setPage(1); }}>
+            <option value="all">全部申请</option>
+            <option value="publication">发布申请</option>
+            <option value="access">访问申请</option>
+          </select>
+        </label>
+      </div>
+      <section className="admin-panel publication-list" aria-label="我的申请">
         <header className="panel-heading">
           <div>
-            <h2>我的发布申请</h2>
-            <p>仅显示当前登录人发起的申请</p>
+            <h2>我的申请</h2>
+            <p>发布申请和访问申请按提交时间排在一起</p>
           </div>
         </header>
         {visible.map((request) => (
-          <article className="publication-row" key={request.id}>
+          <article className="publication-row" key={`${request.kind}-${request.id}`}>
             <span className={`publication-icon status-${request.status}`}>
               <FilePlus2 size={19} />
             </span>
             <div className="publication-main">
               <div>
-                <h3>{request.appName}</h3>
-                <span className={`workflow-status status-${request.status}`}>
-                  {request.status}
-                </span>
+                <h3>{request.title}</h3>
+                <span className="workflow-status request-type">{request.kind === "publication" ? "发布申请" : "访问申请"}</span>
+                <span className={`workflow-status status-${request.status}`}>{request.status}</span>
               </div>
               <p>{request.summary}</p>
-              <small>
-                {request.category} · {request.submittedAt}
-              </small>
+              <small>{request.meta}</small>
             </div>
-            <div
-              className="workflow-progress"
-              aria-label={`${request.appName}流程进度`}
-            >
-              <span className="is-done">
-                <CheckCircle2 size={15} />
-                提交申请
-              </span>
+            <div className="workflow-progress" aria-label={`${request.title}流程进度`}>
+              <span className="is-done"><CheckCircle2 size={15} />提交申请</span>
               <ArrowRight size={14} />
-              <span
-                className={
-                  request.status === "审核中"
-                    ? "is-current"
-                    : request.status === "已退回"
-                      ? "is-returned"
-                      : "is-done"
-                }
-              >
-                {request.status === "已退回" ? (
-                  <RotateCcw size={15} />
-                ) : (
-                  <Clock3 size={15} />
-                )}{" "}
-                {request.currentNodeName}
+              <span className={request.status === "审核中" ? "is-current" : request.status === "已退回" || request.status === "已驳回" ? "is-returned" : "is-done"}>
+                {request.status === "已退回" || request.status === "已驳回" ? <RotateCcw size={15} /> : <Clock3 size={15} />} {request.node}
               </span>
-              {(backendRequests ? request.status === "已退回" || request.status === "发布失败" : canResubmitPublication(currentUser, request)) && (
-                <button
-                  className="resubmit-button"
-                  type="button"
-                  aria-label={`重新提交${request.appName}`}
-                  onClick={() => void resubmit(request.id)}
-                >
-                  <RotateCcw size={14} />
-                  重新提交
+              {request.canResubmit && (
+                <button className="resubmit-button" type="button" aria-label={`重新提交${request.title}`} onClick={() => void resubmit(request.id)}>
+                  <RotateCcw size={14} />重新提交
                 </button>
+              )}
+              {request.kind === "access" && (
+                <button className="secondary-action" type="button" onClick={() => setAccessDetailId(request.id)}>查看</button>
               )}
             </div>
           </article>
         ))}
-        {!mine.length && (
+        {!rows.length && (
           <div className="table-empty">
             <FilePlus2 size={28} />
-            <strong>还没有发布申请</strong>
-            <span>创建申请后，流程进度会显示在这里。</span>
+            <strong>还没有申请</strong>
+            <span>新建申请后，发布和访问记录会一起显示在这里。</span>
           </div>
         )}
-        <AntPagination
-          onPageSizeChange={setPageSize} ariaLabel="发布申请分页"
-          current={currentPage}
-          pageSize={pageSize}
-          total={mine.length}
-          onChange={setPage}
-        />
+        <AntPagination onPageSizeChange={setPageSize} ariaLabel="申请分页" current={currentPage} pageSize={pageSize} total={rows.length} onChange={setPage} />
       </section>
       {(backendNotice || notice) && (
         <div className="inline-toast" role="status">
@@ -287,7 +302,6 @@ export default function PublicationRequestsPage() {
         <Modal title="新建发布申请" onClose={() => setForm(null)}>
           <form className="entity-form publication-form" aria-label="发布申请表单" tabIndex={0} onSubmit={submit}>
             <div className="form-grid">
-              {backendEnabled && <div className="form-field form-span"><span>申请类型</span><ModernSelect ariaLabel="申请类型" value={form.processKey ?? "application-publishing"} options={requestTypes.map(t => ({ value: t.code, label: `${t.name} · V${t.version}` }))} onChange={processKey => setForm({ ...form, processKey })} /></div>}
               {backendEnabled && <GiteaRepositoryPicker onChange={selection => setForm(previous => previous ? { ...previous,
                 codeSource: selection?.source, repositoryUrl: selection?.repository.html_url ?? "", branch: selection?.branch ?? "", commitSha: selection?.commit.sha ?? "",
                 appName: previous.appName || selection?.repository.name || "", summary: previous.summary || selection?.repository.description || ""
@@ -378,6 +392,22 @@ export default function PublicationRequestsPage() {
           </form>
         </Modal>
       )}
+      {picker && (
+        <Modal title="选择申请类型" onClose={() => setPicker(false)}>
+          <div className="request-kind-list">
+            <button className="request-kind" type="button" aria-label="发布申请" onClick={openPublication}>
+              <strong>发布申请</strong>
+              <span>提交应用代码、版本和访问范围，沿用现有发布表单与审核流程。</span>
+            </button>
+            <button className="request-kind" type="button" aria-label="访问申请" onClick={openAccess}>
+              <strong>访问申请</strong>
+              <span>选择还不能访问的已发布应用，并填写申请原因。</span>
+            </button>
+          </div>
+        </Modal>
+      )}
+      {accessForm && <AccessRequestFormModal onClose={() => setAccessForm(false)} onSubmitted={() => { setBackendNotice("访问申请已提交，审批人由绑定流程决定"); void loadBackend(); }} />}
+      {accessDetailId && <AccessRequestDetailModal id={accessDetailId} onClose={() => setAccessDetailId(null)} />}
     </div>
   );
 }

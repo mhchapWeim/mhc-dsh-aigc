@@ -9,6 +9,8 @@ public sealed class RegisteredApplication
     public string DescriptionEn { get; set; } = "";
     public string Owner { get; set; } = "";
     public string OwnerEn { get; set; } = "";
+    /// <summary>访问申请的审核负责人。与展示用的负责人/团队分开保存，历史应用默认留空。</summary>
+    public Guid? AccessReviewerId { get; set; }
     public string AccessUrl { get; set; } = "";
     public Guid CategoryId { get; set; }
     public AppCategory? Category { get; set; }

@@ -11,20 +11,25 @@ public static class ApplicationRegistryEndpoints
     public sealed record GrantInput(string SubjectType, Guid SubjectId);
     public sealed record SaveInput(string Name, string NameEn, string Description, string DescriptionEn,
         string Owner, string OwnerEn, Guid CategoryId, string CategoryEn, string AccessUrl,
-        bool IsEnabled, int SortOrder, string AccessMode, GrantInput[] Grants, ApplicationClickUpdate? Clicks = null);
+        bool IsEnabled, int SortOrder, string AccessMode, GrantInput[] Grants, ApplicationClickUpdate? Clicks = null,
+        Guid? AccessReviewerId = null);
+    public sealed record ReviewerInput(Guid? UserId);
     public sealed record VisitInput(Guid VisitId);
     public sealed record TranslationInput(string Text);
+    public sealed record OperationalInput(bool Enabled);
 
     public static void MapApplicationRegistryEndpoints(this IEndpointRouteBuilder app)
     {
-        var group = app.MapGroup("/api/application-registry").RequireAuthorization("category.manage").WithTags("注册中心");
+        var group = app.MapGroup("/api/application-registry").RequireAuthorization("category.manage").WithTags("应用管理");
         group.MapGet("/", async (AigcHubDbContext db, CancellationToken ct) => {
             var items = await db.RegisteredApplications.AsNoTracking().Include(x => x.Category).Include(x => x.Grants)
                 .OrderBy(x => x.SortOrder).ThenByDescending(x => x.CreatedAt).ToListAsync(ct);
             var counts = await ApplicationClickService.CountsAsync(db, items.Select(x => x.Id).ToArray(), DateTimeOffset.UtcNow, ct);
             var totals = await ApplicationClickService.TotalsAsync(db, items.Select(x => x.Id).ToArray(), ct);
+            var reviewers = await ReviewerLabelsAsync(db, items.Select(x => x.AccessReviewerId), ct);
             return Results.Ok(items.Select(x => new { x.Id, x.Name, x.NameEn, x.Description, x.DescriptionEn, x.Owner, x.OwnerEn,
                 x.CategoryId, Category = x.Category?.Name ?? "", x.CategoryEn, x.AccessUrl, x.IsEnabled, x.SortOrder, x.AccessMode, x.UpdatedAt,
+                x.AccessReviewerId, AccessReviewerName = Label(reviewers, x.AccessReviewerId).Name, AccessReviewerEmployeeNo = Label(reviewers, x.AccessReviewerId).EmployeeNo,
                 Clicks = counts[x.Id], TotalClicks = totals[x.Id], Grants = x.Grants.Select(g => new { g.SubjectType, g.SubjectId }).ToArray() }));
         });
         group.MapGet("/click-report", async (string? from, string? to, Guid? applicationId, AigcHubDbContext db, CancellationToken ct) => {
@@ -46,6 +51,54 @@ public static class ApplicationRegistryEndpoints
             Departments = await db.Departments.AsNoTracking().Where(x => x.IsEnabled).OrderBy(x => x.Name).Select(x => new { x.Id, x.Name }).ToListAsync(ct),
             Users = await db.Users.AsNoTracking().Where(x => x.IsEnabled).OrderBy(x => x.EmployeeNo).Select(x => new { x.Id, x.Name, x.EmployeeNo }).ToListAsync(ct)
         }));
+        group.MapGet("/published", async (AigcHubDbContext db, CancellationToken ct) =>
+        {
+            var apps = await db.PublicationRequests.AsNoTracking().Include(x => x.Applicant)
+                .Where(x => x.Status == PublicationStatus.Approved).OrderByDescending(x => x.UpdatedAt).ToListAsync(ct);
+            var ids = apps.Select(x => x.Id).ToArray();
+            var routes = await db.ApplicationRoutes.AsNoTracking().Where(x => ids.Contains(x.PublicationRequestId))
+                .ToDictionaryAsync(x => x.PublicationRequestId, ct);
+            var reviewers = await ReviewerLabelsAsync(db, apps.Select(x => x.AccessReviewerId), ct);
+            return Results.Ok(apps.Select(x =>
+            {
+                routes.TryGetValue(x.Id, out var route);
+                return new
+                {
+                    x.Id, Name = x.AppName, x.Version, x.ApplicantId,
+                    ApplicantName = x.Applicant?.Name ?? "", ApplicantEmployeeNo = x.Applicant?.EmployeeNo ?? "",
+                    RouteStatus = route?.Status, x.OperationalEnabled, PublicationStatus = x.Status.ToString(),
+                    x.AccessReviewerId, AccessReviewerName = Label(reviewers, x.AccessReviewerId).Name, AccessReviewerEmployeeNo = Label(reviewers, x.AccessReviewerId).EmployeeNo
+                };
+            }));
+        });
+        group.MapPut("/published/{id:guid}/access-reviewer", async (Guid id, ReviewerInput input, AigcHubDbContext db, CancellationToken ct) =>
+        {
+            var app = await db.PublicationRequests.Include(x => x.Applicant).SingleOrDefaultAsync(x => x.Id == id && x.Status == PublicationStatus.Approved, ct);
+            if (app is null) return Results.NotFound();
+            app.AccessReviewerId = await RequireReviewerAsync(db, input.UserId, ct);
+            app.UpdatedAt = DateTimeOffset.UtcNow;
+            await db.SaveChangesAsync(ct);
+            var route = await db.ApplicationRoutes.AsNoTracking().SingleOrDefaultAsync(x => x.PublicationRequestId == id, ct);
+            var reviewers = await ReviewerLabelsAsync(db, [app.AccessReviewerId], ct);
+            return Results.Ok(new
+            {
+                app.Id, Name = app.AppName, app.Version, app.ApplicantId,
+                ApplicantName = app.Applicant?.Name ?? "", ApplicantEmployeeNo = app.Applicant?.EmployeeNo ?? "",
+                RouteStatus = route?.Status, app.OperationalEnabled, PublicationStatus = app.Status.ToString(),
+                app.AccessReviewerId, AccessReviewerName = Label(reviewers, app.AccessReviewerId).Name, AccessReviewerEmployeeNo = Label(reviewers, app.AccessReviewerId).EmployeeNo
+            });
+        });
+        group.MapPost("/published/{id:guid}/operational", async (Guid id, OperationalInput input, ICurrentUser current, AigcHubDbContext db, CancellationToken ct) =>
+        {
+            var (app, changed) = await PublishedApplicationOperation.SetEnabledAsync(db, current.Id, id, input.Enabled, ct);
+            var route = await db.ApplicationRoutes.AsNoTracking().SingleOrDefaultAsync(x => x.PublicationRequestId == id, ct);
+            return Results.Ok(new
+            {
+                app.Id, Name = app.AppName, app.Version,
+                ApplicantName = app.Applicant?.Name ?? "", ApplicantEmployeeNo = app.Applicant?.EmployeeNo ?? "",
+                RouteStatus = route?.Status, app.OperationalEnabled, PublicationStatus = app.Status.ToString(), Changed = changed
+            });
+        });
         group.MapPost("/", async (SaveInput input, AigcHubDbContext db, CancellationToken ct) =>
         {
             if (input.Clicks is not null) throw new WorkflowException("请创建应用后再调整点击数");
@@ -90,7 +143,7 @@ public static class ApplicationRegistryEndpoints
             if (user is null) return Results.Forbid();
             var item = await db.RegisteredApplications.AsNoTracking().Include(x => x.Grants).SingleOrDefaultAsync(x => x.Id == id && x.IsEnabled, ct);
             if (item is null) return Results.NotFound();
-            if (!CanAccess(item, user)) return Results.Json(new { message = "无权访问该应用，请联系管理员授权" }, statusCode: 403);
+            if (!await CanAccessAsync(db, item, user, ct)) return AccessDenied();
             return Results.Ok(new { item.AccessUrl });
         }).RequireAuthorization("portal.view");
         app.MapPost("/api/catalog/registered-apps/{id:guid}/access", async (Guid id, VisitInput input, ICurrentUser current, AigcHubDbContext db, CancellationToken ct) =>
@@ -100,7 +153,7 @@ public static class ApplicationRegistryEndpoints
             if (user is null) return Results.Forbid();
             var item = await db.RegisteredApplications.AsNoTracking().Include(x => x.Grants).SingleOrDefaultAsync(x => x.Id == id && x.IsEnabled, ct);
             if (item is null) return Results.NotFound();
-            if (!CanAccess(item, user)) return Results.Json(new { message = "无权访问该应用，请联系管理员授权" }, statusCode: 403);
+            if (!await CanAccessAsync(db, item, user, ct)) return AccessDenied();
             var counted = await ApplicationClickService.RecordAsync(db, id, current.Id, input.VisitId, ct);
             await db.SaveChangesAsync(ct);
             var clicks = (await ApplicationClickService.CountsAsync(db, [id], DateTimeOffset.UtcNow, ct))[id];
@@ -109,8 +162,31 @@ public static class ApplicationRegistryEndpoints
         }, ct)).RequireAuthorization("portal.view");
     }
 
-    public static bool CanAccess(RegisteredApplication item, AppUser user) => item.AccessMode == "All" || item.Grants.Any(g =>
-        (g.SubjectType == "User" && g.SubjectId == user.Id) || (g.SubjectType == "Department" && user.Department?.IsEnabled == true && g.SubjectId == user.DepartmentId));
+    private static async Task<Guid?> RequireReviewerAsync(AigcHubDbContext db, Guid? userId, CancellationToken ct)
+    {
+        if (userId is not Guid id || id == Guid.Empty) return null;
+        if (!await db.Users.AnyAsync(x => x.Id == id && x.IsEnabled, ct))
+            throw new WorkflowException("访问审核负责人不存在或已停用");
+        return id;
+    }
+
+    private static async Task<Dictionary<Guid, (string Name, string EmployeeNo)>> ReviewerLabelsAsync(AigcHubDbContext db, IEnumerable<Guid?> ids, CancellationToken ct)
+    {
+        var keys = ids.Where(x => x.HasValue).Select(x => x!.Value).Distinct().ToArray();
+        if (keys.Length == 0) return [];
+        return await db.Users.AsNoTracking().Where(x => keys.Contains(x.Id))
+            .ToDictionaryAsync(x => x.Id, x => (x.Name, x.EmployeeNo), ct);
+    }
+
+    private static (string Name, string EmployeeNo) Label(Dictionary<Guid, (string Name, string EmployeeNo)> reviewers, Guid? id) =>
+        id is Guid key && reviewers.TryGetValue(key, out var label) ? label : ("", "");
+
+    private static async Task<bool> CanAccessAsync(AigcHubDbContext db, RegisteredApplication item, AppUser user, CancellationToken ct) =>
+        RegisteredApplicationAccess.HasScope(item, user, false) ||
+        await RegisteredApplicationAccess.ActiveGrants(db, user.Id).AnyAsync(x => x.RegisteredApplicationId == item.Id, ct);
+
+    private static IResult AccessDenied() =>
+        Results.Json(new { code = "application_access_required", message = "无权访问该应用，请提交访问申请" }, statusCode: 403);
 
     private static async Task ApplyAsync(RegisteredApplication item, SaveInput input, AigcHubDbContext db, CancellationToken ct)
     {
@@ -134,6 +210,7 @@ public static class ApplicationRegistryEndpoints
         item.Name = input.Name.Trim(); item.NameEn = input.NameEn.Trim(); item.Description = input.Description.Trim(); item.DescriptionEn = input.DescriptionEn.Trim();
         item.Owner = input.Owner.Trim(); item.OwnerEn = input.OwnerEn.Trim(); item.CategoryId = input.CategoryId; item.CategoryEn = input.CategoryEn.Trim();
         item.AccessUrl = url.AbsoluteUri; item.IsEnabled = input.IsEnabled; item.SortOrder = input.SortOrder; item.AccessMode = input.AccessMode;
+        item.AccessReviewerId = await RequireReviewerAsync(db, input.AccessReviewerId, ct);
         item.UpdatedAt = DateTimeOffset.UtcNow;
         var desired = input.AccessMode == "Subjects" ? grants : [];
         foreach (var old in item.Grants.Where(g => !desired.Any(x => x.SubjectType == g.SubjectType && x.SubjectId == g.SubjectId)).ToArray())

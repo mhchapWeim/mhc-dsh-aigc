@@ -210,6 +210,7 @@ function mount(
     if (key === 'conversation.input.model' || key === 'conversation.input.plan') {
       seatOwners.push({ key, owner })
     }
+    if (key === 'conversation.hero.brand.mark') return opts?.fallback
     if (key === 'conversation.hero.workspace') { pickerOwner = owner; return null }
     if (key === 'conversation.hero.frame') {
       // A hoc slot with no layers renders its content unchanged.
@@ -422,11 +423,12 @@ function mount(
 }
 
 describe('Hero chrome', () => {
-  it('renders the English preview badge through the hero locale seat', () => {
-    const renderSlot = vi.fn<(key: string, owner: object, opts?: { fallback?: ReactNode }) => ReactNode>(() => null)
+  it('renders the original mascot beside the greeting', () => {
+    const renderSlot = vi.fn<(key: string, owner: object, opts?: { fallback?: ReactNode }) => ReactNode>((_key, _owner, opts) => opts?.fallback)
     const view = render(<HeroShell t={makeTranslate(en, commonEn)} renderSlot={renderSlot as never} />)
-    expect(view.getByText('Into the Unknown')).toBeTruthy()
-    expect(view.getByText('Preview')).toBeTruthy()
+    const logo = view.container.querySelector('img[src="/bhss-office-assistant.svg"]')
+    expect(logo).toBeTruthy()
+    expect(logo?.nextElementSibling?.textContent).toBe(en['hero.headline'])
     expect(renderSlot).toHaveBeenCalledOnce()
     expect(renderSlot.mock.calls[0]?.[0]).toBe('conversation.hero.brand.mark')
     const brandMarkOwner = renderSlot.mock.calls[0]?.[1]
@@ -596,7 +598,7 @@ describe('ConversationRoot resident composer', () => {
     expect(b.headerFactory).not.toHaveBeenCalled()
     expect(b.slotCalls).not.toContain('conversation.session.header.actions')
     expect(b.view.getByText('今天有什么需要我来办的?')).toBeTruthy()
-    expect(b.view.getByText('内测版')).toBeTruthy()
+    expect(b.view.container.querySelector('img[src="/bhss-office-assistant.svg"]')).toBeTruthy()
     expect(b.view.queryByTestId('view-chat')).toBeNull()
     // The same machine-backed textarea is live in the hero, and the
     // persistence mirror stays bound (ConversationSession mounts chrome-hidden

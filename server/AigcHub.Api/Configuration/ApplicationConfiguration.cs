@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.RateLimiting;
 using System.Text.Json.Serialization;
 using AigcHub.Api.Data;
 using AigcHub.Api.Domain;
+using AigcHub.Api.Endpoints;
 using AigcHub.Api.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.DataProtection;
@@ -12,6 +13,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Microsoft.Extensions.Options;
+using Yarp.ReverseProxy.Forwarder;
 
 namespace AigcHub.Api.Configuration;
 
@@ -19,7 +21,7 @@ public static class ApplicationConfiguration
 {
     private static readonly string[] Permissions =
     [
-        "portal.view", "admin.view", "publication.create", "publication.review", "process.design",
+        "portal.view", "admin.view", "publication.create", "publication.review", "process.design", "gateway.manage",
         "user.manage", "department.manage", "category.manage", "role.manage", "model.manage", "announcement.manage", "client-release.manage", "diagnostic.manage", "plugin.manage", "mcp.manage"
     ];
 
@@ -106,6 +108,11 @@ public static class ApplicationConfiguration
                 ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
             });
         builder.Services.AddScoped<WorkflowService>();
+        builder.Services.AddScoped<ApplicationRouteService>();
+        builder.Services.AddScoped<GatewaySettingsService>();
+        builder.Services.AddScoped<LaunchTicketService>();
+        builder.Services.AddScoped<GatewaySessionService>();
+        AddGatewayUpstreamServices(builder.Services);
         builder.Services.AddScoped<IRealtimeNotificationPublisher, SignalRNotificationPublisher>();
         builder.Services.AddScoped<DatabasePermissionService>();
         builder.Services.AddScoped<ChatToolRegistry>();
@@ -205,6 +212,43 @@ public static class ApplicationConfiguration
         });
     }
 
+    private static SocketsHttpHandler CreateGatewayForwarderHandler(bool acceptInvalidCertificates)
+    {
+        var handler = new SocketsHttpHandler { AllowAutoRedirect = false, UseCookies = false, ActivityHeadersPropagator = null };
+        if (acceptInvalidCertificates)
+            handler.SslOptions.RemoteCertificateValidationCallback = static (_, _, _, _) => true;
+        return handler;
+    }
+
+    internal const string GatewayUntrustedUpstream = "gateway-untrusted-upstream";
+
+    internal static bool CanAcceptInvalidGatewayCertificate(IConfiguration configuration, Uri upstream) =>
+        upstream.Scheme == Uri.UriSchemeHttps &&
+        configuration.GetValue("ApplicationGateway:AcceptInvalidUpstreamCertificates", false) &&
+        (configuration.GetSection("ApplicationGateway:AllowedUpstreamHosts").Get<string[]>() ?? [])
+            .Any(host => string.Equals(host.Trim(), upstream.IdnHost, StringComparison.OrdinalIgnoreCase));
+
+    private static void AddGatewayUpstreamServices(IServiceCollection services)
+    {
+        services.AddSingleton<IUpstreamProbe, HttpUpstreamProbe>();
+        services.AddHttpForwarder();
+        services.AddSingleton(_ => new HttpMessageInvoker(CreateGatewayForwarderHandler(false)));
+        services.AddKeyedSingleton(GatewayUntrustedUpstream, (_, _) => new HttpMessageInvoker(CreateGatewayForwarderHandler(true)));
+        services.AddHttpClient("upstream-probe", client => client.Timeout = TimeSpan.FromSeconds(5))
+            .ConfigurePrimaryHttpMessageHandler(provider =>
+            {
+                var configuration = provider.GetRequiredService<IConfiguration>();
+                return new HttpClientHandler
+                {
+                    AllowAutoRedirect = false,
+                    UseCookies = false,
+                    ServerCertificateCustomValidationCallback = (request, _, _, errors) =>
+                        errors == System.Net.Security.SslPolicyErrors.None ||
+                        (request.RequestUri is Uri upstream && CanAcceptInvalidGatewayCertificate(configuration, upstream))
+                };
+            });
+    }
+
     public static HttpClientHandler CreateLiteLlmHttpHandler(bool verifySsl, bool allowAutoRedirect) => new()
     {
         AllowAutoRedirect = allowAutoRedirect,
@@ -213,8 +257,26 @@ public static class ApplicationConfiguration
             : HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
     };
 
+    public static void AddApplicationGatewayHostServices(this WebApplicationBuilder builder)
+    {
+        builder.Logging.ClearProviders();
+        builder.Logging.AddConsole();
+        builder.Logging.AddFilter("System.Net.Http.HttpClient", LogLevel.Warning);
+        var connectionString = builder.Configuration.GetConnectionString("PostgreSql")
+            ?? throw new InvalidOperationException("缺少 ConnectionStrings:PostgreSql");
+        builder.Services.AddDbContext<AigcHubDbContext>(options => options.UseNpgsql(connectionString));
+        builder.Services.AddHttpContextAccessor();
+        builder.Services.AddScoped<ApplicationRouteService>();
+        builder.Services.AddScoped<GatewaySettingsService>();
+        builder.Services.AddScoped<LaunchTicketService>();
+        builder.Services.AddScoped<GatewaySessionService>();
+        AddGatewayUpstreamServices(builder.Services);
+    }
+
     public static void UseAigcHubPipeline(this WebApplication app)
     {
+        if (app.Configuration.GetValue("ApplicationGateway:HostEnabled", false))
+            app.UseApplicationGateway();
         app.UseSwagger();
         app.UseSwaggerUI();
         app.UseCors();

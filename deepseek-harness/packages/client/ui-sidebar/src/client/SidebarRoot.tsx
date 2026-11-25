@@ -123,6 +123,17 @@ type PanelMoreMenuProps =
 /** The panel list's More launcher: a panel-row button whose menu rows come from `sidebar.panellist.actions`. */
 function PanelMoreMenu({ wide, label, entries, onOpen, onPinnedChange, trackEntryClick, renderSlot }: PanelMoreMenuProps) {
   const [open, setOpen] = useState(false)
+  const [menuRows, setMenuRows] = useState<HTMLDivElement | null>(null)
+  useLayoutEffect(() => {
+    if (menuRows === null) return
+    const closeIfEmpty = (): void => {
+      if (menuRows.querySelector('[role="menuitem"], [role="menuitemcheckbox"], [role="menuitemradio"]') === null) setOpen(false)
+    }
+    closeIfEmpty()
+    const observer = new MutationObserver(closeIfEmpty)
+    observer.observe(menuRows, { childList: true, subtree: true })
+    return () => { observer.disconnect() }
+  }, [menuRows])
   const onDismiss = (): void => { setOpen(false) }
   return (
     <Menu open={open} onClose={onDismiss} portal autoFocus className={css.moreAnchor} listClassName={css.moreMenu}
@@ -138,7 +149,9 @@ function PanelMoreMenu({ wide, label, entries, onOpen, onPinnedChange, trackEntr
           </button>
         </Tooltip>
       )}>
-      {renderSlot('sidebar.panellist.actions', { entries, onOpen, onPinnedChange, onDismiss })}
+      <div ref={setMenuRows} className={css.moreMenuRows}>
+        {renderSlot('sidebar.panellist.actions', { entries, onOpen, onPinnedChange, onDismiss })}
+      </div>
     </Menu>
   )
 }

@@ -1,6 +1,6 @@
 {
   "name": "@bhss/dsh-plugin-internal-model",
-  "version": "1.0.8",
+  "version": "1.0.9",
   "description": "AIGC 本地模型授权与 DSH 内网直连",
   "type": "module",
   "main": "lib/index.js",
@@ -20,15 +20,16 @@
     "pack": "npm run build && npm pack --ignore-scripts"
   },
   "engines": {
-    "node": "^22.19.0 || >=24.0.0"
+    "node": "^22.19.0 || >=24.0.0",
+    "dsh": "0.2.2-rc.3"
   },
   "peerDependencies": {
     "@deepseek-ai/cordis": "^4.0.1",
     "@deepseek-ai/schemastery": "^3.18.1",
-    "@deepseek-ai/dsh-credentials": "0.1.7-alpha.2",
-    "@deepseek-ai/dsh-llm": "0.1.7-alpha.2",
-    "@deepseek-ai/dsh-llm-pi-ai": "0.1.7-alpha.2",
-    "@deepseek-ai/dsh-llm-managed-backend": "0.1.7-alpha.2"
+    "@deepseek-ai/dsh-credentials": "0.2.2-rc.3",
+    "@deepseek-ai/dsh-llm": "0.2.2-rc.3",
+    "@deepseek-ai/dsh-llm-pi-ai": "0.2.2-rc.3",
+    "@deepseek-ai/dsh-llm-managed-backend": "0.2.2-rc.3"
   },
   "dsh": {
     "bundle": {
@@ -36,7 +37,7 @@
     }
   },
   "aigc": {
-    "dshVersion": "0.1.7-alpha.2",
+    "dshVersion": "0.2.2-rc.3",
     "kind": "host",
     "capabilities": [
       "internal-model"

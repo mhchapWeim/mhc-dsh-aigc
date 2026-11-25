@@ -17,6 +17,8 @@ export type PortalApp = {
   tags: string[];
   owner: string;
   accessUrl: string;
+  launchable?: boolean;
+  slug?: string;
   publishedAt: string;
   status: '运行中';
   accent: string;

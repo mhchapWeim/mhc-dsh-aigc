@@ -11,7 +11,7 @@ public sealed record IntegrationResult(string MessageId, string ServiceCode, str
     Guid CorrelationId, string ExecutionStatus, JsonElement Data);
 
 /// <summary>Single-token graph runner. Legacy definitions retain their original execution path.</summary>
-public sealed class IntegrationWorkflowRunner(AigcHubDbContext db, WorkflowDefinitionReader reader)
+public sealed class IntegrationWorkflowRunner(AigcHubDbContext db, WorkflowDefinitionReader reader, ApplicationRouteService? routes = null)
 {
     public static bool IsIntegrated(ProcessDefinition definition) =>
         JsonNode.Parse(definition.DefinitionJson)?["executionMode"]?.GetValue<string>() == "integrated-v1";
@@ -109,6 +109,7 @@ public sealed class IntegrationWorkflowRunner(AigcHubDbContext db, WorkflowDefin
                             throw new WorkflowException("发布完成前必须有有效的 HTTPS 部署地址", 409);
                         instance.Status = WorkflowInstanceStatus.Completed;
                         request.Status = PublicationStatus.Approved;
+                        if (routes is not null) await routes.RegisterAsync(request, request.AccessUrl, ct);
                     }
                     instance.CompletedAt = DateTimeOffset.UtcNow;
                     db.Notifications.Add(new InboxNotification { UserId = request.ApplicantId, Title = $"申请处理结果：{request.AppName}", Content = request.CurrentNodeName, Link = "/admin/publications" });
@@ -121,6 +122,21 @@ public sealed class IntegrationWorkflowRunner(AigcHubDbContext db, WorkflowDefin
 
     public async Task<bool> ReceiveAsync(string trustedService, IntegrationResult result, CancellationToken ct)
         => await ReceiveCoreAsync(trustedService, result, null, ct);
+
+    internal const string DeploymentServiceCode = "deployment";
+    internal const string DeploymentCompletedEvent = "deploy.completed.v1";
+
+    public Task<bool> CompleteDeploymentManuallyAsync(Guid invocationId, string? deploymentUrl, Guid actorId, CancellationToken ct)
+    {
+        var submitted = deploymentUrl?.Trim();
+        if (submitted is null || submitted.Length > 2048 || !Uri.TryCreate(submitted, UriKind.Absolute, out var url) ||
+            url.Scheme != Uri.UriSchemeHttps || !string.IsNullOrEmpty(url.UserInfo))
+            throw new WorkflowException("请输入有效的 HTTPS 部署地址，且地址不能包含账号或密码");
+
+        var result = new IntegrationResult($"manual-deployment:{invocationId:N}", DeploymentServiceCode,
+            DeploymentCompletedEvent, invocationId, "Succeeded", JsonSerializer.SerializeToElement(new { deploymentUrl = url.AbsoluteUri }));
+        return ReceiveCoreAsync(DeploymentServiceCode, result, null, ct, actorId);
+    }
 
     public async Task<bool> ReceiveMessageAsync(string trustedService, ReadOnlyMemory<byte> body, ReviewMessageProperties properties, CancellationToken ct)
     {
@@ -140,7 +156,8 @@ public sealed class IntegrationWorkflowRunner(AigcHubDbContext db, WorkflowDefin
         return await ReceiveCoreAsync(trustedService, new IntegrationResult(Guid.Parse(review.EventId).ToString(), trustedService, "review.finished", id, review.Status, CodeReviewProtocol.Normalize(review)), review, ct);
     }
 
-    private async Task<bool> ReceiveCoreAsync(string trustedService, IntegrationResult result, ReviewResult? review, CancellationToken ct)
+    private async Task<bool> ReceiveCoreAsync(string trustedService, IntegrationResult result, ReviewResult? review, CancellationToken ct,
+        Guid? manualActorId = null)
     {
         if (trustedService != result.ServiceCode || string.IsNullOrWhiteSpace(result.MessageId) || result.MessageId.Length > 200)
             throw new WorkflowException("结果来源或消息标识无效", 403);
@@ -158,6 +175,8 @@ public sealed class IntegrationWorkflowRunner(AigcHubDbContext db, WorkflowDefin
         var request = await db.PublicationRequests.SingleAsync(x => x.Id == instance.BusinessId, ct);
         var active = (call.Status is "Pending" or "Sent" or "DeliveryFailed") && instance.Status == WorkflowInstanceStatus.WaitingCallback && instance.CurrentNodeKey == call.NodeKey;
         var disposition = !active ? "Stale" : call.ExpiresAt <= DateTimeOffset.UtcNow ? "Expired" : "Applied";
+        if (manualActorId.HasValue && disposition != "Applied")
+            throw new WorkflowException("只能触发当前流程节点尚未过期的部署调用，请刷新记录", 409);
         if (disposition == "Applied" && review is { Status: "Rejected", Error: { Code: "REQUEST_CONFLICT" } })
         {
             disposition = "RequestConflict";
@@ -169,13 +188,27 @@ public sealed class IntegrationWorkflowRunner(AigcHubDbContext db, WorkflowDefin
             if (review is null && result.ExecutionStatus is not ("Succeeded" or "Failed")) throw new WorkflowException("只接受最终执行结果");
             var definition = await db.ProcessDefinitions.SingleAsync(x => x.Id == instance.ProcessDefinitionId, ct);
             var node = JsonNode.Parse(definition.DefinitionJson)!["nodes"]!.AsArray().Single(n => Text(n, "id") == call.NodeKey)!;
+            var deploymentField = Text(node, "deploymentUrlField");
+            if (manualActorId is Guid actorId)
+            {
+                if (deploymentField.Length == 0)
+                    throw new WorkflowException("该节点未配置部署地址结果字段，不能手动触发", 409);
+                if (node["verifyCommit"]?.ToJsonString() == "true")
+                    throw new WorkflowException("该部署节点要求验证提交版本，请使用带 commitSha 的部署回调", 409);
+                var url = result.Data.GetProperty("deploymentUrl").GetString();
+                result = result with { Data = JsonSerializer.SerializeToElement(new Dictionary<string, string?> { [deploymentField] = url }) };
+                db.WorkflowHistory.Add(new WorkflowHistory
+                {
+                    InstanceId = instance.Id, NodeKey = call.NodeKey, ActorId = actorId,
+                    EventType = "ManualDeploymentCompleted", Detail = call.Id.ToString()
+                });
+            }
             if (review is null && result.ExecutionStatus == "Succeeded" && node["verifyCommit"]?.ToJsonString() == "true")
             {
                 if (!result.Data.TryGetProperty("commitSha", out var commit) || commit.ValueKind != JsonValueKind.String || !string.Equals(commit.GetString(), request.CommitSha, StringComparison.OrdinalIgnoreCase))
                     throw new WorkflowException("结果 Commit 与申请不一致", 409);
             }
             var outcome = review is not null ? CodeReviewProtocol.Outcome(review) : result.ExecutionStatus == "Failed" ? "failed" : "succeeded";
-            var deploymentField = Text(node, "deploymentUrlField");
             var decisionRequired = Text(node, "resultMode") == "decision" || call.Operation == "audit.submit.v1";
             if (review is null && result.ExecutionStatus == "Succeeded" && deploymentField.Length == 0)
             {
@@ -183,9 +216,9 @@ public sealed class IntegrationWorkflowRunner(AigcHubDbContext db, WorkflowDefin
                     outcome = decision.ValueKind == JsonValueKind.String ? decision.GetString() switch { "Passed" => "passed", "Rejected" => "rejected", _ => throw new WorkflowException("审核结论无效") } : throw new WorkflowException("审核结论必须是字符串");
                 else if (decisionRequired) throw new WorkflowException("审计成功结果必须包含 decision=Passed 或 Rejected");
             }
-            if (review is null && result.ExecutionStatus == "Succeeded" && Text(node, "deploymentUrlField") is { Length: > 0 } urlField)
+            if (review is null && result.ExecutionStatus == "Succeeded" && deploymentField.Length > 0)
             {
-                if (!result.Data.TryGetProperty(urlField, out var property) || property.ValueKind != JsonValueKind.String || !Uri.TryCreate(property.GetString(), UriKind.Absolute, out var url) || url.Scheme != "https")
+                if (!result.Data.TryGetProperty(deploymentField, out var property) || property.ValueKind != JsonValueKind.String || !Uri.TryCreate(property.GetString(), UriKind.Absolute, out var url) || url.Scheme != "https")
                     throw new WorkflowException("部署结果缺少有效的 HTTPS 地址");
                 request.AccessUrl = url.ToString();
             }

@@ -98,7 +98,7 @@ describe('admin pages', () => {
     const pages: Array<[React.ReactNode, string]> = [
       [<UserManagementPage key="users" />, '用户分页'],
       [<RoleManagementPage key="roles" />, '角色分页'],
-      [<PublicationRequestsPage key="publications" />, '发布申请分页'],
+      [<PublicationRequestsPage key="publications" />, '申请分页'],
       [<PublicationReviewsPage key="reviews" />, '发布审核分页'],
     ];
 
@@ -188,7 +188,8 @@ describe('admin pages', () => {
     const user = userEvent.setup();
     renderWithPlatform(<PublicationRequestsPage />);
 
-    await user.click(screen.getByRole('button', { name: '新建发布申请' }));
+    await user.click(screen.getByRole('button', { name: '新建申请' }));
+    await user.click(screen.getByRole('button', { name: '发布申请' }));
     await user.type(screen.getByRole('textbox', { name: '应用名称' }), '设备知识助手');
     await user.type(screen.getByRole('textbox', { name: '应用简介' }), '检索设备知识与维修经验');
     await user.type(screen.getByRole('textbox', { name: '代码仓库' }), 'https://git.example/apps/device.git');
@@ -227,7 +228,7 @@ describe('admin pages', () => {
   it('exposes publishing workflow destinations in the admin navigation', () => {
     renderWithPlatform(<AdminShell><div>content</div></AdminShell>);
 
-    expect(screen.getByRole('link', { name: /发布申请/ })).toHaveAttribute('href', '/admin/publications');
+    expect(screen.getByRole('link', { name: /申请管理/ })).toHaveAttribute('href', '/admin/publications');
     expect(screen.getByRole('link', { name: /发布审核/ })).toHaveAttribute('href', '/admin/reviews');
     expect(screen.getByText('1')).toBeInTheDocument();
   });

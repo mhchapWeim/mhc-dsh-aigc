@@ -8,6 +8,7 @@ import { usePageSize } from '../../components/use-page-size';
 import { AntPagination } from '../../components/ant-pagination';
 import { Modal } from '../../components/modal';
 import { GrantSelector } from '../models/grant-selector';
+import { RecipientPicker, emptyAudience } from '../components/recipient-picker';
 import type { GrantOptions } from '../../lib/api-client';
 import { getPlugins, getPluginGrantOptions, publishPlugin, uploadPlugin, type ManagedPlugin } from '../../lib/plugin-api';
 import './plugins.css';
@@ -71,12 +72,35 @@ export default function PluginsPage() {
       <div className="plugin-form-scroll">
       {error && <p role="alert" className="model-form-error">{error}</p>}
       <label>名称<input value={editing.name} maxLength={120} onChange={e => setEditing({ ...editing, name: e.target.value })} /></label>
-      <label>发布版本<SearchableSelect aria-label="发布版本" value={editing.publishedVersionId ?? ''} onChange={e => setEditing({ ...editing, publishedVersionId: e.target.value || null })}><option value="">请选择版本</option>{editing.versions.map(v => <option key={v.id} value={v.id}>{v.version} · DSH {v.dshVersion}</option>)}</SearchableSelect></label>
+      <label>默认发布版本<SearchableSelect aria-label="发布版本" value={editing.publishedVersionId ?? ''} onChange={e => setEditing({ ...editing, publishedVersionId: e.target.value || null })}><option value="">请选择版本</option>{editing.versions.map(v => <option key={v.id} value={v.id}>{v.version} · DSH {v.dshVersion}</option>)}</SearchableSelect></label>
       <label className="plugin-enabled"><input type="checkbox" checked={editing.isEnabled} onChange={e => setEditing({ ...editing, isEnabled: e.target.checked })} />启用插件</label>
       <label>插件配置（JSON）<textarea rows={7} spellCheck={false} value={configuration} onChange={e => setConfiguration(e.target.value)} /></label>
       <small>格式：{`{"插件行 ID": {"参数名": "值"}}`}。密钥请使用下方服务端字段。</small>
       {editing.packageName === '@bhss/dsh-plugin-managed-search' && <label>博查 API Key（仅服务端保存）<input type="password" autoComplete="new-password" value={secret} onChange={e => setSecret(e.target.value)} placeholder={editing.hasServerSecret ? '已配置，留空保留' : '请输入博查 API Key'} /></label>}
       <h3>使用范围</h3><GrantSelector options={options} value={editing.grants} onChange={grants => setEditing({ ...editing, grants })} />
+      {editing.pilotReleases !== undefined && <section className="plugin-pilot-releases">
+        <h3>灰度发布</h3>
+        <p>只有同时拥有插件使用权限、列在灰度名单中且 DSH 版本匹配的用户会收到灰度插件包。</p>
+        <label>添加灰度版本<SearchableSelect aria-label="添加灰度版本" value="" onChange={e => {
+          const versionId = e.target.value;
+          if (versionId) setEditing({ ...editing, pilotReleases: [...(editing.pilotReleases ?? []), { versionId, userIds: [] }] });
+        }}>
+          <option value="">请选择版本</option>
+          {editing.versions.filter(version => version.dshVersion !== editing.versions.find(v => v.id === editing.publishedVersionId)?.dshVersion
+            && !editing.pilotReleases?.some(rule => editing.versions.find(v => v.id === rule.versionId)?.dshVersion === version.dshVersion))
+            .map(version => <option key={version.id} value={version.id}>{version.version} · DSH {version.dshVersion}</option>)}
+        </SearchableSelect></label>
+        {editing.pilotReleases.map(rule => {
+          const version = editing.versions.find(v => v.id === rule.versionId);
+          return <details key={rule.versionId} open>
+            <summary>{version?.version} · DSH {version?.dshVersion} · {rule.userIds.length} 人</summary>
+            <RecipientPicker usersOnly options={options} value={{ ...emptyAudience(), userIds: rule.userIds }} onChange={({ userIds }) =>
+              setEditing({ ...editing, pilotReleases: editing.pilotReleases?.map(item => item.versionId === rule.versionId ? { ...item, userIds } : item) })} />
+            <button type="button" className="secondary-action" onClick={() =>
+              setEditing({ ...editing, pilotReleases: editing.pilotReleases?.filter(item => item.versionId !== rule.versionId) })}>移除灰度版本</button>
+          </details>;
+        })}
+      </section>}
       <p>保存后下发策略。已有插件代码升级需要客户端重启。</p>
       </div>
       <div className="modal-actions"><button className="secondary-action" disabled={busy} onClick={() => setEditing(null)}>取消</button><button className="primary-action" disabled={busy} onClick={() => void save()}>{busy ? '发布中…' : '保存并发布'}</button></div>

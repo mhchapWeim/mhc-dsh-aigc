@@ -8,6 +8,7 @@ public sealed class ManagedPlugin
     public string Description { get; set; } = "";
     public bool IsEnabled { get; set; }
     public Guid? PublishedVersionId { get; set; }
+    public string PilotReleasesJson { get; set; } = "[]";
     public long Revision { get; set; } = 1;
     public string ConfigurationJson { get; set; } = "{}";
     public string ServerSecretProtected { get; set; } = "";

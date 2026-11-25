@@ -38,6 +38,22 @@ it('rejects malformed configuration without publishing', async () => {
   expect(api.publishPlugin).not.toHaveBeenCalled();
 });
 
+it('publishes a runtime-specific pilot without changing the default version or use grants', async () => {
+  const template = (await api.getPlugins())[0];
+  api.getPlugins.mockResolvedValue([{ ...template, isEnabled: true, publishedVersionId: 'v1', pilotReleases: [],
+    versions: [...template.versions, { ...template.versions[0], id: 'v2', version: '1.0.1', dshVersion: '0.2.2-rc.3' }] }]);
+  const user = userEvent.setup();
+  render(<PluginsPage />);
+  await user.click(await screen.findByRole('button', { name: '配置与发布' }));
+  selectDropdown(screen.getByRole('combobox', { name: '添加灰度版本' }), 'v2');
+  const pilot = screen.getByRole('region', { name: '灰度用户' });
+  await user.click(within(pilot).getByRole('checkbox', { name: /测试用户/ }));
+  await user.click(screen.getByRole('button', { name: '保存并发布' }));
+  await waitFor(() => expect(api.publishPlugin).toHaveBeenCalledWith(expect.objectContaining({
+    publishedVersionId: 'v1', grants: template.grants, pilotReleases: [{ versionId: 'v2', userIds: ['u1'] }],
+  }), ''));
+});
+
 it('shows user, role and department scope and publishes their combined selection', async () => {
   api.getPluginGrantOptions.mockResolvedValue({ users: [{ id: 'u1', name: '测试用户', employeeNo: 'wh001' }],
     roles: [{ id: 'r1', name: '研发角色', code: 'dev' }], departments: [{ id: 'd1', name: '研发部门', code: 'rd' }] });

@@ -215,4 +215,8 @@ Managed policy reconciliation resolves the organization access token before read
 
 Only changes to `llm-managed-backend/user-session` invalidate organization identity. Billing records and other plugins' credential records leave managed tools and package activation intact.
 
+When the profile write lock is busy, package reconciliation defers the affected plugin and retries after `managedLockRetryMs`. A replacement acquires the lock before deactivating the existing bundle. Later plugins can still be reconciled and reported. A failed status report leaves the local bundle state intact.
+
+The `managed-plugins` diagnostics record the deferred write phase and the PID observed in the lock file when available. The completion record includes the attempt count, elapsed time, and local outcome. Policy, download, and report request errors name their stage.
+
 Organization MCP services are reconciled independently of package installation. AIGC owns service configuration and grants; authorized tools connect automatically, and sign-out, account changes, policy failure, or revocation removes them. The display-only `connectors()` Remote exposes no upstream credentials. See [deployment integration](../../../../docs/AIGC-DSH-MCP-INTEGRATION.md).

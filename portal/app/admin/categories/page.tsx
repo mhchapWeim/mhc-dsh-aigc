@@ -70,7 +70,7 @@ export default function CategoryManagementPage() {
   };
 
   return (
-    <div className="admin-page page-enter">{deleteConfirmHolder}
+    <div className="admin-page page-enter admin-stack">{deleteConfirmHolder}
       <div className="page-title">
         <div>
           <span className="section-kicker">PORTAL TAXONOMY</span>

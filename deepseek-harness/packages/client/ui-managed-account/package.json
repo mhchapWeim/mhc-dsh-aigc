@@ -1,7 +1,7 @@
 {
   "name": "@deepseek-ai/dsh-client-ui-managed-account",
   "description": "Organization sign-in dialog for deployments that route models through a managed backend",
-  "version": "0.1.7-alpha.2",
+  "version": "0.2.2-rc.3",
   "publishConfig": {
     "access": "public"
   },

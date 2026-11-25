@@ -1,3 +1,6 @@
+.registry-tabs { display: flex; gap: 8px; flex-wrap: wrap; }
+.registry-tabs button { font: inherit; font-size: 13px; min-height: 38px; padding: 8px 14px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); color: var(--ink); cursor: pointer; }
+.registry-tabs button[aria-selected='true'] { color: var(--blue-600); border-color: var(--blue-600); font-weight: 600; }
 .registry-filters { display: flex; gap: 16px; align-items: end; flex-wrap: wrap; padding: 20px; }
 .registry-filters label { display: grid; gap: 8px; }
 .registry-filters input { border: 1px solid var(--line); background: var(--surface); color: var(--ink); padding: 8px 10px; border-radius: 6px; min-height: 38px; }
@@ -12,8 +15,14 @@
 .registry-form label, .registry-form .form-field { min-width: 0; }
 .registry-form small { color: var(--muted); font-size: 12px; line-height: 1.6; }
 .registry-translate { border: 0; background: transparent; color: var(--blue-600); cursor: pointer; padding: 4px 6px; }
-@media (max-width: 600px) { .registry-form .form-grid { grid-template-columns: minmax(0, 1fr); } .registry-form-body { padding: 16px; } .registry-filters label { width: 100%; } }
+@media (max-width: 600px) { .registry-form .form-grid { grid-template-columns: minmax(0, 1fr); } .registry-form-body, .registry-confirm > .modal-body { padding: 16px; } .registry-filters label, .registry-tabs button { width: 100%; } }
 
+.modal.registry-confirm { width: min(520px, calc(100vw - 32px)); max-height: calc(100dvh - 40px); display: flex; flex-direction: column; overflow: hidden; }
+.registry-confirm > header, .registry-confirm > .modal-footer { flex: none; }
+.registry-confirm > .modal-body { flex: 1 1 auto; min-height: 0; overflow: auto; padding: 20px 21px; }
+.registry-confirm > .modal-footer { display: flex; justify-content: flex-end; gap: 8px; padding: 14px 21px; border-top: 1px solid var(--line); background: var(--surface); }
+.registry-confirm p { margin: 0; color: var(--ink); line-height: 1.65; }
+.registry-confirm .model-form-error { margin-top: 12px; }
 .registry-click-fields { min-width: 0; border: 1px solid var(--line); border-radius: 6px; padding: 16px; }
 .registry-click-fields legend { padding: 0 6px; font-size: 13px; font-weight: 600; }
 .registry-click-fields small { display: block; margin-top: 10px; color: var(--muted); }

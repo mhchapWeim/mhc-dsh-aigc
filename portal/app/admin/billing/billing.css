@@ -28,7 +28,7 @@
 .billing-filters{display:flex;gap:16px;flex-wrap:wrap}
 .billing-filters label{display:grid;gap:7px;font-size:12.5px;color:var(--muted);min-width:168px}
 .billing-filters input,.billing-filters select{min-height:40px;padding:8px 11px;font:inherit;font-size:13px;border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--ink)}
-.billing-filters input:focus,.billing-filters select:focus{outline:2px solid rgba(47,111,237,.18);border-color:var(--blue-600)}
+.billing-filters input:focus,.billing-filters select:focus{outline:none;box-shadow:0 0 0 2px rgba(5,145,255,.1)}
 .billing-hint{margin:12px 0 0;font-size:12.5px;line-height:1.65;color:var(--muted)}
 .billing-filters .billing-hint{margin-bottom:0}
 

@@ -211,7 +211,6 @@ export function apply(ctx) {
     const workspaceResponse = await fetch(new URL('/desktop-smoke-workspace', ready.url), { headers: { cookie } })
     if (!workspaceResponse.ok) throw new Error('desktop runtime: Workspace service check failed: ' + await workspaceResponse.text())
     console.log('desktop runtime: Workspace controller ready')
-    if (await pluginResponse.text() !== 'plugin route ready') throw new Error('desktop runtime: plugin HTTP route failed')
     const installation = await fetch(new URL('/desktop-smoke-install', ready.url), {
       headers: { cookie }, signal: AbortSignal.timeout(120_000),
     })

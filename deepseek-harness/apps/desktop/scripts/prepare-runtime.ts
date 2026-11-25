@@ -24,13 +24,17 @@ type DesktopTarget = ReturnType<typeof desktopTargetPlatform>
 async function prepareElectron({ platform, arch }: DesktopTarget): Promise<string> {
   const require = createRequire(import.meta.url)
   const { version } = require('electron/package.json') as { version: string }
+  const checksums = require('electron/checksums.json') as Record<string, string>
   // The archive source is configurable because GitHub release assets are regularly
   // answered with a 504 here; the checksum is still the official Electron digest.
   const mirrorOptions = resolveMirror()
   const attempts = resolveAttempts()
   const archive = await packagingStep(process.env.DSH_DESKTOP_PACKAGING_RUN_DIR, 'download:electron',
     () => downloadWithRetry(
-      () => downloadArtifact({ version, platform, arch, artifactName: 'electron', cacheRoot: BUILD_PATHS.downloads, ...(mirrorOptions === undefined ? {} : { mirrorOptions }) }),
+      () => downloadArtifact({
+        version, platform, arch, artifactName: 'electron', checksums,
+        cacheRoot: BUILD_PATHS.downloads, ...(mirrorOptions === undefined ? {} : { mirrorOptions }),
+      }),
       attempts,
       (attempt, error) => {
         const reason = error instanceof Error ? error.message : String(error)

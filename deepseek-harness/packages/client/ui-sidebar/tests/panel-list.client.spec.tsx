@@ -426,6 +426,24 @@ describe('sidebar launcher pins', () => {
     expect(more.getAttribute('aria-expanded')).toBe('false')
   })
 
+  it('keeps More closed when its registered content renders no items', async () => {
+    const { runtime, locale, view } = await bench()
+    await mountPanels(runtime, locale)
+    await mountProbeActions(runtime, 'empty', () => <></>)
+    const more = await view.findByRole('button', { name: 'More' })
+
+    fireEvent.click(more)
+    expect(view.queryByRole('menu')).toBeNull()
+    expect(more.getAttribute('aria-expanded')).toBe('false')
+
+    const actions = await mountProbeActions(runtime)
+    fireEvent.click(more)
+    expect(view.getByRole('menuitem', { name: 'Dismiss' })).toBeTruthy()
+    await actions.dispose()
+    await waitFor(() => { expect(view.queryByRole('menu')).toBeNull() })
+    expect(more.getAttribute('aria-expanded')).toBe('false')
+  })
+
   it('ignores an open request for a panel that is no longer registered', async () => {
     const { runtime, locale, layout, view } = await bench()
     const { alpha } = await mountPanels(runtime, locale)

@@ -16,8 +16,9 @@ export const emptyAudienceOptions = (): DesktopAudienceOptions => ({ users: [], 
 
 type PickerOptions = Omit<GrantOptions, 'users'> & { users: Array<GrantOptions['users'][number] & { departmentId?: string | null; roleIds?: string[] }> };
 
-export function RecipientPicker({ options, value, onChange, mode = 'recipients' }: {
+export function RecipientPicker({ options, value, onChange, mode = 'recipients', usersOnly = false }: {
   options: PickerOptions; value: GrantSelection; onChange: (selection: GrantSelection) => void; mode?: 'recipients' | 'authorization';
+  usersOnly?: boolean;
 }) {
   const [tab, setTab] = useState<(typeof groups)[number]>(groups[0]);
   const [query, setQuery] = useState('');
@@ -35,11 +36,11 @@ export function RecipientPicker({ options, value, onChange, mode = 'recipients' 
     if (!selectedIds.has(id) && options[tab.options].find(item => item.id === id)?.disabled) return;
     onChange({ ...value, [tab.key]: selected.includes(id) ? selected.filter(item => item !== id) : [...selected, id] });
   };
-  const title = mode === 'authorization' ? '授权范围' : '接收范围';
+  const title = usersOnly ? '灰度用户' : mode === 'authorization' ? '授权范围' : '接收范围';
   return <section className="recipient-picker" aria-label={title}>
-    <div className="recipient-heading"><div><h3>{title}</h3><p>{mode === 'authorization' ? '按用户、角色或部门组合授权。' : '支持组合选择，重复人员只接收一次。'}</p></div><span className="recipient-count">{mode === 'authorization' ? `${value.userIds.length + value.roleIds.length + value.departmentIds.length} 项` : `${recipients.length} 人`}</span></div>
-    <div className="recipient-tabs" role="tablist" aria-label={mode === 'authorization' ? '授权对象类型' : '接收对象类型'}>{groups.map(group => <button type="button" role="tab" aria-selected={tab.key === group.key}
-      key={group.key} onClick={() => { setTab(group); setQuery(''); setPage(1); }}><group.icon size={16} />{group.label}<span>{value[group.key].length}</span></button>)}</div>
+    <div className="recipient-heading"><div><h3>{title}</h3>{!usersOnly && <p>{mode === 'authorization' ? '按用户、角色或部门组合授权。' : '支持组合选择，重复人员只接收一次。'}</p>}</div><span className="recipient-count">{mode === 'authorization' && !usersOnly ? `${value.userIds.length + value.roleIds.length + value.departmentIds.length} 项` : `${recipients.length} 人`}</span></div>
+    {!usersOnly && <div className="recipient-tabs" role="tablist" aria-label={mode === 'authorization' ? '授权对象类型' : '接收对象类型'}>{groups.map(group => <button type="button" role="tab" aria-selected={tab.key === group.key}
+      key={group.key} onClick={() => { setTab(group); setQuery(''); setPage(1); }}><group.icon size={16} />{group.label}<span>{value[group.key].length}</span></button>)}</div>}
     <div className="recipient-toolbar"><label className="recipient-search"><Search size={16} /><input type="search" aria-label={`搜索${mode === 'authorization' ? '授权' : '接收'}${tab.label}`} placeholder={`搜索${tab.label}名称${tab.key === 'userIds' ? '或工号' : '或编号'}`} value={query} onChange={event => { setQuery(event.target.value); setPage(1); }} /></label>
       <button type="button" disabled={pageItems.length === 0 || pageItems.every(item => item.disabled || selectedIds.has(item.id))} onClick={() => selectItems(pageItems)}>选择本页</button>
       <button type="button" title={`选择当前${tab.label}搜索结果的全部 ${matches.length} 项（包含所有分页）`} disabled={matches.length === 0 || matches.every(item => item.disabled || selectedIds.has(item.id))} onClick={() => selectItems(matches)}>全选</button></div>
@@ -53,6 +54,6 @@ export function RecipientPicker({ options, value, onChange, mode = 'recipients' 
       const item = options[group.options].find(option => option.id === id);
       return <button type="button" key={`${group.key}/${id}`} aria-label={`移除${item?.name ?? '已失效对象'}`} onClick={() => onChange({ ...value, [group.key]: value[group.key].filter(selectedId => selectedId !== id) })}>{group.label} · {item?.name ?? '已失效对象'}<X size={12} /></button>;
     }))}<button type="button" className="recipient-clear" onClick={() => onChange(emptyAudience())}>清空</button></div>}
-    <p className="recipient-hint">{mode === 'authorization' ? '已选范围会保留在下方，可逐项移除或清空。' : '保存时按当前成员生成接收名单；成员变化后可重新保存范围。'}</p>
+    {!usersOnly && <p className="recipient-hint">{mode === 'authorization' ? '已选范围会保留在下方，可逐项移除或清空。' : '保存时按当前成员生成接收名单；成员变化后可重新保存范围。'}</p>}
   </section>;
 }

@@ -1,0 +1,21 @@
+.gateway-settings { display: grid; gap: 16px; padding: 20px; }
+.gateway-settings .form-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.gateway-field { display: grid; gap: 8px; min-width: 0; }
+.gateway-field > span { font-size: 13px; font-weight: 600; color: var(--ink); }
+.gateway-field input {
+  width: 100%;
+  min-height: 38px;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+}
+.gateway-field input:focus { outline: none; box-shadow: 0 0 0 2px rgba(5, 145, 255, 0.1); }
+.gateway-field small { color: var(--muted); font-size: 12px; line-height: 1.6; }
+.gateway-actions { display: flex; justify-content: flex-end; }
+.gateway-table { overflow-x: auto; }
+.gateway-table table { min-width: 720px; }
+.gateway-change { margin: 0; color: var(--ink); line-height: 1.6; }
+@media (max-width: 900px) { .gateway-settings .form-grid { grid-template-columns: minmax(0, 1fr); } }

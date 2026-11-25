@@ -9,6 +9,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AigcHub.Api", "server\AigcH
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AigcHub.Tests", "server\AigcHub.Tests\AigcHub.Tests.csproj", "{D6D60265-365A-4BD9-BB56-CE87307D0630}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AigcHub.Gateway", "server\AigcHub.Gateway\AigcHub.Gateway.csproj", "{8A1B4E2C-6D70-4F11-9C3A-2B7E5D0A91F4}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -43,6 +45,18 @@ Global
 		{D6D60265-365A-4BD9-BB56-CE87307D0630}.Release|x64.Build.0 = Release|Any CPU
 		{D6D60265-365A-4BD9-BB56-CE87307D0630}.Release|x86.ActiveCfg = Release|Any CPU
 		{D6D60265-365A-4BD9-BB56-CE87307D0630}.Release|x86.Build.0 = Release|Any CPU
+		{8A1B4E2C-6D70-4F11-9C3A-2B7E5D0A91F4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8A1B4E2C-6D70-4F11-9C3A-2B7E5D0A91F4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8A1B4E2C-6D70-4F11-9C3A-2B7E5D0A91F4}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{8A1B4E2C-6D70-4F11-9C3A-2B7E5D0A91F4}.Debug|x64.Build.0 = Debug|Any CPU
+		{8A1B4E2C-6D70-4F11-9C3A-2B7E5D0A91F4}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{8A1B4E2C-6D70-4F11-9C3A-2B7E5D0A91F4}.Debug|x86.Build.0 = Debug|Any CPU
+		{8A1B4E2C-6D70-4F11-9C3A-2B7E5D0A91F4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8A1B4E2C-6D70-4F11-9C3A-2B7E5D0A91F4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8A1B4E2C-6D70-4F11-9C3A-2B7E5D0A91F4}.Release|x64.ActiveCfg = Release|Any CPU
+		{8A1B4E2C-6D70-4F11-9C3A-2B7E5D0A91F4}.Release|x64.Build.0 = Release|Any CPU
+		{8A1B4E2C-6D70-4F11-9C3A-2B7E5D0A91F4}.Release|x86.ActiveCfg = Release|Any CPU
+		{8A1B4E2C-6D70-4F11-9C3A-2B7E5D0A91F4}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -50,5 +64,6 @@ Global
 	GlobalSection(NestedProjects) = preSolution
 		{3B664C3F-59AF-492D-BF63-8D61EC526CF7} = {DAD03CFC-D5FA-AC94-41C7-9ABAB326F09E}
 		{D6D60265-365A-4BD9-BB56-CE87307D0630} = {DAD03CFC-D5FA-AC94-41C7-9ABAB326F09E}
+		{8A1B4E2C-6D70-4F11-9C3A-2B7E5D0A91F4} = {DAD03CFC-D5FA-AC94-41C7-9ABAB326F09E}
 	EndGlobalSection
 EndGlobal

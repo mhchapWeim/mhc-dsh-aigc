@@ -301,7 +301,7 @@ public sealed class OpenApplicationTool(AigcHubDbContext db) : IChatTool
             .Include(x => x.Roles).SingleOrDefaultAsync(x => x.Id == userId && x.IsEnabled, ct)
             ?? throw new WorkflowException("当前用户不存在或已停用", 403);
         var query = db.PublicationRequests.AsNoTracking().Include(x => x.AccessGrants)
-            .Where(x => x.Status == PublicationStatus.Approved && x.AccessUrl != "");
+            .Where(x => x.Status == PublicationStatus.Approved && x.OperationalEnabled && x.AccessUrl != "");
         if (input.ApplicationId.HasValue) query = query.Where(x => x.Id == input.ApplicationId);
         else if (!string.IsNullOrWhiteSpace(input.ApplicationName))
             query = query.Where(x => x.AppName.ToLower() == input.ApplicationName.Trim().ToLower());

@@ -8,7 +8,7 @@ vi.mock('./platform-provider', () => ({usePlatform: () => ({currentUserId: 'user
 vi.mock('../lib/api-client', () => ({clearSession: vi.fn(), hasBackend: false, getInboxMessages: vi.fn(async () => ({items: [], page: 1, pageSize: 20, total: 0, unreadCount: 0})), getInboxUnread: vi.fn(async () => ({unread: 0, latest: null})), markInboxRead: vi.fn(), markInboxAllRead: vi.fn(), getRegisteredAppAccess: vi.fn(), getRecentCatalogApps: vi.fn(async () => []), getCatalogApps: vi.fn(async () => [{
   id: 'registered', name: '设备助手', nameEn: 'Device Assistant', description: '检索设备知识', descriptionEn: 'Find equipment knowledge', category: '智慧服务',
   owner: '质量部', ownerEn: 'Quality', categoryColor: '#2465d0', accessUrl: '', publishedAt: '2026-11-03', registered: true, subcategory: '设备知识', subcategoryId: 'child', clicks: {day: 2, week: 4, month: 6, year: 8}, totalClicks: 128,
-}])}));
+}]), submitRegisteredAccessRequest: vi.fn()}));
 
 beforeEach(() => { localStorage.clear(); vi.clearAllMocks(); });
 afterEach(() => { vi.restoreAllMocks(); document.documentElement.removeAttribute('data-theme'); });
@@ -19,10 +19,31 @@ it('shows registered apps to users without a URL and denies opening when the ser
   vi.spyOn(window, 'open').mockReturnValue(popup as unknown as Window);
   const user = userEvent.setup(); render(<PortalShell/>);
   await user.click(await screen.findByRole('link', {name: '进入设备助手'}));
-  await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('无权访问'));
+  await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('暂时不能打开该应用'));
+  expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   expect(window.open).not.toHaveBeenCalled();
   expect(popup.location.replace).not.toHaveBeenCalled();
   await waitFor(() => expect(screen.getByRole('status')).toBeEmptyDOMElement(), {timeout: 4000});
+});
+
+it('opens a prefilled access request only after the app reports insufficient permission', async () => {
+  vi.mocked(api.getRegisteredAppAccess).mockRejectedValueOnce(
+    Object.assign(new Error('无权访问该应用'), {code: 'application_access_required'}),
+  );
+  const open = vi.spyOn(window, 'open').mockReturnValue(null);
+  const user = userEvent.setup();
+  render(<PortalShell/>);
+
+  await user.click(await screen.findByRole('link', {name: '进入设备助手'}));
+  expect(await screen.findByRole('dialog')).toHaveTextContent('你无权访问该应用');
+  expect(screen.getByRole('textbox', {name: '目标应用'})).toHaveValue('设备助手');
+  await user.type(screen.getByRole('textbox', {name: '申请原因'}), '处理设备故障');
+  await user.click(screen.getByRole('button', {name: '提交访问申请'}));
+
+  await waitFor(() => expect(api.submitRegisteredAccessRequest).toHaveBeenCalledWith('registered', '处理设备故障'));
+  expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  expect(screen.getByRole('status')).toHaveTextContent('访问申请已提交');
+  expect(open).not.toHaveBeenCalled();
 });
 
 it('uses stored English copy and navigates only after server authorization', async () => {

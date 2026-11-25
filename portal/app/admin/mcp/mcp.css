@@ -15,7 +15,7 @@
 .mcp-modal .mcp-form-body>h3{margin:4px 0 0;font-size:14px}
 .mcp-modal .mcp-form-body>label>input:not([type=checkbox]),.mcp-modal .mcp-form-body>label>textarea{width:100%;min-width:0;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:var(--ink);padding:9px 10px;font:inherit;font-weight:400;line-height:1.5}
 .mcp-modal .mcp-form-body textarea{resize:vertical;min-height:88px}
-.mcp-modal .mcp-form-body input:focus-visible,.mcp-modal .mcp-form-body textarea:focus-visible{outline:2px solid var(--blue-600);outline-offset:2px}
+.mcp-modal .mcp-form-body input:focus-visible,.mcp-modal .mcp-form-body textarea:focus-visible{outline:none;box-shadow:0 0 0 2px rgba(5,145,255,.1)}
 .mcp-modal .mcp-form-body input[type=file]{padding:6px;font-size:12px}
 .mcp-modal input[type=file]::file-selector-button{margin-right:12px;padding:7px 12px;border:1px solid var(--line);border-radius:6px;background:var(--page);color:var(--ink);font:inherit;cursor:pointer}
 .mcp-modal .mcp-check{flex-direction:row!important;font-weight:400;gap:8px!important}
@@ -36,6 +36,6 @@
 .mcp-modal .recipient-list strong,.mcp-modal .recipient-list small{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .mcp-modal .recipient-list .recipient-disabled-reason{white-space:normal}
 .mcp-modal .recipient-search input[type=search]{flex:1;min-width:0;width:100%;border:0;border-radius:0;background:transparent;padding:8px 0;box-shadow:none;outline:none}
-.mcp-modal .recipient-search:focus-within{outline:2px solid var(--blue-600);outline-offset:2px}
+.mcp-modal .recipient-search:focus-within{outline:none;box-shadow:0 0 0 2px rgba(5,145,255,.1)}
 .mcp-modal .mcp-form-body>*{flex-shrink:0}
 @media(max-width:600px){.mcp-modal .recipient-list{grid-template-columns:minmax(0,1fr)}.mcp-modal .recipient-search{flex-basis:100%}}

@@ -37,10 +37,11 @@ vi.mock('../src/crash-report.ts', async importOriginal => ({
 }))
 
 // Persistence is covered separately; startup fixtures must not create real log directories.
+const ingestHostDiagnostic = vi.hoisted(() => vi.fn())
 vi.mock('../src/failure-journal.ts', () => ({
   FailureJournal: class {
     record(): void {}
-    ingest(): void {}
+    ingest = ingestHostDiagnostic
     prune(): void {}
     async export(): Promise<void> {}
   },
@@ -847,7 +848,7 @@ describe('desktop main startup', () => {
     ['darwin', 'en'], ['darwin', 'zh-CN'], ['win32', 'en'], ['win32', 'zh-CN'], ['linux', 'en'], ['linux', 'zh-CN'],
   ] as const).flatMap(([platform, locale]) => [
     [platform, locale, true] as const, [platform, locale, false] as const,
-  ]))('groups localized DevTools before quit on %s (%s, packaged=%s)', async (platform, locale, packaged) => {
+  ]))('hides the command manager and DevTools entries on %s (%s, packaged=%s)', async (platform, locale, packaged) => {
     vi.stubGlobal('process', { ...process, platform })
     harness.app.isPackaged = packaged
     vi.spyOn(harness.app, 'getPreferredSystemLanguages').mockReturnValue([locale])
@@ -855,25 +856,19 @@ describe('desktop main startup', () => {
     const messages = locale === 'en' ? en : zh
     const menu = applicationMenuItems()
     const visible = menu.filter(item => item.visible !== false)
-    expect(visible.map(item => item.role === 'quit' ? 'quit' : item.label ?? item.type)).toEqual([
-      messages.aboutMenu, 'separator', messages.checkUpdatesMenu,
-      ...platform === 'linux' ? [] : [messages.cliCommandMenu],
-      'separator', ...packaged ? [] : [messages.reloadPageMenu, messages.restartAppHostMenu],
-      messages.toggleDevToolsMenu, 'separator',
-      ...platform === 'darwin' ? [messages.hideApplication, messages.hideOtherApplications, messages.showAllApplications, 'separator'] : [],
-      'quit',
-    ])
-    expect(visible.filter(item => item.role === 'toggleDevTools')).toEqual([
-      { role: 'toggleDevTools', label: messages.toggleDevToolsMenu },
-    ])
+    expect(visible.some(item => item.label === messages.cliCommandMenu)).toBe(false)
+    expect(visible.some(item => item.role === 'toggleDevTools')).toBe(false)
+    expect(visible.some(item => item.label === messages.checkUpdatesMenu)).toBe(true)
+    expect(visible.some(item => item.role === 'quit')).toBe(true)
     if (platform === 'win32') {
       expect(harness.menu.mock.calls[0]![0]).toEqual([
         { role: 'toggleDevTools', visible: false },
         { role: 'toggleDevTools', visible: false, accelerator: 'F12' },
       ])
-      expect(menu.every(item => item.visible !== false)).toBe(true)
+      expect(menu.filter(item => item.visible === false).map(item => item.label)).toEqual([messages.cliCommandMenu])
     } else {
-      expect(menu.filter(item => item.visible === false)).toEqual([
+      expect(menu.filter(item => item.role === 'toggleDevTools')).toEqual([
+        { role: 'toggleDevTools', visible: false },
         { role: 'toggleDevTools', visible: false, accelerator: 'F12' },
       ])
     }
@@ -884,9 +879,9 @@ describe('desktop main startup', () => {
     )
     const refreshed = platform === 'win32' ? applicationMenuItems()
       : harness.menu.mock.lastCall![0][0]!.submenu as MenuItemConstructorOptions[]
-    expect(refreshed.filter(item => item.role === 'toggleDevTools' && item.visible !== false)).toEqual([
-      { role: 'toggleDevTools', label: nextLocale === 'en' ? en.toggleDevToolsMenu : zh.toggleDevToolsMenu },
-    ])
+    const refreshedVisible = refreshed.filter(item => item.visible !== false)
+    expect(refreshedVisible.some(item => item.role === 'toggleDevTools')).toBe(false)
+    expect(refreshedVisible.some(item => item.label === (nextLocale === 'en' ? en.cliCommandMenu : zh.cliCommandMenu))).toBe(false)
     expect(harness.windows[0]!.options).toMatchObject({ webPreferences: { devTools: true } })
   })
 
@@ -1440,9 +1435,9 @@ describe('desktop main startup', () => {
     expect(() => handler(event, 'arbitrary-command', 48, 34)).toThrow('invalid popup request')
     expect(() => handler(event, 'application', NaN, 34)).toThrow('invalid popup request')
     const application = handler(event, 'application', 48, 34)
-    expect(harness.menu.buildFromTemplate.mock.lastCall![0].map(item => item.label ?? item.type)).toEqual([
-      '关于 弯崽工作伙伴', 'separator', '数据与迁移', '检查更新…', '管理 dsh 命令…',
-      '打开诊断日志目录', '导出诊断包（最近7天）', 'separator', zh.toggleDevToolsMenu, 'separator', 'AIGC认证', '退出',
+    expect(harness.menu.buildFromTemplate.mock.lastCall![0].filter(item => item.visible !== false).map(item => item.label ?? item.type)).toEqual([
+      '关于 弯崽工作伙伴', 'separator', '数据与迁移', '检查更新…',
+      '打开诊断日志目录', '导出诊断包（最近7天）', 'separator', 'AIGC认证', '退出',
     ])
     expect(harness.popup.mock.lastCall![0]).toMatchObject({ window, x: 48, y: 34 })
     expect(harness.popup.mock.lastCall![0].callback).toBeTypeOf('function')
@@ -1490,11 +1485,11 @@ describe('desktop main startup', () => {
       : undefined)
     const application = template[0]!.submenu as MenuItemConstructorOptions[]
     expect(application.filter(item => item.visible !== false).map(describeItem)).toEqual(platform === 'darwin'
-      ? ['about', 'separator', en.dataMigrationMenu, en.checkUpdatesMenu, en.cliCommandMenu,
-        en.openDiagnostics, en.exportDiagnostics, 'separator', 'toggleDevTools', 'separator',
-        en.aigcAuthenticationMenu, 'hide', 'hideOthers', 'unhide', 'separator', 'quit']
-      : ['about', 'separator', en.dataMigrationMenu, en.checkUpdatesMenu, en.cliCommandMenu,
-        en.openDiagnostics, en.exportDiagnostics, 'separator', 'toggleDevTools', 'separator',
+      ? ['about', 'separator', en.dataMigrationMenu, en.checkUpdatesMenu,
+        en.openDiagnostics, en.exportDiagnostics, 'separator',
+        'hide', 'hideOthers', 'unhide', 'separator', en.aigcAuthenticationMenu, 'quit']
+      : ['about', 'separator', en.dataMigrationMenu, en.checkUpdatesMenu,
+        en.openDiagnostics, en.exportDiagnostics, 'separator',
         en.aigcAuthenticationMenu, 'quit'])
     expect(harness.menu.setApplicationMenu).toHaveBeenCalledOnce()
   })
@@ -2860,6 +2855,16 @@ describe('desktop main startup', () => {
     const file = join(harness.app.getPath('userData'), 'plugin-operations', 'operations.jsonl')
     await vi.waitFor(() => { expect(JSON.parse(readFileSync(file, 'utf8'))).toEqual(record) })
     expect(existsSync(join(harness.app.getPath('logs'), 'plugin-operations'))).toBe(false)
+  })
+
+  it('preserves the Host diagnostic category and operation when recording it', async () => {
+    await import('../src/main.ts')
+    await harness.preparing.promise
+    harness.prepared.resolve()
+    await harness.hostStarted.promise
+    const record = JSON.stringify({ category: 'host-log', operation: 'managed-plugins', error: 'Profile write lock busy' })
+    harness.hosts[0]!.onDiagnostic!(record)
+    expect(ingestHostDiagnostic).toHaveBeenLastCalledWith(record)
   })
 
   it('writes the Host\'s own diagnostic into a startup-phase crash report when the Host reports a fatal error before ready', async () => {

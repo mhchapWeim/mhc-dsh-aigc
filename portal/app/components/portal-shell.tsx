@@ -6,13 +6,14 @@ import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ChevronDown, CircleCheckBig, Clock3, Download, FilePlus2, Heart, Languages, LogOut, Moon, Search, Settings2, ShieldCheck, SlidersHorizontal, Sparkles, Sun, UserRound } from 'lucide-react';
 import { AppCatalogGrid } from './app-catalog-grid';
+import { AccessRequestFormModal } from './access-request-form';
 import { InboxBell } from './inbox-bell';
 import { PasswordChangeForm } from './password-change-form';
 import { Modal } from './modal';
 import { usePlatform } from './platform-provider';
 import { categoryLabels, localizeApp, portalCopy, type PortalLocale } from '../lib/portal-i18n';
 import type { PortalApp } from '../lib/types';
-import { clearSession, getCatalogApps, getRecentCatalogApps, getRegisteredAppAccess } from '../lib/api-client';
+import { clearSession, getCatalogApps, getRecentCatalogApps, getRegisteredAppAccess, submitPublishedLaunch } from '../lib/api-client';
 import type { RecentCatalogApp } from '../lib/api-client';
 
 type Theme = 'light' | 'dark';
@@ -34,6 +35,7 @@ export function PortalShell() {
   const [favorites, setFavorites] = useState<string[]>([]);
   const [favoritesOnly, setFavoritesOnly] = useState(false);
   const [notice, setNotice] = useState('');
+  const [accessRequestApp, setAccessRequestApp] = useState<PortalApp | null>(null);
   const accessPending = useRef(false);
   useEffect(() => {
     if (!notice) return;
@@ -62,7 +64,7 @@ export function PortalShell() {
           category: item.category,
           tags: [],
           owner: item.owner,
-          accessUrl: item.accessUrl,
+          accessUrl: item.accessUrl, launchable: item.launchable, slug: item.slug,
           publishedAt: item.publishedAt,
           status: '运行中',
           accent: item.categoryColor || '#2465d0',
@@ -142,7 +144,25 @@ export function PortalShell() {
         if (popup) popup.opener = null;
         else setNotice(locale === 'zh' ? '请允许浏览器弹出窗口后重试' : 'Please allow pop-ups and try again');
         loadRecent();
-      }).catch(() => { setNotice(locale === 'zh' ? '无权访问该应用或应用已停用，请联系管理员' : 'Access denied or application unavailable. Contact an administrator.'); })
+      }).catch((error: unknown) => {
+        if (error instanceof Error && 'code' in error && error.code === 'application_access_required') {
+          setAccessRequestApp(app);
+        } else {
+          setNotice(locale === 'zh' ? '暂时不能打开该应用，请联系管理员' : 'This application cannot be opened right now. Contact an administrator.');
+        }
+      })
+        .finally(() => { accessPending.current = false; });
+      return;
+    }
+    if (app.launchable) {
+      if (accessPending.current) return;
+      accessPending.current = true;
+      setNotice(copy.opening(app.name));
+      submitPublishedLaunch(app.id).then(() => {
+        setRecent(current => [{ id: app.id, name: app.name, registered: false, lastUsedAt: new Date().toISOString() },
+          ...current.filter(item => item.id !== app.id)].slice(0, 6));
+        loadRecent();
+      }).catch(() => setNotice(locale === 'zh' ? '暂时不能打开该应用，请稍后从应用集合重试' : 'This application cannot be opened right now'))
         .finally(() => { accessPending.current = false; });
       return;
     }
@@ -236,6 +256,14 @@ export function PortalShell() {
         </section>
       </main>
       {profileCenterOpen && <Modal className="profile-password-modal" title={copy.profile} onClose={() => setProfileCenterOpen(false)}><section className="profile-center"><header><span className="profile-center__avatar">{currentUser?.name.slice(0, 1) ?? '访'}</span><div><h3>{currentUser?.name ?? (locale === 'zh' ? '访客' : 'Guest')}</h3><p>{currentUser?.email ?? (locale === 'zh' ? '当前未登录' : 'Not signed in')}</p></div><span className={`state-badge ${currentUser ? 'is-enabled' : 'is-disabled'}`}>{currentUser ? (locale === 'zh' ? '账号正常' : 'Active') : (locale === 'zh' ? '未登录' : 'Signed out')}</span></header><dl><div><dt>{locale === 'zh' ? '企业工号' : 'Employee ID'}</dt><dd>{currentUser?.employeeNo ?? '—'}</dd></div><div><dt>{locale === 'zh' ? '所属部门' : 'Department'}</dt><dd>{currentUser?.department ?? '—'}</dd></div><div><dt>{locale === 'zh' ? '平台角色' : 'Role'}</dt><dd>{currentUser?.role ?? '—'}</dd></div><div><dt>{locale === 'zh' ? '最近登录' : 'Last login'}</dt><dd>{currentUser?.lastLogin ?? '—'}</dd></div></dl>{currentUser && <section className="profile-password-section"><h3>修改密码</h3><PasswordChangeForm /></section>}<footer className="modal-actions"><button className="primary-action" type="button" onClick={() => setProfileCenterOpen(false)}>{locale === 'zh' ? '关闭' : 'Close'}</button></footer></section></Modal>}
+      {accessRequestApp && (
+        <AccessRequestFormModal
+          application={{ id: accessRequestApp.id, name: accessRequestApp.name, registered: true }}
+          locale={locale}
+          onClose={() => setAccessRequestApp(null)}
+          onSubmitted={() => setNotice(locale === 'zh' ? '访问申请已提交，等待审批' : 'Access requested. Approval is pending.')}
+        />
+      )}
       <div className={`toast${notice ? ' is-visible' : ''}`} role="status" aria-live="polite">{notice}</div>
     </div>
   );

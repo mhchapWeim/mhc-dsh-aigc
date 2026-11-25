@@ -17,6 +17,7 @@ vi.mock('../../components/platform-provider', () => ({ usePlatform: () => mocks.
 vi.mock('../../lib/api-client', () => ({
   hasBackend: true,
   getReviewablePublications: mocks.reviewable,
+  getReviewableAccessRequests: vi.fn(async () => []),
   completeWorkflowTask: mocks.complete,
 }));
 

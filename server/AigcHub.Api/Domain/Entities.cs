@@ -84,6 +84,7 @@ public sealed class ProcessDefinition
     public int Version { get; set; } = 1;
     public string DefinitionJson { get; set; } = "{}";
     public bool IsPublished { get; set; }
+    public string RequestType { get; set; } = "publication";
     public DateTimeOffset? PublishedAt { get; set; }
     public DateTimeOffset UpdatedAt { get; set; } = DateTimeOffset.UtcNow;
 }
@@ -111,6 +112,12 @@ public sealed class PublicationRequest
     public Guid ApplicantId { get; set; }
     public AppUser? Applicant { get; set; }
     public PublicationStatus Status { get; set; } = PublicationStatus.Draft;
+    /// <summary>目录与网关访问开关。与审批结果、发布版本和路由状态分开记录；升级前的发布记录默认启用。</summary>
+    public bool OperationalEnabled { get; set; } = true;
+    /// <summary>每次实际启停加一。票据和会话只在代际一致时有效，恢复后不能沿用停用前的凭证。</summary>
+    public long AccessEpoch { get; set; }
+    /// <summary>访问申请的审核负责人。空表示未指定，不沿用发布申请人。</summary>
+    public Guid? AccessReviewerId { get; set; }
     public string CurrentNodeKey { get; set; } = "draft";
     public string CurrentNodeName { get; set; } = "草稿";
     public string? ReviewComment { get; set; }

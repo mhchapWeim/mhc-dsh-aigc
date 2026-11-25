@@ -9,13 +9,23 @@ export type RegistryInput = {
   clicks?: ClickCounts;
   totalClicks?: number;
   accessMode: 'All' | 'Subjects'; grants: RegistryGrant[];
+  accessReviewerId?: string | null;
 };
-export type RegistryApp = RegistryInput & { id: string; category: string; updatedAt: string; totalClicks?: number };
+export type RegistryApp = RegistryInput & { id: string; category: string; updatedAt: string; totalClicks?: number; accessReviewerName?: string; accessReviewerEmployeeNo?: string };
 export type RegistryOptions = { categories: {id: string; name: string; parentId?: string | null}[]; departments: {id: string; name: string}[]; users: {id: string; name: string; employeeNo: string}[] };
 export const getRegistryApps = () => apiRequest<RegistryApp[]>('/api/application-registry');
 export const getRegistryOptions = () => apiRequest<RegistryOptions>('/api/application-registry/options');
 export const saveRegistryApp = (input: Omit<RegistryInput, 'clicks' | 'totalClicks'> & {clicks?: ClickUpdate; totalClicks?: number}, id?: string) => apiRequest<{id: string}>(`/api/application-registry${id ? `/${encodeURIComponent(id)}` : ''}`, {method: id ? 'PUT' : 'POST', body: JSON.stringify(input)});
 export const translateRegistryText = (text: string) => apiRequest<{text: string}>('/api/application-registry/translate', {method: 'POST', body: JSON.stringify({text})});
+
+export type PublishedApp = {
+  id: string; name: string; version: string; applicantId?: string; applicantName: string; applicantEmployeeNo: string;
+  routeStatus: string | null; operationalEnabled: boolean; publicationStatus: string;
+  accessReviewerId?: string | null; accessReviewerName?: string; accessReviewerEmployeeNo?: string;
+};
+export const getPublishedApps = () => apiRequest<PublishedApp[]>('/api/application-registry/published');
+export const setPublishedOperational = (id: string, enabled: boolean) => apiRequest<PublishedApp & {changed: boolean}>(`/api/application-registry/published/${encodeURIComponent(id)}/operational`, {method: 'POST', body: JSON.stringify({enabled})});
+export const setPublishedAccessReviewer = (id: string, userId: string | null) => apiRequest<PublishedApp>(`/api/application-registry/published/${encodeURIComponent(id)}/access-reviewer`, {method: 'PUT', body: JSON.stringify({userId})});
 
 export type ClickReport = {generatedAt: string; periods: Record<string, string>; from: string; to: string; trend: {date: string; clicks: number}[]; applications: {id: string; name: string}[]; items: {id: string; name: string; category: string; isEnabled: boolean; clicks: ClickCounts; rangeClicks: number}[]};
 export const getClickReport = (filters: {from?: string; to?: string; applicationId?: string} = {}) => {

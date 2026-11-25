@@ -1,23 +1,22 @@
 [
   {
-    "label": "关于 DeepSeek Harness",
+    "label": "关于 弯崽工作伙伴",
     "role": "about"
   },
   {
     "type": "separator"
   },
   {
+    "label": "数据与迁移"
+  },
+  {
     "label": "检查更新…"
   },
   {
-    "label": "管理 dsh 命令…"
+    "label": "打开诊断日志目录"
   },
   {
-    "type": "separator"
-  },
-  {
-    "role": "toggleDevTools",
-    "label": "开发者工具"
+    "label": "导出诊断包（最近7天）"
   },
   {
     "type": "separator"
@@ -36,6 +35,9 @@
   },
   {
     "type": "separator"
+  },
+  {
+    "label": "AIGC认证"
   },
   {
     "role": "quit",

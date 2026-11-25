@@ -24,6 +24,14 @@ public sealed partial class AigcHubDbContext(DbContextOptions<AigcHubDbContext> 
     public DbSet<ProcessDefinition> ProcessDefinitions => Set<ProcessDefinition>();
     public DbSet<PublicationRequest> PublicationRequests => Set<PublicationRequest>();
     public DbSet<PublicationAccessGrant> PublicationAccessGrants => Set<PublicationAccessGrant>();
+    public DbSet<RequestProcessBinding> RequestProcessBindings => Set<RequestProcessBinding>();
+    public DbSet<ApplicationAccessRequest> ApplicationAccessRequests => Set<ApplicationAccessRequest>();
+    public DbSet<ApplicationPersonalGrant> ApplicationPersonalGrants => Set<ApplicationPersonalGrant>();
+    public DbSet<ApplicationRoute> ApplicationRoutes => Set<ApplicationRoute>();
+    public DbSet<ApplicationGatewaySetting> ApplicationGatewaySettings => Set<ApplicationGatewaySetting>();
+    public DbSet<ApplicationGatewaySettingChange> ApplicationGatewaySettingChanges => Set<ApplicationGatewaySettingChange>();
+    public DbSet<ApplicationLaunchTicket> ApplicationLaunchTickets => Set<ApplicationLaunchTicket>();
+    public DbSet<ApplicationGatewaySession> ApplicationGatewaySessions => Set<ApplicationGatewaySession>();
     public DbSet<WorkflowInstance> WorkflowInstances => Set<WorkflowInstance>();
     public DbSet<WorkflowTask> WorkflowTasks => Set<WorkflowTask>();
     public DbSet<WorkflowTaskCandidate> WorkflowTaskCandidates => Set<WorkflowTaskCandidate>();
@@ -138,5 +146,27 @@ public sealed partial class AigcHubDbContext(DbContextOptions<AigcHubDbContext> 
         builder.Entity<WorkflowCallbackInbox>().HasIndex(x => x.EventId).IsUnique();
         builder.Entity<PublicationRequest>().Property(x => x.ConcurrencyToken).IsConcurrencyToken();
         builder.Entity<WorkflowInstance>().Property(x => x.ConcurrencyToken).IsConcurrencyToken();
+        builder.Entity<RequestProcessBinding>().HasKey(x => x.RequestType);
+        builder.Entity<ApplicationAccessRequest>().HasIndex(x => x.RequestNo).IsUnique();
+        builder.Entity<ApplicationAccessRequest>().Property(x => x.Status).HasConversion<string>();
+        builder.Entity<ApplicationAccessRequest>().HasIndex(x => new { x.ApplicantId, x.PublicationRequestId })
+            .IsUnique().HasFilter("\"Status\" = 'Reviewing'");
+        builder.Entity<ApplicationAccessRequest>().HasIndex(x => new { x.ApplicantId, x.RegisteredApplicationId })
+            .IsUnique().HasFilter("\"Status\" = 'Reviewing' AND \"RegisteredApplicationId\" IS NOT NULL");
+        builder.Entity<ApplicationAccessRequest>().ToTable(table => table.HasCheckConstraint(
+            "CK_ApplicationAccessRequests_Target", "(\"PublicationRequestId\" IS NULL) <> (\"RegisteredApplicationId\" IS NULL)"));
+        builder.Entity<ApplicationAccessRequest>().Property(x => x.ConcurrencyToken).IsConcurrencyToken();
+        builder.Entity<ApplicationPersonalGrant>().HasIndex(x => x.AccessRequestId).IsUnique();
+        builder.Entity<ApplicationPersonalGrant>().HasIndex(x => new { x.UserId, x.PublicationRequestId })
+            .IsUnique().HasFilter("\"RevokedAt\" IS NULL");
+        builder.Entity<ApplicationPersonalGrant>().HasIndex(x => new { x.UserId, x.RegisteredApplicationId })
+            .IsUnique().HasFilter("\"RevokedAt\" IS NULL AND \"RegisteredApplicationId\" IS NOT NULL");
+        builder.Entity<ApplicationPersonalGrant>().ToTable(table => table.HasCheckConstraint(
+            "CK_ApplicationPersonalGrants_Target", "(\"PublicationRequestId\" IS NULL) <> (\"RegisteredApplicationId\" IS NULL)"));
+        builder.Entity<ApplicationRoute>().HasIndex(x => x.PublicationRequestId).IsUnique();
+        builder.Entity<ApplicationRoute>().HasIndex(x => x.Slug).IsUnique();
+        builder.Entity<ApplicationLaunchTicket>().HasIndex(x => x.TokenHash).IsUnique();
+        builder.Entity<ApplicationGatewaySession>().HasIndex(x => x.CookieHash).IsUnique();
+        builder.Entity<ApplicationGatewaySettingChange>().HasIndex(x => x.CreatedAt);
     }
 }

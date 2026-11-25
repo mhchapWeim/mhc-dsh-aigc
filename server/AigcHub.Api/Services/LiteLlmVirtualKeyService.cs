@@ -50,25 +50,30 @@ public sealed partial class LiteLlmVirtualKeyService(IHttpClientFactory clients,
             if (!response.IsSuccessStatusCode) throw new HttpRequestException($"LiteLLM model info returned {(int)response.StatusCode}");
             using var body = await JsonDocument.ParseAsync(await response.Content.ReadAsStreamAsync(ct), cancellationToken: ct);
             var models = new Dictionary<string, LiteLlmModelCapability>(StringComparer.Ordinal);
-            if (body.RootElement.TryGetProperty("data", out var data) && data.ValueKind == JsonValueKind.Array)
+            if (body.RootElement.ValueKind == JsonValueKind.Object
+                && body.RootElement.TryGetProperty("data", out var data) && data.ValueKind == JsonValueKind.Array)
             {
                 foreach (var item in data.EnumerateArray())
                 {
-                    if (!item.TryGetProperty("model_name", out var name) || name.ValueKind != JsonValueKind.String) continue;
+                    if (item.ValueKind != JsonValueKind.Object
+                        || !item.TryGetProperty("model_name", out var name) || name.ValueKind != JsonValueKind.String) continue;
                     var info = item.TryGetProperty("model_info", out var declared) && declared.ValueKind == JsonValueKind.Object
                         ? declared : default;
                     bool? vision = info.ValueKind == JsonValueKind.Object
                         && info.TryGetProperty("supports_vision", out var flag)
                         && flag.ValueKind is JsonValueKind.True or JsonValueKind.False ? flag.GetBoolean() : null;
-                    // One public alias may route to several deployments. Do not let response order
-                    // enable images when their capabilities disagree or are undisclosed.
-                    if (models.TryGetValue(name.GetString()!, out var previous) && previous.SupportsVision != vision)
-                        vision = null;
+                    var modelMode = info.ValueKind == JsonValueKind.Object && info.TryGetProperty("mode", out var mode)
+                        && mode.ValueKind == JsonValueKind.String ? mode.GetString() : null;
+                    // Deployments behind one alias must agree on vision and operation mode.
+                    if (models.TryGetValue(name.GetString()!, out var previous))
+                    {
+                        if (previous.SupportsVision != vision) vision = null;
+                        if (!string.Equals(previous.Mode, modelMode, StringComparison.OrdinalIgnoreCase)) modelMode = null;
+                    }
                     models[name.GetString()!] = new LiteLlmModelCapability(vision,
                         PositiveTokenCount(info, "max_input_tokens"),
                         PositiveTokenCount(info, "max_output_tokens") ?? PositiveTokenCount(info, "max_tokens"),
-                        info.ValueKind == JsonValueKind.Object && info.TryGetProperty("mode", out var mode)
-                            && mode.ValueKind == JsonValueKind.String ? mode.GetString() : null,
+                        modelMode,
                         info.ValueKind == JsonValueKind.Object
                             ? info.EnumerateObject().Where(property => property.Name.StartsWith("supports_", StringComparison.Ordinal)
                                 && property.Value.ValueKind == JsonValueKind.True)

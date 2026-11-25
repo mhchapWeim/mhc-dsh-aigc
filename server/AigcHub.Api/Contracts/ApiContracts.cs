@@ -10,7 +10,7 @@ public sealed record SaveDepartmentRequest(string Code, string Name, string Desc
 public sealed record SaveCategoryRequest(string Code, string Name, string Description, string Color, int SortOrder, bool IsEnabled, Guid? ParentId = null);
 public sealed record SaveRoleRequest(string Code, string Name, string Description, string[] PermissionCodes);
 public sealed record SaveUserRequest(string EmployeeNo, string Name, string Email, string? Password, Guid? DepartmentId, Guid[] RoleIds, bool IsEnabled, Guid[]? ModelIds = null, Guid[]? VirtualKeyIds = null, Guid[]? PluginIds = null, Guid[]? ReleaseIds = null, Guid[]? McpIds = null, Guid? BillingPlanId = null, bool? AllowCustomModels = null);
-public sealed record SaveProcessDefinitionRequest(string Key, string Name, int Version, JsonElement Definition, bool IsPublished);
+public sealed record SaveProcessDefinitionRequest(string Key, string Name, int Version, JsonElement Definition, bool IsPublished, string? RequestType = null);
 public sealed record AccessSubjectRequest(string SubjectType, Guid SubjectId);
 public sealed record SubmitPublicationRequest(
     string AppName,

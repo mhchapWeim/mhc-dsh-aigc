@@ -9,7 +9,7 @@ type AppCardProps = { app: PortalApp; index: number; favorite: boolean; locale: 
 export function AppCard({ app, index, favorite, locale, onFavorite, onOpen }: AppCardProps) {
   const isEnglish = locale === 'en';
   const status = isEnglish ? 'Running' : app.status;
-  const available = Boolean(app.accessUrl) || Boolean(app.registered);
+  const available = Boolean(app.accessUrl) || Boolean(app.registered) || Boolean(app.launchable);
   const AppIcon = app.category === '知识智能' ? BookOpenCheck : app.category === '效率办公' ? BriefcaseBusiness : app.category === '研发创新' ? Code2 : Bot;
   const favoriteLabel = isEnglish ? `${favorite ? 'Remove from' : 'Add to'} favorites: ${app.name}` : `${favorite ? '取消收藏' : '收藏'}${app.name}`;
   return (

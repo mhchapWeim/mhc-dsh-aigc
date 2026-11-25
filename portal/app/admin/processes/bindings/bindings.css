@@ -1,0 +1,16 @@
+.binding-table { overflow-x: auto; }
+.binding-table table { min-width: 860px; }
+.binding-actions { display: flex; align-items: center; gap: 8px; }
+.binding-actions select {
+  min-width: 280px;
+  min-height: 38px;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+}
+.binding-actions select:focus { outline: none; box-shadow: 0 0 0 2px rgba(5, 145, 255, 0.1); }
+.binding-note { margin: 12px 0 0; color: var(--muted); font-size: 13px; line-height: 1.6; }
+@media (max-width: 600px) { .binding-actions { flex-wrap: wrap; } .binding-actions select { width: 100%; min-width: 0; } }

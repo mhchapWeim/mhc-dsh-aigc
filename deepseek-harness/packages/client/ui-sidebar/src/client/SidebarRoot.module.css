@@ -334,9 +334,11 @@
 }
 
 .localBuildTitle {
-  font-size: 14px;
-  line-height: 13px;
+  font-size: 16px;
+  line-height: 16px;
   letter-spacing: 0;
+  font-weight: bold;
+  padding-inline-start: 6px;
 }
 
 .iconButton {
@@ -749,6 +751,10 @@
 .moreMenu {
   width: 288px;
   max-width: calc(100vw - 24px);
+}
+
+.moreMenuRows {
+  display: contents;
 }
 
 .panelGlyph {

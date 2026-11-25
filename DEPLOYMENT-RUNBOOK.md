@@ -1,5 +1,53 @@
 # DSH、AIGC 和 Portal 部署记录
 
+## 2026-11-24 访问审核负责人 API/Portal 离线包（未部署）
+
+基于 `codex/dsh-upstream-integration` @ `972285a7` 的当前工作区，包含未提交的访问审核负责人和后台焦点样式。只构建 API 与 Portal，不构建 DSH 客户端，也不重建应用网关。没有执行生产导入、CHECK_ONLY、数据库备份或 Deployment 更新。
+
+- 交付目录：`deploy/k8s/bosch-aigc-dsh/update-2026-11-24-access-review-app-only`
+- ZIP：`output/aigc-update-2026-11-24-access-review-app-only.zip`，163,839,778 字节
+- ZIP SHA-256：`b6af25a9caa20ebebb292c17febb4c9b25814b7054016b1221abf029eda5ac4d`
+- 镜像：`aigc-api:2026-11-24-access-review`（`sha256:ea544dd823e92d2b2834130136466deb84131b53571a44de45f4276d118c05c1`）、`aigc-portal:2026-11-24-access-review`（`sha256:33e0fcdace176ca65063a140396f565d2e19d2395f9e157bf30ac40cbd37bc51`），linux/amd64
+- tar SHA-256：`53b2fa8a5d765bf153d8344476be655b96220f296d5c6a13b197d9e8b9f505f0`，164,788,736 字节
+
+API 启动幂等增加 `PublicationRequests.AccessReviewerId` 与 `RegisteredApplications.AccessReviewerId`。`update.sh` 因此默认强制数据库 dump。补丁只替换两个容器镜像和 `imagePullPolicy=Never`，不改 Secret、ConfigMap 或 PVC。预检脚本 20 项通过。API 镜像 6 个开发凭据字段已脱敏，Portal 旧域名 0 处。命令见该目录 README。获得授权后先导入 nj304，再 `CHECK_ONLY=1`，确认回滚镜像后才运行 `update.sh`。
+
+## 2026-11-20 应用网关根路径修复镜像（未部署）
+
+只重建网关镜像，修复带会话访问 `/{slug}` 和 `/{slug}/` 时仍提示「请从 AIGC 应用集合进入此应用」。API、Portal、`aigc-edge` 和 `aigc-settings` 不需要变更。本地 `ApplicationGatewayHttpTests` 4 项通过。镜像内 `AigcHub.Api.dll` 含 `ForwardAsync`。
+
+- tar：`output/aigc-gateway-2026-11-20-gateway-root-linux-amd64.tar`，100,489,728 字节
+- tar SHA-256：`234d04a1980369a192a664fd6a3c7959f2773f32be86fbf9507d16130a5974d5`
+- 镜像：`docker.io/library/aigc-gateway:2026-11-20-gateway-root`（`sha256:8f67ab785f88b9b4387e77fe8f6456d94044510dd9c67b22596714e55de17bee`），linux/amd64
+
+在 nj304 导入后，于控制节点只改网关 Deployment 的镜像并等待滚动完成。不要重建 `aigc-edge`。
+
+## 2026-11-19 应用网关 API/Portal/Gateway 离线包（未部署）
+
+基于 `codex/dsh-upstream-integration` 当前工作区，包含申请管理、流程绑定、访问授权和应用网关。只构建 API、Portal 和新网关，不构建 DSH 客户端。没有执行生产导入、CHECK_ONLY、数据库备份或 `aigc-edge` 变更。
+
+- 交付目录：`deploy/k8s/bosch-aigc-dsh/update-2026-11-19-app-gateway-app-only`
+- ZIP：`output/aigc-update-2026-11-19-app-gateway-app-only.zip`，169,720,990 字节
+- ZIP SHA-256：`cf5cd8df17599d6de5e3135d0bcda7c3fcda32be144830e623d499377150b47f`
+- 镜像：`aigc-api:2026-11-19-app-gateway`（`sha256:3e5576523e06fbdd9c734680b0d331847671b4acc2765e9559a2eee763f1a237`）、`aigc-portal:2026-11-19-app-gateway`（`sha256:158b4623aa757d443a477b9ffa617202dea589edb10a45708c3fb7b1f5e63411`）、`aigc-gateway:2026-11-19-app-gateway`（`sha256:30bd323f8b66054a31020020f088650d630fba9fdd3e9d942139842ea19c4895`），linux/amd64
+- tar SHA-256：`5d0e3410b645f13abbed8ef7b228ad4448e068c84f0c678e78248fedb385a7b1`，170,598,400 字节
+
+新增 Kubernetes Service `aigc-app-gateway`，端口 8080，选择器 `app=aigc-app-gateway`。对应 Deployment 同名，单副本，固定到 `bosch-k8s-node-nj304`，镜像拉取策略 `Never`。它复用现有 `aigc-settings` 和 `aigc-secrets`，不使用主机网络，因此不占用 80/443。`update.sh` 在授权更新时创建该 Deployment 和 Service，并只向 `aigc-settings` 追加 `ApplicationGateway__*`。部署服务连接另按交付目录 `DEPLOYMENT-CONNECTION.md` 把 `IntegrationConnections__Deployment__*` 的非敏感项合并进同一个 ConfigMap；密码和 `CallbackSecret` 留在 `aigc-secrets`。服务标识 `deployment` 由管理页面写入数据库，不进 ConfigMap。真实更新前要设置 `GATEWAY_ALLOWED_UPSTREAM_HOSTS`。`aigc-edge` 仍是中台入口。`/{slug}` 要等网关健康后，用交付目录里的 `aigc-edge-nginx.configmap.yaml` 执行 `kubectl apply -f`，再重建 `aigc-edge`。步骤见同目录 `EDGE-NGINX.md`。本包的更新脚本不会改它。这份 ConfigMap 文件在已打好的 ZIP 之外，需要单独拷到控制节点。
+
+预检脚本 20 项通过。API 镜像 6 个开发凭据字段已脱敏。公开域名使用 `https://aigcplatform.boschhuayu-steering.com`。命令见该目录 README。获得授权后先导入 nj304，再 `CHECK_ONLY=1`，确认回滚镜像后才运行 `update.sh`。
+
+## 2026-11-18 托管插件灰度 app-only 离线包（未部署）
+
+基于 `codex/dsh-upstream-integration` @ `972285a7` 的当前工作区，包含未提交的 `PilotReleasesJson` 与门户「灰度发布」。只构建 API 与 Portal，不改 Secret、ConfigMap、PVC 或插件存储。生产镜像更新、插件发布和客户端灰度尚未授权。本机没有 Kubernetes context，因此没有查询现场镜像，没有执行 `CHECK_ONLY`，也没有备份 PostgreSQL。回滚镜像要等控制节点预检快照里的 `images.json`。
+
+- 交付目录：`deploy/k8s/bosch-aigc-dsh/update-2026-11-18-plugin-pilot-app-only`
+- ZIP：`output/aigc-update-2026-11-18-plugin-pilot-app-only.zip`，163,555,947 字节
+- ZIP SHA-256：`15f31161e70e848a1a095d5949c06e3303162b9f4ca72b98a09acb296ee6ed7b`
+- 镜像：`aigc-api:2026-11-18-plugin-pilot`（`sha256:93797fb43f7779637bdf478f7537bf19b24ef80c150cf8dbc681bfce8ef2a754`）、`aigc-portal:2026-11-18-plugin-pilot`（`sha256:b2e64f9286f5f40fd87cc7ce4ca259765883f8d8b718ea22210d507a95d3740d`），linux/amd64
+- tar SHA-256：`88bf6c503ab3ef072f3e4eb2efc960f12825f97ae8cf373ce24af6a439fa01b6`，164,493,312 字节
+
+预检脚本 20 项通过。API 镜像含增量列符号，6 个开发凭据字段已脱敏。命令见该目录 README。获得授权后先导入 nj304，再 `CHECK_ONLY=1`，确认回滚镜像后才运行 `update.sh`。三位灰度用户工号尚未确认。
+
 ## 2026-11-13-main.2 Gitea 证书校验开关 API 修复包（未部署）
 
 现场授权回调 `/api/code-sources/gitea/complete` 因公司CA证书链 `PartialChain` 失败。用户授权临时绕过Gitea证书校验；新增按连接引用读取 `VerifySsl`，缺省 true，显式false才使用独立Gitea客户端跳过校验。覆盖授权交换、刷新及仓库API，其他HTTPS服务不变，禁止自动重定向。

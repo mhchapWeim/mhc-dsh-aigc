@@ -1,23 +1,22 @@
 [
   {
-    "label": "About DeepSeek Harness",
+    "label": "About 弯崽工作伙伴",
     "role": "about"
   },
   {
     "type": "separator"
   },
   {
+    "label": "Data and migration"
+  },
+  {
     "label": "Check for Updates…"
   },
   {
-    "label": "Manage dsh Command…"
+    "label": "Open diagnostic logs"
   },
   {
-    "type": "separator"
-  },
-  {
-    "role": "toggleDevTools",
-    "label": "Developer tools"
+    "label": "Export diagnostics (last 7 days)"
   },
   {
     "type": "separator"
@@ -36,6 +35,9 @@
   },
   {
     "type": "separator"
+  },
+  {
+    "label": "AIGC authentication"
   },
   {
     "role": "quit",

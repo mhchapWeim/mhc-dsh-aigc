@@ -6,6 +6,7 @@
 .admin-app .integration-fields input[type=checkbox] { width: auto; }
 .admin-app .integration-fields p { overflow-wrap: anywhere; }
 .admin-app .integration-fields .modal-actions { display: flex; flex-wrap: wrap; }
+.admin-app .integration-call-actions { display: flex; flex-wrap: wrap; gap: 6px; }
 
 /* Inline guidance for third-party lookups. Deliberately neutral: an empty repository
    or an unfinished connection is a normal state, not an error. `.model-form-error`

@@ -116,6 +116,7 @@ public static class DatabaseSchemaInitializer
             "ConfigurationJson" text NOT NULL, "ServerSecretProtected" text NOT NULL
         );
         CREATE UNIQUE INDEX IF NOT EXISTS "IX_ManagedPlugins_PackageName" ON aigc_hub."ManagedPlugins" ("PackageName");
+        ALTER TABLE aigc_hub."ManagedPlugins" ADD COLUMN IF NOT EXISTS "PilotReleasesJson" text NOT NULL DEFAULT '[]';
         CREATE TABLE IF NOT EXISTS aigc_hub."ManagedPluginVersions" (
             "Id" uuid PRIMARY KEY, "PluginId" uuid NOT NULL REFERENCES aigc_hub."ManagedPlugins" ("Id"),
             "Version" text NOT NULL, "DshVersion" text NOT NULL, "Sha256" text NOT NULL, "Size" bigint NOT NULL,
@@ -403,5 +404,73 @@ public static class DatabaseSchemaInitializer
         // ExecuteSqlRaw runs String.Format over the script even when no parameters are given,
         // so any literal brace in the DDL (DEFAULT '{}') must be escaped as {{ }} first.
         await db.Database.ExecuteSqlRawAsync(sql.Replace("{", "{{").Replace("}", "}}"), Array.Empty<object>(), ct);
+        const string gateway = """
+        ALTER TABLE aigc_hub."ProcessDefinitions" ADD COLUMN IF NOT EXISTS "RequestType" text NOT NULL DEFAULT 'publication';
+        CREATE TABLE IF NOT EXISTS aigc_hub."RequestProcessBindings" (
+            "RequestType" text PRIMARY KEY, "ProcessKey" text NOT NULL, "UpdatedById" uuid NULL, "UpdatedAt" timestamptz NOT NULL);
+        CREATE TABLE IF NOT EXISTS aigc_hub."ApplicationAccessRequests" (
+            "Id" uuid PRIMARY KEY, "RequestNo" text NOT NULL, "ApplicantId" uuid NOT NULL, "PublicationRequestId" uuid NOT NULL,
+            "Reason" text NOT NULL, "Status" text NOT NULL, "CurrentNodeKey" text NOT NULL, "CurrentNodeName" text NOT NULL,
+            "ReviewComment" text NULL, "ReviewerId" uuid NULL, "ProcessInstanceId" uuid NULL,
+            "CreatedAt" timestamptz NOT NULL, "UpdatedAt" timestamptz NOT NULL, "ConcurrencyToken" uuid NOT NULL);
+        CREATE UNIQUE INDEX IF NOT EXISTS "IX_ApplicationAccessRequests_RequestNo" ON aigc_hub."ApplicationAccessRequests" ("RequestNo");
+        CREATE UNIQUE INDEX IF NOT EXISTS "IX_ApplicationAccessRequests_InFlight"
+            ON aigc_hub."ApplicationAccessRequests" ("ApplicantId", "PublicationRequestId") WHERE "Status" = 'Reviewing';
+        CREATE TABLE IF NOT EXISTS aigc_hub."ApplicationPersonalGrants" (
+            "Id" uuid PRIMARY KEY, "UserId" uuid NOT NULL, "PublicationRequestId" uuid NOT NULL, "AccessRequestId" uuid NOT NULL,
+            "Source" text NOT NULL, "GrantedAt" timestamptz NOT NULL, "RevokedAt" timestamptz NULL, "RevokedById" uuid NULL, "RevokeReason" text NULL);
+        CREATE UNIQUE INDEX IF NOT EXISTS "IX_ApplicationPersonalGrants_AccessRequestId" ON aigc_hub."ApplicationPersonalGrants" ("AccessRequestId");
+        CREATE UNIQUE INDEX IF NOT EXISTS "IX_ApplicationPersonalGrants_Active"
+            ON aigc_hub."ApplicationPersonalGrants" ("UserId", "PublicationRequestId") WHERE "RevokedAt" IS NULL;
+        ALTER TABLE aigc_hub."ApplicationAccessRequests"
+            ADD COLUMN IF NOT EXISTS "RegisteredApplicationId" uuid NULL,
+            ALTER COLUMN "PublicationRequestId" DROP NOT NULL;
+        ALTER TABLE aigc_hub."ApplicationPersonalGrants"
+            ADD COLUMN IF NOT EXISTS "RegisteredApplicationId" uuid NULL,
+            ALTER COLUMN "PublicationRequestId" DROP NOT NULL;
+        DO $$
+        BEGIN
+            IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid = 'aigc_hub."ApplicationAccessRequests"'::regclass AND conname = 'CK_ApplicationAccessRequests_Target') THEN
+                ALTER TABLE aigc_hub."ApplicationAccessRequests" ADD CONSTRAINT "CK_ApplicationAccessRequests_Target"
+                    CHECK (("PublicationRequestId" IS NULL) <> ("RegisteredApplicationId" IS NULL));
+            END IF;
+            IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid = 'aigc_hub."ApplicationPersonalGrants"'::regclass AND conname = 'CK_ApplicationPersonalGrants_Target') THEN
+                ALTER TABLE aigc_hub."ApplicationPersonalGrants" ADD CONSTRAINT "CK_ApplicationPersonalGrants_Target"
+                    CHECK (("PublicationRequestId" IS NULL) <> ("RegisteredApplicationId" IS NULL));
+            END IF;
+        END $$;
+        CREATE UNIQUE INDEX IF NOT EXISTS "IX_ApplicationAccessRequests_RegisteredInFlight"
+            ON aigc_hub."ApplicationAccessRequests" ("ApplicantId", "RegisteredApplicationId")
+            WHERE "Status" = 'Reviewing' AND "RegisteredApplicationId" IS NOT NULL;
+        CREATE UNIQUE INDEX IF NOT EXISTS "IX_ApplicationPersonalGrants_RegisteredActive"
+            ON aigc_hub."ApplicationPersonalGrants" ("UserId", "RegisteredApplicationId")
+            WHERE "RevokedAt" IS NULL AND "RegisteredApplicationId" IS NOT NULL;
+        CREATE TABLE IF NOT EXISTS aigc_hub."ApplicationRoutes" (
+            "Id" uuid PRIMARY KEY, "PublicationRequestId" uuid NOT NULL, "Slug" text NOT NULL, "UpstreamUrl" text NOT NULL,
+            "Status" text NOT NULL, "Detail" text NOT NULL, "UpdatedAt" timestamptz NOT NULL);
+        CREATE UNIQUE INDEX IF NOT EXISTS "IX_ApplicationRoutes_PublicationRequestId" ON aigc_hub."ApplicationRoutes" ("PublicationRequestId");
+        CREATE UNIQUE INDEX IF NOT EXISTS "IX_ApplicationRoutes_Slug" ON aigc_hub."ApplicationRoutes" ("Slug");
+        CREATE TABLE IF NOT EXISTS aigc_hub."ApplicationGatewaySettings" (
+            "Id" integer PRIMARY KEY, "IdleTimeoutMinutes" integer NOT NULL, "MaxSessionHours" integer NOT NULL,
+            "LaunchTicketSeconds" integer NOT NULL, "UpdatedAt" timestamptz NOT NULL, "UpdatedById" uuid NULL);
+        CREATE TABLE IF NOT EXISTS aigc_hub."ApplicationGatewaySettingChanges" (
+            "Id" uuid PRIMARY KEY, "ActorId" uuid NOT NULL, "CreatedAt" timestamptz NOT NULL, "BeforeJson" text NOT NULL, "AfterJson" text NOT NULL);
+        CREATE TABLE IF NOT EXISTS aigc_hub."ApplicationLaunchTickets" (
+            "Id" uuid PRIMARY KEY, "UserId" uuid NOT NULL, "PublicationRequestId" uuid NOT NULL, "TokenHash" text NOT NULL,
+            "ExpiresAt" timestamptz NOT NULL, "ConsumedAt" timestamptz NULL, "LifetimeSeconds" integer NOT NULL, "CreatedAt" timestamptz NOT NULL);
+        CREATE UNIQUE INDEX IF NOT EXISTS "IX_ApplicationLaunchTickets_TokenHash" ON aigc_hub."ApplicationLaunchTickets" ("TokenHash");
+        CREATE TABLE IF NOT EXISTS aigc_hub."ApplicationGatewaySessions" (
+            "Id" uuid PRIMARY KEY, "UserId" uuid NOT NULL, "PublicationRequestId" uuid NOT NULL, "CookieHash" text NOT NULL,
+            "CreatedAt" timestamptz NOT NULL, "LastActivityAt" timestamptz NOT NULL, "AbsoluteExpiresAt" timestamptz NOT NULL,
+            "IdleTimeoutSeconds" integer NOT NULL, "ClosedAt" timestamptz NULL);
+        CREATE UNIQUE INDEX IF NOT EXISTS "IX_ApplicationGatewaySessions_CookieHash" ON aigc_hub."ApplicationGatewaySessions" ("CookieHash");
+        ALTER TABLE aigc_hub."PublicationRequests" ADD COLUMN IF NOT EXISTS "OperationalEnabled" boolean NOT NULL DEFAULT true;
+        ALTER TABLE aigc_hub."PublicationRequests" ADD COLUMN IF NOT EXISTS "AccessEpoch" bigint NOT NULL DEFAULT 0;
+        ALTER TABLE aigc_hub."ApplicationLaunchTickets" ADD COLUMN IF NOT EXISTS "AccessEpoch" bigint NOT NULL DEFAULT 0;
+        ALTER TABLE aigc_hub."ApplicationGatewaySessions" ADD COLUMN IF NOT EXISTS "AccessEpoch" bigint NOT NULL DEFAULT 0;
+        ALTER TABLE aigc_hub."PublicationRequests" ADD COLUMN IF NOT EXISTS "AccessReviewerId" uuid NULL;
+        ALTER TABLE aigc_hub."RegisteredApplications" ADD COLUMN IF NOT EXISTS "AccessReviewerId" uuid NULL;
+        """;
+        await db.Database.ExecuteSqlRawAsync(gateway, ct);
     }
 }

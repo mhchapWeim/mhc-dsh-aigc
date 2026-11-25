@@ -1,5 +1,6 @@
 using System.Security.Cryptography;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using AigcHub.Api.Data;
 using AigcHub.Api.Domain;
 using AigcHub.Api.Services;
@@ -15,7 +16,10 @@ public static class PluginMarketEndpoints
     public const string SearchPackage = "@bhss/dsh-plugin-managed-search";
     public static string Resource(Guid id) => $"plugin:{id:D}";
     public static string SecretPurpose(Guid id) => $"AigcHub.Plugin.{id:D}.v1";
-    private sealed record PolicyInput(string Name, bool IsEnabled, Guid? VersionId, JsonElement Configuration, AccessGrantSelection Grants, string? ServerSecret);
+    private const string RuntimeVersionHeader = "X-Dsh-Runtime-Version";
+    private sealed record PilotRelease(Guid VersionId, Guid[] UserIds);
+    private sealed record PolicyInput(string Name, bool IsEnabled, Guid? VersionId, JsonElement Configuration, AccessGrantSelection Grants, string? ServerSecret,
+        PilotRelease[]? PilotReleases = null);
     private sealed record ReportInput(string DeviceId, Guid PluginId, string Version, long Revision, string Status, string? Error);
 
     public static void MapPluginMarketEndpoints(this IEndpointRouteBuilder app)
@@ -37,12 +41,37 @@ public static class PluginMarketEndpoints
     private static string Root(IConfiguration config, IWebHostEnvironment env) =>
         Path.GetFullPath(config["Plugins:StoragePath"] ?? Path.Combine(env.ContentRootPath, "App_Data", "plugins"));
 
+    private static PilotRelease[] ReadPilotReleases(ManagedPlugin plugin) =>
+        JsonSerializer.Deserialize<PilotRelease[]>(plugin.PilotReleasesJson) ?? [];
+
+    private static bool MatchesRuntime(string baseline, string runtime)
+    {
+        if (string.Equals(baseline, runtime, StringComparison.Ordinal)) return true;
+        var prefix = baseline.Contains('-') ? baseline + "." : baseline + "-test.";
+        return runtime.StartsWith(prefix, StringComparison.Ordinal)
+            && Regex.IsMatch(runtime[prefix.Length..], @"^20\d{2}(?:0[1-9]|1[0-2])(?:0[1-9]|[12]\d|3[01])\.[1-9]\d*\z",
+                RegexOptions.CultureInvariant | RegexOptions.NonBacktracking);
+    }
+
+    private static ManagedPluginVersion? SelectRelease(ManagedPlugin plugin, Guid userId, string runtimeVersion)
+    {
+        var current = plugin.Versions.SingleOrDefault(x => x.Id == plugin.PublishedVersionId);
+        if (runtimeVersion.Length > 100) return null;
+        if (runtimeVersion.Length == 0 || (current is not null && MatchesRuntime(current.DshVersion, runtimeVersion))) return current;
+
+        var pilotIds = ReadPilotReleases(plugin).Where(rule => rule.UserIds.Contains(userId))
+            .Select(rule => rule.VersionId).ToHashSet();
+        return plugin.Versions.Where(x => pilotIds.Contains(x.Id))
+            .OrderByDescending(x => x.DshVersion.Length)
+            .FirstOrDefault(x => MatchesRuntime(x.DshVersion, runtimeVersion));
+    }
+
     private static async Task<IResult> ListAsync(AigcHubDbContext db, AccessGrantService grants, CancellationToken ct)
     {
         var result = new List<object>();
         foreach (var plugin in await db.ManagedPlugins.AsNoTracking().Include(x => x.Versions).OrderBy(x => x.Name).ToListAsync(ct))
             result.Add(new { plugin.Id, plugin.PackageName, plugin.Name, plugin.Description, plugin.IsEnabled,
-                plugin.PublishedVersionId, plugin.Revision, configuration = JsonSerializer.Deserialize<JsonElement>(plugin.ConfigurationJson),
+                plugin.PublishedVersionId, pilotReleases = ReadPilotReleases(plugin), plugin.Revision, configuration = JsonSerializer.Deserialize<JsonElement>(plugin.ConfigurationJson),
                 hasServerSecret = plugin.ServerSecretProtected.Length > 0, grants = await grants.GetAsync(Resource(plugin.Id), ct),
                 versions = plugin.Versions.OrderByDescending(x => x.CreatedAt).Select(x => new { x.Id, x.Version, x.DshVersion, x.Sha256, x.Size, x.CreatedAt }) });
         return Results.Ok(result);
@@ -122,26 +151,43 @@ public static class PluginMarketEndpoints
     private static async Task<IResult> SaveAsync(Guid id, PolicyInput input, AigcHubDbContext db, AccessGrantService grants,
         IDataProtectionProvider protection, ICurrentUser current, CancellationToken ct)
     {
-        var plugin = await db.ManagedPlugins.SingleOrDefaultAsync(x => x.Id == id, ct);
+        var plugin = await db.ManagedPlugins.Include(x => x.Versions).SingleOrDefaultAsync(x => x.Id == id, ct);
         if (plugin is null) return Results.NotFound();
         if (string.IsNullOrWhiteSpace(input.Name) || input.Name.Length > 120 || input.Configuration.ValueKind != JsonValueKind.Object
             || input.Configuration.GetRawText().Length > 64 * 1024) return Results.BadRequest("名称或 JSON 配置无效");
-        if (input.VersionId is { } version && !await db.ManagedPluginVersions.AnyAsync(x => x.Id == version && x.PluginId == id, ct))
+        var defaultVersion = plugin.Versions.SingleOrDefault(x => x.Id == input.VersionId);
+        if (input.VersionId is not null && defaultVersion is null)
             return Results.BadRequest("版本不属于当前插件");
         if (input.IsEnabled && input.VersionId is null) return Results.BadRequest("启用前请选择发布版本");
+        var pilotReleases = input.PilotReleases ?? ReadPilotReleases(plugin);
+        var pilotBaselines = new HashSet<string>(StringComparer.Ordinal);
+        if (pilotReleases.Length > 20) return Results.BadRequest("灰度版本最多 20 个");
+        foreach (var rule in pilotReleases)
+        {
+            var version = plugin.Versions.SingleOrDefault(x => x.Id == rule?.VersionId);
+            if (rule is null || version is null || version.DshVersion == defaultVersion?.DshVersion
+                || !pilotBaselines.Add(version.DshVersion) || rule.UserIds is not { Length: > 0 and <= 500 })
+                return Results.BadRequest("灰度版本须属于当前插件，每个 DSH 基线只能选择一个灰度版本，且须指定 1 至 500 位用户");
+        }
+        if (input.PilotReleases is not null)
+        {
+            var pilotUsers = pilotReleases.SelectMany(x => x.UserIds).Distinct().ToArray();
+            if (pilotUsers.Length > 0 && await db.Users.CountAsync(x => pilotUsers.Contains(x.Id) && x.IsEnabled, ct) != pilotUsers.Length)
+                return Results.BadRequest("灰度名单包含无效或已停用用户");
+        }
         if (input.ServerSecret?.Length > 8192) return Results.BadRequest("密钥过长");
         if (plugin.PackageName == SearchPackage && input.IsEnabled && string.IsNullOrWhiteSpace(input.ServerSecret) && plugin.ServerSecretProtected.Length == 0)
             return Results.BadRequest("启用博查搜索前请配置服务端 API Key");
         if (input.Configuration.EnumerateObject().Any(x => x.Value.ValueKind != JsonValueKind.Object))
             return Results.BadRequest("配置必须为插件行 ID 到配置对象的映射");
-        await grants.SetAsync(Resource(id), input.Grants, ct);
         plugin.Name = input.Name.Trim(); plugin.IsEnabled = input.IsEnabled; plugin.PublishedVersionId = input.VersionId;
+        plugin.PilotReleasesJson = JsonSerializer.Serialize(pilotReleases);
         plugin.ConfigurationJson = input.Configuration.GetRawText(); plugin.Revision++;
         if (!string.IsNullOrWhiteSpace(input.ServerSecret))
             plugin.ServerSecretProtected = protection.CreateProtector(SecretPurpose(id)).Protect(input.ServerSecret.Trim());
         db.OperationAudits.Add(new OperationAudit { UserId = current.Id, Action = "plugin.publish", EntityType = "Plugin", EntityId = id.ToString(), Succeeded = true,
-            DetailJson = JsonSerializer.Serialize(new { input.IsEnabled, input.VersionId, plugin.Revision }) });
-        await db.SaveChangesAsync(ct);
+            DetailJson = JsonSerializer.Serialize(new { input.IsEnabled, input.VersionId, pilotReleases, plugin.Revision }) });
+        await grants.SetAsync(Resource(id), input.Grants, ct);
         return Results.NoContent();
     }
 
@@ -149,16 +195,17 @@ public static class PluginMarketEndpoints
     {
         var user = await DshManagedEndpoints.UserAsync(request, db, ct);
         if (user is null) return Results.Unauthorized();
+        var runtimeVersion = request.Headers[RuntimeVersionHeader].ToString();
         var result = new List<object>();
         foreach (var plugin in await db.ManagedPlugins.AsNoTracking().Include(x => x.Versions).ToListAsync(ct))
         {
             var enabled = plugin.IsEnabled && await grants.AllowsAsync(Resource(plugin.Id), user.Id, ct);
-            var version = plugin.Versions.SingleOrDefault(x => x.Id == plugin.PublishedVersionId);
+            var version = enabled ? SelectRelease(plugin, user.Id, runtimeVersion) : null;
             result.Add(new { plugin.Id, plugin.PackageName, plugin.Revision, enabled = enabled && version is not null,
                 version = enabled ? version?.Version : null, dshVersion = enabled ? version?.DshVersion : null,
                 sha256 = enabled ? version?.Sha256 : null, size = enabled ? version?.Size : null,
                 downloadPath = enabled && version is not null ? $"/v1/plugins/{plugin.Id:D}/versions/{version.Id:D}/package" : null,
-                configuration = enabled ? JsonSerializer.Deserialize<JsonElement>(plugin.ConfigurationJson) : JsonSerializer.SerializeToElement(new { }) });
+                configuration = version is not null ? JsonSerializer.Deserialize<JsonElement>(plugin.ConfigurationJson) : JsonSerializer.SerializeToElement(new { }) });
         }
         return Results.Ok(new { userId = user.Id, plugins = result });
     }
@@ -168,8 +215,9 @@ public static class PluginMarketEndpoints
     {
         var user = await DshManagedEndpoints.UserAsync(request, db, ct);
         if (user is null) return Results.Unauthorized();
-        var plugin = await db.ManagedPlugins.AsNoTracking().SingleOrDefaultAsync(x => x.Id == id, ct);
-        if (plugin is null || !plugin.IsEnabled || plugin.PublishedVersionId != versionId || !await grants.AllowsAsync(Resource(id), user.Id, ct))
+        var plugin = await db.ManagedPlugins.AsNoTracking().Include(x => x.Versions).SingleOrDefaultAsync(x => x.Id == id, ct);
+        if (plugin is null || !plugin.IsEnabled || !await grants.AllowsAsync(Resource(id), user.Id, ct)
+            || SelectRelease(plugin, user.Id, request.Headers[RuntimeVersionHeader].ToString())?.Id != versionId)
             return Results.StatusCode(403);
         var path = Path.Combine(Root(config, env), $"{versionId:N}.tgz");
         return File.Exists(path) ? Results.File(path, "application/gzip", $"{versionId:N}.tgz", enableRangeProcessing: true) : Results.NotFound();

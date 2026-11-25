@@ -43,8 +43,8 @@ public static class PublicationEndpoints
         publications.MapPost("/{id:guid}/resubmit", ResubmitAsync).RequireAuthorization("publication.create");
 
         var tasks = app.MapGroup("/api/workflow/tasks").WithTags("流程任务")
-            .RequireAuthorization("publication.review");
-        tasks.MapGet("/mine", MyTasksAsync);
+            .RequireAuthorization();
+        tasks.MapGet("/mine", MyTasksAsync).RequireAuthorization("publication.review");
         tasks.MapPost("/{id:guid}/complete", async (Guid id, CompleteTaskRequest input,
             ICurrentUser current, WorkflowService workflow, CancellationToken ct) =>
             Results.Ok(await workflow.CompleteTaskAsync(current.Id, id, input, ct)));

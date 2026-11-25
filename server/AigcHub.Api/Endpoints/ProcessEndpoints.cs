@@ -1,6 +1,7 @@
 using AigcHub.Api.Contracts;
 using AigcHub.Api.Data;
 using AigcHub.Api.Domain;
+using AigcHub.Api.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 using System.Text.Json;
@@ -88,20 +89,30 @@ public static class ProcessEndpoints
     }
 
     private static async Task<IResult> CreateAsync(SaveProcessDefinitionRequest input,
-        AigcHubDbContext db, CancellationToken ct)
+        AigcHubDbContext db, WorkflowDefinitionReader reader, CancellationToken ct)
     {
         var key = input.Key?.Trim() ?? "";
         if (!Regex.IsMatch(key, "^[a-z][a-z0-9-]{1,79}$")) return Results.BadRequest(new { message = "流程编码需为 2–80 位小写字母、数字或连字符，以字母开头" });
         var error = Validate(input.Name, input.Definition, input.IsPublished);
         if (error is not null) return Results.BadRequest(new { message = error });
+        var requestType = string.IsNullOrWhiteSpace(input.RequestType) ? "publication" : input.RequestType.Trim().ToLowerInvariant();
+        if (requestType is not ("publication" or "access")) return Results.BadRequest(new { message = "流程适用的申请类型必须是 publication 或 access" });
         await using var transaction = await LockAsync(db, key, ct);
         var siblings = await db.ProcessDefinitions.Where(x => x.Key == key).ToListAsync(ct);
+        if (siblings.Count > 0)
+            requestType = siblings[0].RequestType;
+        if (siblings.Any(x => x.RequestType != requestType)) return Results.BadRequest(new { message = "同一流程编码只能适用于一种申请类型" });
+        if (input.IsPublished)
+        {
+            var assignmentError = await reader.ValidatePublishedAssignmentsAsync(requestType, input.Definition.GetRawText(), ct);
+            if (assignmentError is not null) return Results.BadRequest(new { message = assignmentError });
+        }
         var version = input.Version > 0 ? input.Version : siblings.Select(x => x.Version).DefaultIfEmpty(0).Max() + 1;
         if (siblings.Any(x => x.Version == version)) return Results.Conflict(new { message = "流程版本已存在，请刷新后重试" });
         var now = Timestamp();
         var item = new ProcessDefinition
         {
-            Key = key, Name = input.Name.Trim(), Version = version,
+            Key = key, Name = input.Name.Trim(), Version = version, RequestType = requestType,
             DefinitionJson = input.Definition.GetRawText(), IsPublished = input.IsPublished,
             PublishedAt = input.IsPublished ? now : null, UpdatedAt = now,
         };
@@ -134,7 +145,7 @@ public static class ProcessEndpoints
         return Results.Ok(item);
     }
 
-    private static async Task<IResult> PublishAsync(Guid id, PublishInput? input, AigcHubDbContext db, CancellationToken ct)
+    private static async Task<IResult> PublishAsync(Guid id, PublishInput? input, AigcHubDbContext db, WorkflowDefinitionReader reader, CancellationToken ct)
     {
         var key = await db.ProcessDefinitions.Where(x => x.Id == id).Select(x => x.Key).SingleOrDefaultAsync(ct);
         if (key is null) return Results.NotFound();
@@ -146,6 +157,8 @@ public static class ProcessEndpoints
         using var document = JsonDocument.Parse(item.DefinitionJson);
         var error = Validate(item.Name, document.RootElement, true);
         if (error is not null) return Results.BadRequest(new { message = error });
+        var assignmentError = await reader.ValidatePublishedAssignmentsAsync(item.RequestType, item.DefinitionJson, ct);
+        if (assignmentError is not null) return Results.BadRequest(new { message = assignmentError });
         foreach (var sibling in siblings)
         {
             if (sibling.IsPublished) sibling.PublishedAt ??= sibling.UpdatedAt;

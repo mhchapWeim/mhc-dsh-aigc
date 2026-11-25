@@ -85,7 +85,7 @@ export type BackendDshUploadBatch = {
 };
 export type BackendProcessDefinition = {
   id: string; key: string; name: string; version: number; definitionJson: string;
-  isPublished: boolean; publishedAt?: string | null; updatedAt: string;
+  isPublished: boolean; publishedAt?: string | null; updatedAt: string; requestType?: string;
 };
 export type DesignerOption = { value: string; label: string; employeeNo?: string };
 export type DesignerOptions = {
@@ -121,7 +121,7 @@ export type BackendCatalogApp = {
   subcategory?: string; subcategoryId?: string | null; clicks?: import('./application-registry').ClickCounts; totalClicks?: number;
   nameEn?: string; descriptionEn?: string; ownerEn?: string; categoryEn?: string; registered?: boolean;
   id: string; name: string; description: string; category: string; categoryColor: string;
-  owner: string; accessUrl: string; publishedAt: string;
+  owner: string; accessUrl: string; launchable?: boolean; slug?: string; publishedAt: string;
 };
 export type BackendChatTool = {
   name: string; displayName: string; description: string; requiredPermission: string;
@@ -178,8 +178,8 @@ export async function apiRequest<T>(path: string, init: RequestInit = {}): Promi
     throw new Error("登录状态已失效，请重新登录");
   }
   if (response.status === 403) {
-    const body = await response.json().catch(() => null) as { detail?: string; message?: string } | null;
-    throw new Error(body?.detail || body?.message || "当前账号没有执行此操作的权限");
+    const body = await response.json().catch(() => null) as { detail?: string; message?: string; code?: string } | null;
+    throw Object.assign(new Error(body?.detail || body?.message || "当前账号没有执行此操作的权限"), { code: body?.code });
   }
   if (!response.ok) {
     const body = await response.json().catch(() => null) as string | { detail?: string; message?: string; error?: string } | null;
@@ -250,7 +250,7 @@ export const getDesignerOptions = () =>
   apiRequest<DesignerOptions>("/api/process-definitions/designer-options");
 
 export const saveProcessDefinition = (input: {
-  key: string; name: string; version: number; definition: unknown; isPublished: boolean;
+  key: string; name: string; version: number; definition: unknown; isPublished: boolean; requestType?: 'publication' | 'access';
 }) => apiRequest<BackendProcessDefinition>("/api/process-definitions", {
   method: "POST", body: JSON.stringify(input),
 });
@@ -361,7 +361,29 @@ function clickVisitId(): string {
   const hex = Array.from(bytes, byte => byte.toString(16).padStart(2, '0')).join('');
   return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
 }
-export const getRegisteredAppAccess = (id: string) => apiRequest<{accessUrl: string; counted?: boolean; clicks?: import('./application-registry').ClickCounts; totalClicks?: number}>(`/api/catalog/registered-apps/${encodeURIComponent(id)}/access`, {method: 'POST', body: JSON.stringify({visitId: clickVisitId()})});
+export const getRegisteredAppAccess = (id: string) =>
+  apiRequest<{ accessUrl: string; counted?: boolean; clicks?: { day: number; week: number; month: number; year: number }; totalClicks?: number }>(
+    `/api/catalog/registered-apps/${encodeURIComponent(id)}/access`,
+    { method: 'POST', body: JSON.stringify({ visitId: clickVisitId() }) });
+export const launchPublishedApp = (id: string) =>
+  apiRequest<{ ticket: string; slug: string; gatewayOrigin: string; expiresAt: string; launchPath?: string }>(`/api/catalog/apps/${encodeURIComponent(id)}/launch`, { method: 'POST' });
+
+export const submitPublishedLaunch = async (id: string) => {
+  const issued = await launchPublishedApp(id);
+  const form = document.createElement('form');
+  form.method = 'POST';
+  form.action = `${issued.gatewayOrigin.replace(/\/$/, '')}${issued.launchPath ?? `/${issued.slug}`}`;
+  form.target = '_blank';
+  form.rel = 'noopener';
+  const ticket = document.createElement('input');
+  ticket.type = 'hidden';
+  ticket.name = 'ticket';
+  ticket.value = issued.ticket;
+  form.append(ticket);
+  document.body.append(form);
+  form.submit();
+  form.remove();
+};
 export const getChatTools = () => apiRequest<BackendChatTool[]>("/api/chat/tools");
 export const getChatModels = () => apiRequest<BackendChatModel[]>("/api/chat/models");
 export const getChatToolOptions = () => apiRequest<BackendChatToolOptions>("/api/chat/tool-options");
@@ -524,6 +546,49 @@ export function uploadDesktopRelease(id: string, installer: File, blockmap: File
     xhr.send(form);
   });
 }
+
+export type ProcessBinding = {
+  requestType: string; label: string; processKey?: string | null; processName?: string | null;
+  publishedVersion?: number | null; status: string; updatedAt?: string | null;
+  options: Array<{ key: string; name: string; version: number; label: string }>;
+};
+export const getProcessBindings = () => apiRequest<ProcessBinding[]>('/api/process-bindings');
+export const saveProcessBinding = (requestType: string, processKey: string) =>
+  apiRequest<void>(`/api/process-bindings/${requestType}`, { method: 'PUT', body: JSON.stringify({ processKey }) });
+
+export type EligibleApplication = { id: string; name: string; registered?: boolean };
+export type AccessRequestItem = {
+  id: string; requestNo: string; publicationRequestId?: string | null; registeredApplicationId?: string | null; appName: string; reason: string;
+  status: string; currentNodeName: string; reviewComment?: string | null; createdAt: string; updatedAt?: string;
+  applicantName?: string; applicantEmployeeNo?: string; taskId?: string; name?: string; assignment?: string;
+  history?: Array<{ eventType: string; nodeKey: string; detail: string; createdAt: string }>;
+};
+export const getEligibleApplications = () => apiRequest<EligibleApplication[]>('/api/access-requests/eligible-apps');
+export const getMyAccessRequests = () => apiRequest<AccessRequestItem[]>('/api/access-requests/mine');
+export const getReviewableAccessRequests = () => apiRequest<AccessRequestItem[]>('/api/access-requests/reviewable');
+export const getAccessRequest = (id: string) => apiRequest<AccessRequestItem>(`/api/access-requests/${id}`);
+export const submitAccessRequest = (applicationId: string, reason: string) =>
+  apiRequest<AccessRequestItem>('/api/access-requests', { method: 'POST', body: JSON.stringify({ applicationId, reason }) });
+export const submitRegisteredAccessRequest = (applicationId: string, reason: string) =>
+  apiRequest<AccessRequestItem>(`/api/catalog/registered-apps/${encodeURIComponent(applicationId)}/access-request`, {
+    method: 'POST', body: JSON.stringify({ reason }),
+  });
+
+export type GatewaySettings = {
+  idleTimeoutMinutes: number; maxSessionHours: number; launchTicketSeconds: number;
+  changes: Array<{ id: string; actorId: string; actorName?: string; employeeNo?: string; createdAt: string; beforeJson: string; afterJson: string }>;
+};
+export const getGatewaySettings = () => apiRequest<GatewaySettings>('/api/gateway-settings');
+export const saveGatewaySettings = (input: { idleTimeoutMinutes: number; maxSessionHours: number; launchTicketSeconds: number }) =>
+  apiRequest<unknown>('/api/gateway-settings', { method: 'PUT', body: JSON.stringify(input) });
+export type PersonalGrant = {
+  id: string; userId: string; userName?: string; employeeNo?: string;
+  publicationRequestId?: string | null; registeredApplicationId?: string | null;
+  appName?: string; revokedAt?: string | null; grantedAt: string; source: string; revokeReason?: string | null;
+};
+export const getPersonalGrants = () => apiRequest<PersonalGrant[]>('/api/gateway-settings/grants');
+export const revokePersonalGrant = (id: string, reason: string) =>
+  apiRequest<void>(`/api/gateway-settings/grants/${id}/revoke`, { method: 'POST', body: JSON.stringify({ reason }) });
 
 export const setDesktopReleaseMandatory = (id: string, isMandatory: boolean) => apiRequest<void>(`/api/desktop-releases/${id}/mandatory`, { method: 'POST', body: JSON.stringify({ isMandatory }) });
 

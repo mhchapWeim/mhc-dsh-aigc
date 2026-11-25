@@ -1,7 +1,7 @@
 {
   "name": "@deepseek-ai/dsh-sensitive-word-filter",
   "description": "Backend-managed prompt admission policy for sensitive words",
-  "version": "0.1.7-alpha.2",
+  "version": "0.2.2-rc.3",
   "publishConfig": {
     "access": "public"
   },

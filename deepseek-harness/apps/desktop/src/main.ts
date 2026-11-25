@@ -622,7 +622,7 @@ async function main(): Promise<void> {
         if (next !== null && next.endpoint !== hostEnvironment.DSH_MANAGED_BACKEND_URL?.replace(/\/+$/u, '')) return
         managedDistribution?.setSession(next)
         failureUploader.setSession(next)
-      }, record => failureJournal.ingest(JSON.stringify({ category: 'plugin-operation', operation: 'record', error: record })), (record) => {
+      }, record => failureJournal.ingest(record), (record) => {
         operationJournal ??= new OperationJournal(join(app.getPath('userData'), 'plugin-operations'), {
           segmentBytes: 256 * 1024, recordBytes: 4096, queuedBytes: 64 * 1024,
         })
@@ -1330,11 +1330,11 @@ async function main(): Promise<void> {
     } },
     { label: currentDesktopLocale().messages.checkUpdatesMenu, click: () => { void openUpdatePrompt(true) } },
     ...process.platform === 'darwin' || process.platform === 'win32'
-      ? [{ label: currentDesktopLocale().messages.cliCommandMenu, click: () => { void commandManager.show() } }] : [],
+      ? [{ label: currentDesktopLocale().messages.cliCommandMenu, visible: false, click: () => { void commandManager.show() } }] : [],
     ...diagnosticItems(),
     ...(managedDeployment ? [managedAnnouncementMenu()] : []),
-    { type: 'separator' },
     ...development ? [
+      { type: 'separator' as const },
       { label: currentDesktopLocale().messages.reloadPageMenu, role: 'reload' as const },
       { label: currentDesktopLocale().messages.restartAppHostMenu, click: () => {
         if (quitting) return
@@ -1342,7 +1342,6 @@ async function main(): Promise<void> {
         quitWithoutConfirmation()
       } },
     ] : [],
-    { role: 'toggleDevTools', label: currentDesktopLocale().messages.toggleDevToolsMenu },
     { type: 'separator' },
     ...hideCommands,
     { label: currentDesktopLocale().messages.aigcAuthenticationMenu, click: () => {
@@ -1352,15 +1351,15 @@ async function main(): Promise<void> {
       : process.platform === 'win32' ? { label: currentDesktopLocale().messages.exitApplication } : {}) },
   ]
   const devToolsF12Shortcut: MenuItemConstructorOptions = { role: 'toggleDevTools', visible: false, accelerator: 'F12' }
-  const windowsDevToolsShortcuts: MenuItemConstructorOptions[] = [
+  const devToolsShortcuts: MenuItemConstructorOptions[] = [
     { role: 'toggleDevTools', visible: false },
     devToolsF12Shortcut,
   ]
   const refreshApplicationMenu = (): void => {
     Menu.setApplicationMenu(Menu.buildFromTemplate(process.platform === 'win32'
-      ? windowsDevToolsShortcuts : [{
+      ? devToolsShortcuts : [{
         label: darwin ? app.name : currentDesktopLocale().messages.application,
-        submenu: [...applicationItems(), devToolsF12Shortcut],
+        submenu: [...applicationItems(), ...devToolsShortcuts],
       }, ...platformMenus()]))
     tray?.relabel()
   }
@@ -1603,7 +1602,7 @@ async function main(): Promise<void> {
     windowsLanguage = locale.id
     refreshManagedTray()
     refreshApplicationMenu()
-    if (!enteredWorkspace && needsWelcome({ loggedIn: state?.loggedIn ?? false, hasApiKey: state?.hasApiKey ?? false })) {
+    if (state !== undefined && !enteredWorkspace && needsWelcome({ loggedIn: state.loggedIn, hasApiKey: state.hasApiKey })) {
       // A later login must retain its own activation policy instead of replaying startup focus.
       raiseAfterUpdate = false
       await showWelcome()

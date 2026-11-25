@@ -87,6 +87,7 @@ const assignmentOptions = [
   { value: "role", label: "按平台角色" },
   { value: "initiator", label: "流程发起人" },
 ];
+const appOwnerOption = { value: "appOwner", label: "应用负责人（缺省转平台审核员）" };
 const emptyDefinition: ProcessDefinition = { name: "", nodes: [], edges: [] };
 type Point = { x: number; y: number };
 type Gesture =
@@ -1102,6 +1103,7 @@ export function ProcessDesigner({ versionId }: { versionId: string }) {
                 directoryUsers={directoryUsers}
                 departmentOptions={departmentOptions}
                 roleOptions={roleOptions}
+                accessFlow={record?.requestType === "access"}
               />
             ) : selectedEdge ? (
               <div className="property-form">
@@ -1228,6 +1230,7 @@ function NodeProperties({
   directoryUsers,
   departmentOptions,
   roleOptions,
+  accessFlow,
 }: {
   node: ProcessNode;
   update: (patch: Partial<ProcessNode>) => void;
@@ -1235,6 +1238,7 @@ function NodeProperties({
   directoryUsers: typeof fallbackDirectoryUsers;
   departmentOptions: DesignerOption[];
   roleOptions: DesignerOption[];
+  accessFlow: boolean;
 }) {
   const nodeType = palette.find((item) => item.type === node.type);
   const assignmentType = node.candidates?.length
@@ -1254,8 +1258,13 @@ function NodeProperties({
               : "",
       assigneeIds: type === "users" ? [] : undefined,
       candidates: undefined,
+      fallbackRole: type === "appOwner" ? (roleOptions[0]?.value ?? "") : undefined,
     });
   };
+  const choices = node.candidates?.length
+    ? [{ value: "legacy", label: "原有候选处理人" }, ...assignmentOptions]
+    : assignmentOptions;
+  const assignmentChoices = accessFlow || assignmentType === "appOwner" ? [...choices, appOwnerOption] : choices;
   return (
     <div className="property-form">
       <div className="selected-type">
@@ -1289,14 +1298,7 @@ function NodeProperties({
             <ModernSelect
               ariaLabel="分配方式"
               value={assignmentType}
-              options={
-                node.candidates?.length
-                  ? [
-                      { value: "legacy", label: "原有候选处理人" },
-                      ...assignmentOptions,
-                    ]
-                  : assignmentOptions
-              }
+              options={assignmentChoices}
               onChange={changeAssignmentType}
             />
           </div>
@@ -1360,6 +1362,22 @@ function NodeProperties({
               <UserRound size={15} />
               <span>任务将自动分配给当前流程的申请提交人。</span>
             </div>
+          )}
+          {assignmentType === "appOwner" && (
+            <>
+              <div className="property-field">
+                <span>兜底审核角色</span>
+                <ModernSelect
+                  ariaLabel="兜底审核角色"
+                  value={node.fallbackRole || roleOptions[0]?.value || ""}
+                  options={roleOptions}
+                  onChange={(fallbackRole) => update({ fallbackRole, candidates: undefined })}
+                />
+              </div>
+              <div className="assignment-hint">
+                <span>申请提交后按目标应用的访问审核负责人分配。负责人未配置、不存在、已停用或就是申请人时，改派给该角色的启用成员，并排除申请人。</span>
+              </div>
+            </>
           )}
           <div className="notification-setting">
             <div>

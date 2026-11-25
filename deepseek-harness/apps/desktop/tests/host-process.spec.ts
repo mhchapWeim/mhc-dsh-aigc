@@ -178,7 +178,7 @@ ${HTTP_HOST}`)
     onTestFinished(async () => { await journal.close() })
     const sink = vi.fn(value => journal.enqueue(JSON.stringify(value)))
     const first = new DesktopHostProcess(process.execPath, runtime, runtime, undefined, process.env,
-      undefined, undefined, undefined, undefined, sink)
+      undefined, undefined, undefined, undefined, undefined, undefined, sink)
     hosts.push(first)
     await first.start()
     await first.stop()
@@ -191,7 +191,7 @@ ${HTTP_HOST}`)
     try {
       const failure = vi.fn()
       const second = new DesktopHostProcess(process.execPath, runtime, runtime, undefined, process.env,
-        failure, undefined, undefined, undefined, () => { throw new Error('sink unavailable') })
+        failure, undefined, undefined, undefined, undefined, undefined, () => { throw new Error('sink unavailable') })
       hosts.push(second)
       await second.start()
       expect(await second.updateTasks('inspect')).toBe(false)

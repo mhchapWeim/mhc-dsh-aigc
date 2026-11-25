@@ -88,7 +88,7 @@ export default function AdminDashboard() {
   ];
   const quickActions = availableActions.filter((item) => canAccessAdminPath(platform, currentUser, item.href));
   return (
-    <div className="admin-page page-enter">
+    <div className="admin-page page-enter admin-stack">
       <div className="page-title">
         <div>
           <span className="section-kicker">PLATFORM OVERVIEW</span>

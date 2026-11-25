@@ -18,6 +18,7 @@ public static class SeedData
             await EnsureModelPermissionAsync(db, ct);
             await EnsureDistributionPermissionsAsync(db, ct);
             await EnsurePublishingProcessV2Async(db, ct);
+            await EnsureGatewayFoundationAsync(db, ct);
             return;
         }
 
@@ -74,6 +75,7 @@ public static class SeedData
         db.AddRange(departments); db.AddRange(permissions); db.AddRange(adminRole, workflowRole, userRole);
         db.AddRange(admin, workflow, applicant); db.AddRange(categories); db.Add(process);
         await db.SaveChangesAsync(ct);
+        await EnsureGatewayFoundationAsync(db, ct);
     }
 
     private static Permission Permission(string code, string name, string page) => new() { Code = code, Name = name, PagePath = page };
@@ -121,6 +123,23 @@ public static class SeedData
             Key = "application-publishing", Name = "应用发布审批流程", Version = 2, IsPublished = true, PublishedAt = DateTimeOffset.UtcNow,
             DefinitionJson = PublishingProcessV2Json()
         });
+        await db.SaveChangesAsync(ct);
+    }
+
+    private static async Task EnsureGatewayFoundationAsync(AigcHubDbContext db, CancellationToken ct)
+    {
+        if (!await db.RequestProcessBindings.AnyAsync(x => x.RequestType == "publication", ct)
+            && await db.ProcessDefinitions.AnyAsync(x => x.Key == "application-publishing", ct))
+            db.RequestProcessBindings.Add(new RequestProcessBinding { RequestType = "publication", ProcessKey = "application-publishing", UpdatedAt = DateTimeOffset.UtcNow });
+        var admin = await db.Roles.Include(x => x.Permissions).SingleOrDefaultAsync(x => x.Code == "platform-admin", ct);
+        var permission = await db.Permissions.SingleOrDefaultAsync(x => x.Code == "gateway.manage", ct);
+        if (permission is null)
+        {
+            permission = Permission("gateway.manage", "应用网关配置", "/admin/gateway");
+            db.Permissions.Add(permission);
+        }
+        if (admin is not null && admin.Permissions.All(x => x.PermissionId != permission.Id))
+            admin.Permissions.Add(new RolePermission { Role = admin, Permission = permission });
         await db.SaveChangesAsync(ct);
     }
 

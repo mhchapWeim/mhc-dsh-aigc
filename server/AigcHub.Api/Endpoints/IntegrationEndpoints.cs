@@ -13,6 +13,7 @@ public static class IntegrationEndpoints
 {
     public sealed record ServiceInput(string Code, string Name, string Kind, bool IsEnabled, string ConnectionKey, IntegrationOperation[] Operations);
     public sealed record OAuthInput(Guid State, string Code);
+    public sealed record CompleteDeploymentInput(string DeploymentUrl);
 
     public static void MapIntegrationEndpoints(this IEndpointRouteBuilder app)
     {
@@ -21,9 +22,21 @@ public static class IntegrationEndpoints
         admin.MapPut("/{code}", SaveAsync);
         admin.MapGet("/invocations", async (int? page, AigcHubDbContext db, CancellationToken ct) => {
             var query = db.IntegrationInvocations.AsNoTracking();
+            var now = DateTimeOffset.UtcNow;
             return Results.Ok(new { items = await query.OrderByDescending(x => x.ExpiresAt).Skip((Math.Max(1, page ?? 1) - 1) * 20).Take(20)
-                .Select(x => new { x.Id, x.InstanceId, x.NodeKey, x.ServiceCode, x.Operation, x.Status, x.Attempts, x.ExpiresAt }).ToListAsync(ct), total = await query.CountAsync(ct) });
+                .Select(x => new
+                {
+                    x.Id, x.InstanceId, x.NodeKey, x.ServiceCode, x.Operation, x.Status, x.Attempts, x.ExpiresAt,
+                    CanTriggerDeployment = x.ServiceCode == IntegrationWorkflowRunner.DeploymentServiceCode &&
+                        x.ResultEvent == IntegrationWorkflowRunner.DeploymentCompletedEvent && x.Protocol == "generic-v1" &&
+                        (x.Status == "Pending" || x.Status == "Sent" || x.Status == "DeliveryFailed") && x.ExpiresAt > now &&
+                        db.WorkflowInstances.Any(instance => instance.Id == x.InstanceId &&
+                            instance.Status == WorkflowInstanceStatus.WaitingCallback && instance.CurrentNodeKey == x.NodeKey)
+                }).ToListAsync(ct), total = await query.CountAsync(ct) });
         });
+        admin.MapPost("/invocations/{id:guid}/complete-deployment", async (Guid id, CompleteDeploymentInput input,
+            ICurrentUser current, IntegrationWorkflowRunner runner, CancellationToken ct) =>
+            Results.Ok(new { duplicate = await runner.CompleteDeploymentManuallyAsync(id, input.DeploymentUrl, current.Id, ct) }));
         admin.MapPost("/invocations/{id:guid}/retry", async (Guid id, AigcHubDbContext db, ICurrentUser current, CancellationToken ct) => {
             var call = await db.IntegrationInvocations.SingleOrDefaultAsync(x => x.Id == id, ct);
             if (call is null) return Results.NotFound();

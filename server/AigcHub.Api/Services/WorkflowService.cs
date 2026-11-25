@@ -56,7 +56,8 @@ public sealed class WorkflowService(
     AigcHubDbContext db,
     IRealtimeNotificationPublisher realtime,
     WorkflowDefinitionReader definitions,
-    GiteaService? gitea = null
+    GiteaService? gitea = null,
+    ApplicationRouteService? routes = null
 )
 {
     public async Task<PublicationRequest> SubmitAsync(
@@ -102,11 +103,9 @@ public sealed class WorkflowService(
         if (accessMode == "Subjects" && accessSubjects.Length == 0)
             throw new WorkflowException("请选择至少一个可访问人员、部门或角色");
         await ValidateAccessSubjectsAsync(accessSubjects, ct);
-        var definition =
-            await db
-                .ProcessDefinitions.OrderByDescending(x => x.Version)
-                .FirstOrDefaultAsync(x => x.Key == (input.ProcessKey ?? "application-publishing") && x.IsPublished, ct)
-            ?? throw new WorkflowException("没有已发布的应用发布流程", 409);
+        // The submitted process key is ignored. The server resolves the binding for this entry.
+        _ = input.ProcessKey;
+        var definition = await ProcessBindings.ResolvePublishedAsync(db, ProcessBindings.Publication, ct);
 
         var request = new PublicationRequest
         {
@@ -267,11 +266,15 @@ public sealed class WorkflowService(
         var instance = await db.WorkflowInstances.SingleAsync(x => x.Id == task.InstanceId, ct);
         if (instance.InitiatorId == actorId)
             throw new WorkflowException("申请人不能审核自己提交的申请", 403);
+        if (instance.BusinessType != ProcessBindings.AccessBusiness && !await HasPermissionAsync(actorId, "publication.review", ct))
+            throw new WorkflowException("当前用户没有发布审核权限", 403);
         if (!CanHandle(actor, task))
             throw new WorkflowException("当前用户不是该节点处理人", 403);
         var decision = input.Action.Trim().ToLowerInvariant();
         if (decision is not ("approve" or "reject"))
             throw new WorkflowException("操作必须是 approve 或 reject");
+        if (instance.BusinessType == ProcessBindings.AccessBusiness)
+            return await CompleteAccessAsync(actor, task, instance, decision, input.Comment, ct);
         var request = await db.PublicationRequests.SingleAsync(
             x => x.Id == instance.BusinessId,
             ct
@@ -413,6 +416,7 @@ public sealed class WorkflowService(
                 !string.Equals(request.CommitSha, commitProperty.GetString(), StringComparison.OrdinalIgnoreCase))
                 throw new WorkflowException("部署回调的 Commit 与代码审核版本不一致", 409);
             request.AccessUrl = deploymentUrl;
+            if (routes is not null) await routes.RegisterAsync(request, deploymentUrl, ct);
         }
         instance.Status = succeeded
             ? WorkflowInstanceStatus.Completed
@@ -444,6 +448,190 @@ public sealed class WorkflowService(
         await db.SaveChangesAsync(ct);
         return new CallbackResult(true, false);
     }
+
+    public async Task<ApplicationAccessRequest> SubmitAccessAsync(Guid actorId, Guid applicationId, string? reason, CancellationToken ct, bool registered = false)
+    {
+        var text = reason?.Trim() ?? "";
+        if (text.Length is < 1 or > 1000) throw new WorkflowException("请填写 1000 字以内的申请原因");
+        var actor = await db.Users.Include(x => x.Roles).Include(x => x.Department).SingleOrDefaultAsync(x => x.Id == actorId && x.IsEnabled, ct)
+            ?? throw new WorkflowException("当前用户不可提交申请", 403);
+        var gateKey = $"{actorId:N}:{applicationId:N}:{registered}";
+        var gate = AccessGates.GetOrAdd(gateKey, _ => new SemaphoreSlim(1, 1));
+        await gate.WaitAsync(ct);
+        try
+        {
+            await using var tx = db.Database.IsRelational() ? await db.Database.BeginTransactionAsync(ct) : null;
+            if (db.Database.IsNpgsql())
+                await db.Database.ExecuteSqlInterpolatedAsync($"SELECT pg_advisory_xact_lock(hashtext({gateKey}))", ct);
+            Guid? publicationId = registered ? null : applicationId;
+            Guid? registeredId = registered ? applicationId : null;
+            var personal = await db.ApplicationPersonalGrants.AnyAsync(x => x.UserId == actorId &&
+                x.PublicationRequestId == publicationId && x.RegisteredApplicationId == registeredId && x.RevokedAt == null, ct);
+            string appName;
+            bool alreadyAllowed;
+            if (registered)
+            {
+                var app = await db.RegisteredApplications.Include(x => x.Grants).SingleOrDefaultAsync(x => x.Id == applicationId, ct)
+                    ?? throw new WorkflowException("目标应用不存在", 404);
+                if (!app.IsEnabled)
+                    throw new WorkflowException("目标应用已停用，不能提交访问申请", 409);
+                appName = app.Name;
+                alreadyAllowed = RegisteredApplicationAccess.HasScope(app, actor, personal);
+            }
+            else
+            {
+                var app = await db.PublicationRequests.Include(x => x.AccessGrants).SingleOrDefaultAsync(x => x.Id == applicationId, ct)
+                    ?? throw new WorkflowException("目标应用不存在", 404);
+                if (!app.OperationalEnabled)
+                    throw new WorkflowException("目标应用已停用，不能提交访问申请", 409);
+                var routeReady = await db.ApplicationRoutes.AnyAsync(x => x.PublicationRequestId == applicationId && x.Status == ApplicationRouteService.Ready, ct);
+                if (!routeReady || app.Status != PublicationStatus.Approved)
+                    throw new WorkflowException("目标应用未发布或网关路由未就绪，不能提交访问申请", 409);
+                appName = app.AppName;
+                alreadyAllowed = PublishedApplicationAccess.HasScope(app, actor, personal);
+            }
+            if (alreadyAllowed)
+                throw new WorkflowException("你已经可以访问该应用，无需再次申请", 409);
+            if (await db.ApplicationAccessRequests.AnyAsync(x => x.ApplicantId == actorId &&
+                x.PublicationRequestId == publicationId && x.RegisteredApplicationId == registeredId && x.Status == AccessRequestStatus.Reviewing, ct))
+                throw new WorkflowException("该应用已有一张在途访问申请", 409);
+            var definition = await ProcessBindings.ResolvePublishedAsync(db, ProcessBindings.Access, ct);
+            var request = new ApplicationAccessRequest
+            {
+                RequestNo = $"ACC-{DateTime.UtcNow:yyyyMMdd}-{Guid.NewGuid().ToString("N")[..6].ToUpperInvariant()}",
+                ApplicantId = actorId, PublicationRequestId = publicationId, RegisteredApplicationId = registeredId,
+                Reason = text, Status = AccessRequestStatus.Reviewing
+            };
+            var instance = new WorkflowInstance
+            {
+                ProcessDefinitionId = definition.Id, BusinessId = request.Id, BusinessType = ProcessBindings.AccessBusiness, InitiatorId = actorId
+            };
+            request.ProcessInstanceId = instance.Id;
+            var task = await definitions.CreateFirstUserTaskAsync(definition, instance.Id, actorId, ct, new AccessAssignment(applicationId, registered));
+            instance.CurrentNodeKey = task.NodeKey;
+            request.CurrentNodeKey = task.NodeKey;
+            request.CurrentNodeName = task.Name;
+            db.AddRange(request, instance, task);
+            db.WorkflowHistory.Add(new WorkflowHistory { InstanceId = instance.Id, EventType = "InstanceStarted", NodeKey = task.NodeKey, ActorId = actorId, Detail = request.RequestNo });
+            RecordAssignment(instance.Id, task);
+            await NotifyCandidatesAsync(task, $"新的访问申请：{appName}", $"{actor.Name} 申请访问 {appName}", "/admin/reviews", ct);
+            await db.SaveChangesAsync(ct);
+            if (tx is not null) await tx.CommitAsync(ct);
+            return request;
+        }
+        finally { gate.Release(); }
+    }
+
+    private async Task<object> CompleteAccessAsync(AppUser actor, WorkflowTask task, WorkflowInstance instance, string decision, string? comment, CancellationToken ct)
+    {
+        var request = await db.ApplicationAccessRequests.Include(x => x.Publication).Include(x => x.RegisteredApplication)
+            .SingleAsync(x => x.Id == instance.BusinessId, ct);
+        var appName = request.RegisteredApplication?.Name ?? request.Publication?.AppName ?? "目标应用";
+        task.Status = WorkflowTaskStatus.Completed;
+        task.CompletedById = actor.Id;
+        task.Decision = decision;
+        task.Comment = comment?.Trim();
+        task.CompletedAt = DateTimeOffset.UtcNow;
+        request.ReviewerId = actor.Id;
+        request.ReviewComment = task.Comment;
+        request.UpdatedAt = DateTimeOffset.UtcNow;
+        request.ConcurrencyToken = Guid.NewGuid();
+        if (decision == "reject")
+        {
+            request.Status = AccessRequestStatus.Rejected;
+            request.CurrentNodeKey = "revise";
+            request.CurrentNodeName = "已驳回";
+            instance.Status = WorkflowInstanceStatus.Rejected;
+            instance.CurrentNodeKey = "revise";
+            instance.CompletedAt = DateTimeOffset.UtcNow;
+            await AddNotificationAsync(request.ApplicantId, $"访问申请已驳回：{appName}", task.Comment ?? "未授予访问权限", "/admin/publications", ct);
+        }
+        else
+        {
+            var definition = await db.ProcessDefinitions.SingleAsync(x => x.Id == instance.ProcessDefinitionId, ct);
+            var next = await definitions.CreateNextUserTaskAsync(definition, instance.Id, instance.InitiatorId, task.NodeKey, ct, accessApproval: true);
+            if (next is not null)
+            {
+                db.WorkflowTasks.Add(next);
+                request.Status = AccessRequestStatus.Reviewing;
+                request.CurrentNodeKey = next.NodeKey;
+                request.CurrentNodeName = next.Name;
+                instance.Status = WorkflowInstanceStatus.Running;
+                instance.CurrentNodeKey = next.NodeKey;
+                RecordAssignment(instance.Id, next);
+                await NotifyCandidatesAsync(next, $"待处理访问申请：{appName}", $"请处理“{next.Name}”", "/admin/reviews", ct);
+            }
+            else await FinishAccessAsync(request, instance, ct);
+        }
+        instance.ConcurrencyToken = Guid.NewGuid();
+        db.WorkflowHistory.Add(new WorkflowHistory
+        {
+            InstanceId = instance.Id, EventType = decision == "approve" ? "TaskApproved" : "TaskRejected",
+            NodeKey = task.NodeKey, ActorId = actor.Id, Detail = task.Comment ?? ""
+        });
+        await db.SaveChangesAsync(ct);
+        return new { taskId = task.Id, decision, requestId = request.Id, request.Status };
+    }
+
+    private async Task FinishAccessAsync(ApplicationAccessRequest request, WorkflowInstance instance, CancellationToken ct)
+    {
+        var registered = request.RegisteredApplicationId.HasValue;
+        var appName = request.RegisteredApplication?.Name ?? request.Publication?.AppName ?? "目标应用";
+        var available = registered
+            ? request.RegisteredApplication?.IsEnabled == true
+            : request.Publication?.Status == PublicationStatus.Approved && request.Publication.OperationalEnabled && await db.ApplicationRoutes.AnyAsync(
+                x => x.PublicationRequestId == request.PublicationRequestId && x.Status == ApplicationRouteService.Ready, ct);
+        if (!available || !await db.Users.AnyAsync(x => x.Id == request.ApplicantId && x.IsEnabled, ct))
+        {
+            request.Status = AccessRequestStatus.Failed;
+            request.CurrentNodeKey = "failed";
+            request.CurrentNodeName = "未授权";
+            request.ReviewComment = "目标应用已下架、路由未就绪或申请人已停用，未授予访问权限";
+            instance.Status = WorkflowInstanceStatus.Failed;
+            instance.CurrentNodeKey = "failed";
+            instance.CompletedAt = DateTimeOffset.UtcNow;
+            await AddNotificationAsync(request.ApplicantId, $"访问申请未授权：{appName}", request.ReviewComment, "/admin/publications", ct);
+            return;
+        }
+        request.Status = AccessRequestStatus.Approved;
+        request.CurrentNodeKey = "approved";
+        request.CurrentNodeName = "已授权";
+        instance.Status = WorkflowInstanceStatus.Completed;
+        instance.CurrentNodeKey = "end";
+        instance.CompletedAt = DateTimeOffset.UtcNow;
+        var existing = await db.ApplicationPersonalGrants.SingleOrDefaultAsync(x => x.AccessRequestId == request.Id, ct);
+        if (existing is null)
+        {
+            var active = await db.ApplicationPersonalGrants.AnyAsync(x => x.UserId == request.ApplicantId &&
+                x.PublicationRequestId == request.PublicationRequestId && x.RegisteredApplicationId == request.RegisteredApplicationId &&
+                x.RevokedAt == null, ct);
+            if (!active)
+                db.ApplicationPersonalGrants.Add(new ApplicationPersonalGrant
+                {
+                    UserId = request.ApplicantId, PublicationRequestId = request.PublicationRequestId,
+                    RegisteredApplicationId = request.RegisteredApplicationId, AccessRequestId = request.Id
+                });
+        }
+        await AddNotificationAsync(request.ApplicantId, $"访问申请已通过：{appName}", "你可以在应用集合中打开该应用", "/", ct);
+    }
+
+    private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, SemaphoreSlim> AccessGates = new();
+
+    private void RecordAssignment(Guid instanceId, WorkflowTask task)
+    {
+        var source = task.Candidates.FirstOrDefault(x => x.Type == "source")?.Value;
+        if (source is null) return;
+        db.WorkflowHistory.Add(new WorkflowHistory
+        {
+            InstanceId = instanceId, EventType = "TaskAssigned", NodeKey = task.NodeKey,
+            Detail = source == "owner" ? "分配给应用负责人" : "转交兜底审核角色"
+        });
+    }
+
+    private Task<bool> HasPermissionAsync(Guid userId, string permission, CancellationToken ct) =>
+        db.Users.AsNoTracking().Where(x => x.Id == userId)
+            .SelectMany(x => x.Roles).SelectMany(x => x.Role.Permissions)
+            .AnyAsync(x => x.Permission.Code == permission, ct);
 
     private async Task ValidateAccessSubjectsAsync(AccessSubjectRequest[] subjects, CancellationToken ct)
     {

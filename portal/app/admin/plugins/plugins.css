@@ -45,6 +45,25 @@
   padding: 0;
   flex: 0 0 auto;
 }
+.plugin-pilot-releases {
+  display: grid;
+  gap: 12px;
+}
+.plugin-pilot-releases > h3,
+.plugin-pilot-releases > p { margin: 0; }
+.plugin-pilot-releases > p { color: var(--muted); }
+.plugin-pilot-releases > details {
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+.plugin-pilot-releases summary {
+  cursor: pointer;
+  overflow-wrap: anywhere;
+}
+.plugin-pilot-releases details > .recipient-picker,
+.plugin-pilot-releases details > button { margin-top: 12px; }
 .plugin-form > .modal-actions {
   flex: 0 0 auto;
   margin: 0;

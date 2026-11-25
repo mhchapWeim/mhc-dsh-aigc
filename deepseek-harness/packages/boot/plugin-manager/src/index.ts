@@ -357,6 +357,7 @@ export class PluginManager extends TypertRemoteService {
   private connectorSnapshot: readonly ManagedMcpConnector[] = []
   private readonly managementBundles = new Set<string>()
   private readonly managedOperation = new AsyncLocalStorage<boolean>()
+  private readonly managedReplacement = new AsyncLocalStorage<{ active: boolean }>()
   private readonly managedStatus: { updates: readonly ManagedPluginUpdate[] } = { updates: [] }
   /**
    * The registry each package was last installed from by this manager in this process. pnpm verifies lockfile tarball
@@ -394,7 +395,14 @@ export class PluginManager extends TypertRemoteService {
       pollMs: config.managedPollMs ?? 60000, requestTimeoutMs: config.managedRequestTimeoutMs ?? 30000,
       lockRetryMs: config.managedLockRetryMs ?? 5000,
       dshVersion: installation.version,
-    }, operation => this.managedOperation.run(true, operation), (name, configuration) => {
+    }, operation => this.managedOperation.run(true, operation), async operation => {
+      // A managed replacement must acquire the lock before it disables the old bundle.
+      await this.withProfileLock(async () => {
+        const replacement = { active: true }
+        try { await this.managedReplacement.run(replacement, operation) }
+        finally { replacement.active = false }
+      }, 0)
+    }, (name, configuration) => {
       const ids = new Set(this.bundleRows(name).map(row => row.id))
       for (const id of Object.keys(configuration)) if (!ids.has(id)) throw new Error(`Configuration row ${id} is not owned by ${name}`)
     }, updates => {
@@ -1402,6 +1410,10 @@ export class PluginManager extends TypertRemoteService {
     return restart === undefined ? { warnings } : { warnings, restartReason: restart }
   }
 
+  private withProfileLock<T>(operation: () => Promise<T>, waitMs: number): Promise<T> {
+    return withFileLock(join(this.profile.dir, 'package.json'), operation, { waitMs, signal: this.abort.signal })
+  }
+
   private async change(
     operation: (result: ChangeResult) => Promise<ChangeResult['application'] | void>,
     request: Pick<ChangeResult, 'stage' | 'target' | 'enabled'>,
@@ -1421,7 +1433,7 @@ export class PluginManager extends TypertRemoteService {
     this.reportOperation({ ...facts, time: new Date().toISOString(), phase: 'started' })
     let settled: ChangeResult
     try {
-      settled = await withFileLock(join(this.profile.dir, 'package.json'), async () => {
+      const apply = async (): Promise<ChangeResult> => {
         this.abort.signal.throwIfAborted()
         const before = this.diskState()
         const result: ChangeResult = { ...request, changed: false,
@@ -1443,7 +1455,10 @@ export class PluginManager extends TypertRemoteService {
         result.changed = before !== this.diskState()
         this.ownerContext.emit('plugin-manager/changed', { reason })
         return result
-      }, { waitMs: this.lockWaitMs })
+      }
+      settled = this.managedReplacement.getStore()?.active === true
+        ? await apply()
+        : await this.withProfileLock(apply, this.managedOperation.getStore() === true ? 0 : this.lockWaitMs)
     } catch (error) {
       this.reportOperation({ ...facts, time: new Date().toISOString(), phase: 'unknown' })
       throw error

@@ -58,6 +58,72 @@ public sealed class PluginMarketHttpTests
         await VerifySearchPolicy(factory);
     }
 
+    [Fact]
+    public async Task PilotReleaseIsSelectedByRuntimeAndRechecksAuthorizationAtDownload()
+    {
+        using var factory = new Factory();
+        using var admin = await Login(factory, false);
+        using var desktop = await Login(factory, true);
+        async Task<JsonElement> Upload(byte[] bytes)
+        {
+            using var content = new MultipartFormDataContent();
+            content.Add(new ByteArrayContent(bytes), "package", "plugin.tgz");
+            using var response = await admin.PostAsync("/api/plugins/upload", content);
+            response.EnsureSuccessStatusCode();
+            return await response.Content.ReadFromJsonAsync<JsonElement>();
+        }
+
+        var legacy = await Upload(Package());
+        var nextBytes = Package(version: "1.0.1", dshVersion: "0.2.2-rc.3");
+        var pilot = await Upload(nextBytes);
+        var id = legacy.GetProperty("pluginId").GetGuid();
+        var legacyId = legacy.GetProperty("versionId").GetGuid();
+        var pilotId = pilot.GetProperty("versionId").GetGuid();
+        using var scope = factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AigcHubDbContext>();
+        var userId = await db.Users.Where(x => x.EmployeeNo == "wh00028").Select(x => x.Id).SingleAsync();
+        var userIds = new[] { userId };
+        var policyPath = $"/api/plugins/{id}/policy";
+        var legacyPolicy = new { name = "搜索", isEnabled = true, versionId = legacyId, configuration = new { },
+            grants = new { userIds, roleIds = Array.Empty<Guid>(), departmentIds = Array.Empty<Guid>() }, serverSecret = "test-bocha-secret" };
+        var rules = new[] { new { versionId = pilotId, userIds } };
+        async Task Publish(Guid[] recipients, bool clear = false)
+        {
+            var policy = new { legacyPolicy.name, legacyPolicy.isEnabled, legacyPolicy.versionId, legacyPolicy.configuration,
+                grants = legacyPolicy.grants with { userIds = recipients }, legacyPolicy.serverSecret,
+                pilotReleases = clear ? [] : rules };
+            using var response = await admin.PutAsJsonAsync(policyPath, policy);
+            response.EnsureSuccessStatusCode();
+        }
+        async Task<JsonElement> Feed(string? runtime)
+        {
+            desktop.DefaultRequestHeaders.Remove("X-Dsh-Runtime-Version");
+            if (runtime is not null) desktop.DefaultRequestHeaders.Add("X-Dsh-Runtime-Version", runtime);
+            return (await desktop.GetFromJsonAsync<JsonElement>("/v1/plugins/policy")).GetProperty("plugins")[0];
+        }
+
+        await Publish(userIds);
+        (await admin.PutAsJsonAsync(policyPath, legacyPolicy)).EnsureSuccessStatusCode();
+        var legacyPath = (await Feed(null)).GetProperty("downloadPath").GetString()!;
+        Assert.EndsWith($"/{legacyId:D}/package", legacyPath);
+        Assert.Equal(legacyPath, (await Feed("0.1.7-alpha.2.20261118.1")).GetProperty("downloadPath").GetString());
+        Assert.False((await Feed("0.2.2-rc.2")).GetProperty("enabled").GetBoolean());
+        var pilotPath = (await Feed("0.2.2-rc.3")).GetProperty("downloadPath").GetString()!;
+        Assert.EndsWith($"/{pilotId:D}/package", pilotPath);
+        Assert.Equal(nextBytes, await desktop.GetByteArrayAsync(pilotPath));
+        Assert.Equal(HttpStatusCode.Forbidden, (await desktop.GetAsync(legacyPath)).StatusCode);
+        await Feed(null);
+        Assert.Equal(HttpStatusCode.Forbidden, (await desktop.GetAsync(pilotPath)).StatusCode);
+
+        await Feed("0.2.2-rc.3");
+        await Publish([]);
+        Assert.Equal(HttpStatusCode.Forbidden, (await desktop.GetAsync(pilotPath)).StatusCode);
+        await Publish(userIds, clear: true);
+        Assert.False((await Feed("0.2.2-rc.3")).GetProperty("enabled").GetBoolean());
+        Assert.Equal(HttpStatusCode.Forbidden, (await desktop.GetAsync(pilotPath)).StatusCode);
+        Assert.Equal(legacyPath, (await Feed(null)).GetProperty("downloadPath").GetString());
+    }
+
     private static async Task VerifySearchPolicy(Factory factory)
     {
         using var admin = await Login(factory, false);
@@ -129,15 +195,15 @@ public sealed class PluginMarketHttpTests
         }
     }
 
-    private static byte[] Package(bool scripts = false)
+    private static byte[] Package(bool scripts = false, string version = "1.0.0", string dshVersion = "0.1.7-alpha.2")
     {
         using var stream = new MemoryStream();
         using (var gzip = new GZipStream(stream, CompressionLevel.Fastest, true))
         using (var tar = new TarWriter(gzip, leaveOpen: true))
         {
-            var manifest = JsonSerializer.Serialize(new { name = "@bhss/dsh-plugin-managed-search", version = "1.0.0", description = "search", main = "lib/index.js",
+            var manifest = JsonSerializer.Serialize(new { name = "@bhss/dsh-plugin-managed-search", version, description = "search", main = "lib/index.js",
                 scripts = scripts ? new Dictionary<string, string> { ["install"] = "bad" } : new(),
-                dsh = new { bundle = new { patch = "./cordis.patch.yml" } }, aigc = new { dshVersion = "0.1.7-alpha.2" } });
+                dsh = new { bundle = new { patch = "./cordis.patch.yml" } }, aigc = new { dshVersion } });
             foreach (var (name, text) in new[] { ("package/package.json", manifest), ("package/cordis.patch.yml", "[]"), ("package/lib/index.js", "export function apply() {}") })
                 tar.WriteEntry(new PaxTarEntry(TarEntryType.RegularFile, name) { DataStream = new MemoryStream(Encoding.UTF8.GetBytes(text)) });
         }

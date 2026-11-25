@@ -4,7 +4,7 @@ export type ProcessNodeType =
   | "userTask"
   | "serviceTask"
   | "gateway";
-export type AssignmentType = "users" | "department" | "role" | "initiator";
+export type AssignmentType = "users" | "department" | "role" | "initiator" | "appOwner";
 export type ProcessNode = {
   id: string;
   type: ProcessNodeType;
@@ -14,6 +14,8 @@ export type ProcessNode = {
   assignee?: string;
   assignmentType?: AssignmentType;
   assigneeIds?: string[];
+  /** 访问申请按应用负责人分配时，保存兜底角色的稳定编码。 */
+  fallbackRole?: string;
   notifyInbox?: boolean;
   description?: string;
   condition?: string;
